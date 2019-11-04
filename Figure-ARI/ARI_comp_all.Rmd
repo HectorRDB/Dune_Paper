@@ -1,0 +1,51 @@
+---
+author: "Hector Roux de Bézieux"
+date: '`r format(Sys.time(), "%d %B , %Y")`'
+title: 'Impact of all the methods on ARI merging'
+output:
+  html_document:
+    toc: true
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: true
+    code_download: TRUE
+---
+
+```{r load packages, include=F}
+library(knitr)
+opts_chunk$set(
+  fig.pos = "!h", out.extra = "", warning = F, message = F,
+  fig.align = "center", echo = F
+)
+libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
+          "mclust", "RColorBrewer", "purrr", "Dune", "pracma")
+suppressMessages(
+  suppressWarnings(sapply(libs, require, character.only = TRUE))
+)
+rm(libs)
+```
+
+```{r}
+df <- bind_rows(
+  "Brain" = read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
+                       stringsAsFactors = FALSE),
+  "Pancreas" = read.table(here("Figure-ARI", "data", "Pancreas.txt"),
+                          header = TRUE, stringsAsFactors = FALSE)
+  ) %>%
+  mutate(scenario = paste(dataset, method, comp, sep = "_"))
+p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+              group_by(scenario) %>%
+              filter(Merge_method != "Param") %>%
+              mutate(rk = dense_rank(desc(AUARIC)),
+                     rk = as.character(rk)),
+            aes(x = scenario, y = Merge_method, fill = rk)) +
+  geom_tile() +
+  scale_fill_viridis_d() +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.line = element_blank()) +
+  labs(x = "", y = "")
+p
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.pdf"),
+       height = 8)
+```
