@@ -1,0 +1,6 @@
+[submodule "Brain"]
+	path = Brain
+	url = git@github.com:HectorRDB/Pipeline_Brain.git
+[submodule "Pancreas"]
+	path = Pancreas
+	url = git@github.com:HectorRDB/Pancreas.git
