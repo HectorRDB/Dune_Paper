@@ -242,7 +242,7 @@ comp_dataset <- function(dataset){
                                   paste0(dataset, "_meta.csv"))) %>% 
     arrange(X) %>%
     `$`("cell_type1") %>%
-    as.character()
+    as.numeric()
   
   df <- bind_rows(
     comp_all(dataset, comp = "comp1", ref = gold_clusters),
@@ -250,8 +250,8 @@ comp_dataset <- function(dataset){
     comp_all(dataset, comp = "comp3", ref = gold_clusters)
   ) %>%
     mutate(comp = case_when(comp == "comp1" ~ "x1",
-                            comp == "comp1" ~ "x2",
-                            comp == "comp1" ~ "x3"))
+                            comp == "comp2" ~ "x2",
+                            comp == "comp3" ~ "x3"))
   return(df)
 }
 
