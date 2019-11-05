@@ -24,13 +24,8 @@ comp_tree_with_ref <- function(x, ref) {
 
 ## Load Dune ----
 comp_dune_ref <- function(dataset, comp = "", ref) {
-  if (comp == "") {
-    df <- readRDS(here("data", "Dune",
-                       paste0(dataset, "_mergers.rds")))
-  } else {
-    df <- readRDS(here("data", "singleTree",
-                       paste0(dataset, comp, "_merger.rds")))
-  }
+  df <- readRDS(here("data", "Dune",
+                       paste(dataset, comp, "merger.rds", sep = "_")))
   
   ARI_ref_sc3 <- data.frame(
     "n_clus" = functionTracking(df, n_clus, clus = "sc3"),
@@ -64,17 +59,12 @@ comp_dune_ref <- function(dataset, comp = "", ref) {
 
 ## Load Tree data ----
 comp_tree_ref <- function(dataset, comp, ref, type) {
-  if (comp == "") {
-    merger <- readRDS(here("data", "Dune",
-                           paste0(dataset, "_mergers.rds")))
-  } else {
-    merger <- readRDS(here("data", "singleTree",
-                           paste0(dataset, comp, "_merger.rds")))
-  }
+  merger <- readRDS(here("data", "Dune",
+                         paste(dataset, comp, "merger.rds", sep = "_")))
   ns <- lapply(merger$currentMat, n_distinct)
   
-  ARI_ref_sc3 <- read.csv(here("Data", "singleTree",
-                               paste0(dataset, comp, "_hierarchical_",
+  ARI_ref_sc3 <- read.csv(here("Data", "Dune",
+                               paste0(dataset, "_", comp, "_hierarchical_",
                                       type, ".csv"))) %>%
     arrange(cells) %>%
     dplyr::select(starts_with("sc3")) %>%
@@ -87,8 +77,8 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
     filter(n_clus >= ns$sc3)
   ARI_ref_sc3 <- trapz(x = ARI_ref_sc3$n_clus, y = ARI_ref_sc3$ARI)
   
-  ARI_ref_seurat <- read.csv(here("Data", "singleTree",
-                                  paste0(dataset, comp, "_hierarchical_",
+  ARI_ref_seurat <- read.csv(here("Data", "Dune",
+                                  paste0(dataset, "_", comp, "_hierarchical_",
                                          type, ".csv"))) %>%
     arrange(cells) %>%
     dplyr::select(starts_with("seurat")) %>%
@@ -101,8 +91,8 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
     filter(n_clus >= ns$Seurat)
   ARI_ref_seurat <- trapz(x = ARI_ref_seurat$n_clus, y = ARI_ref_seurat$ARI)
   
-  ARI_ref_monocle <- read.csv(here("Data", "singleTree",
-                                   paste0(dataset, comp, "_hierarchical_",
+  ARI_ref_monocle <- read.csv(here("Data", "Dune",
+                                   paste0(dataset, "_", comp, "_hierarchical_",
                                           type, ".csv"))) %>%
     arrange(cells) %>%
     dplyr::select(starts_with("monocle")) %>%
@@ -186,17 +176,10 @@ load_seurat <- function(dataset, dune) {
 }
 
 comp_single_ref <- function(dataset, comp, ref) {
-  if (comp == "") {
-    merger <- readRDS(here("data", "Dune",
-                           paste0(dataset, "_mergers.rds")))
-    dune <- read.csv(here("data", "Dune",
-                          paste0(dataset, ".csv")))
-  } else {
-    dune <- read.csv(here("data", "singleTree",
-                          paste0(dataset, comp, "_Dune.csv")))
-    merger <- readRDS(here("data", "singleTree",
-                           paste0(dataset, comp, "_merger.rds")))
-  }
+  merger <- readRDS(here("data", "Dune",
+                         paste(dataset, comp, "merger.rds", sep = "_")))
+  dune <- read.csv(here("data", "Dune",
+                        paste(dataset, comp, "Dune.csv", sep = "_")))
   
   ns <- lapply(merger$currentMat, n_distinct)
   
@@ -262,13 +245,13 @@ comp_dataset <- function(dataset){
     as.character()
   
   df <- bind_rows(
-    comp_all(dataset, comp = "_comp1", ref = gold_clusters),
-    comp_all(dataset, comp = "_comp2", ref = gold_clusters),
-    comp_all(dataset, comp = "_comp3", ref = gold_clusters)
+    comp_all(dataset, comp = "comp1", ref = gold_clusters),
+    comp_all(dataset, comp = "comp2", ref = gold_clusters),
+    comp_all(dataset, comp = "comp3", ref = gold_clusters)
   ) %>%
-    mutate(comp = case_when(comp == "_comp1" ~ "x1",
-                            comp == "_comp1" ~ "x2",
-                            comp == "_comp1" ~ "x3"))
+    mutate(comp = case_when(comp == "comp1" ~ "x1",
+                            comp == "comp1" ~ "x2",
+                            comp == "comp1" ~ "x3"))
   return(df)
 }
 

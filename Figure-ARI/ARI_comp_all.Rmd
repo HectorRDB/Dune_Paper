@@ -49,3 +49,20 @@ p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.pdf"),
        height = 8)
 ```
+
+```{r}
+p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+              group_by(scenario) %>%
+              # filter(Merge_method != "Param") %>%
+              mutate(rk = dense_rank(desc(AUARIC)),
+                     rk = as.character(rk)),
+            aes(x = scenario, y = Merge_method, fill = rk)) +
+  geom_tile() +
+  scale_fill_viridis_d() +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.line = element_blank()) +
+  labs(x = "", y = "")
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp_param.pdf"),
+       height = 8)
+```
