@@ -18,7 +18,8 @@ opts_chunk$set(
   fig.align = "center", echo = F
 )
 libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
-          "mclust", "RColorBrewer", "purrr", "Dune", "pracma")
+          "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "kableExtra",
+          "DailyHRB")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -30,10 +31,23 @@ rm(libs)
 ```{r}
 df <- read.table(here("Figure-ARI", "data", "sc3-comp1.txt"), header = TRUE,
                        stringsAsFactors = FALSE)
-p <- ggplot(df, aes(x = n_clus, y = ARI, col = mergeMethod)) +
-  geom_line(size = 2) +
-  theme_classic() +
-  scale_color_brewer(palette = "Dark2")
+p <- ggplot(df %>% filter(mergeMethod != "Params"),
+            aes(x = n_clus, y = ARI, col = mergeMethod)) +
+  geom_line(size = 2, alpha = .9,
+            arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
+                          type = "closed"),
+            show.legend = FALSE) +
+  geom_line(size = 0, alpha = 0) +
+  my_theme() +
+  scale_color_brewer(palette = "Dark2") +
+  annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
+           label = "Start", fontface = "bold") +
+  labs(x = "Number of clusters", y = "ARI with gold standard",
+       col = "Method of\nmerging") +
+  scale_x_continuous(breaks = c(20, 25, 30)) +
+  guides(color = guide_legend(
+    override.aes = list(size = 2, alpha = 1))
+  )
 p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.pdf"))
 ```
@@ -45,14 +59,17 @@ df2 <- df %>% filter(mergeMethod == "Dune")
 p <- ggplot(df2, aes(x = n_clus, y = ARI)) +
   geom_area(aes(y = ARI), fill = "gray", alpha = .5) +
   geom_line(size = 2, col = "#7570B3") +
-  theme_classic() +
+  my_theme() +
   geom_segment(x = min(df2$n_clus), xend = max(df2$n_clus), y = 0, yend = 0) +
   geom_segment(x = min(df2$n_clus), xend = min(df2$n_clus), y = 0,
                yend = df2$ARI[1]) +
   geom_segment(x = max(df2$n_clus), xend = max(df2$n_clus), y = 0,
                yend = df2$ARI[nrow(df2)]) +
   annotate("text", x = (min(df2$n_clus) + max(df2$n_clus)) / 2,
-           y = mean(df2$ARI) / 2, label = "Area Under the ARI Curve\n(AUARIC)")
+           y = mean(df2$ARI) / 2,
+           label = "Area Under the ARI Curve\n(AUARIC)") +
+  labs(x = "Number of clusters", y = "ARI with gold standard") +
+  scale_x_continuous(breaks = c(20, 25, 30))
 p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "AUARIC.pdf"))
 ```
@@ -71,10 +88,14 @@ AUARIC <- map_df(types, function(type){
   t() %>%
   as.data.frame() %>%
   mutate("mergeMethods" = rownames(.)) %>%
-  rename(AUARIC = V1) %>%
-  select(mergeMethods, AUARIC)
-kable(AUARIC)
+  select(mergeMethods, V1) %>%
+  filter(mergeMethods != "Params") %>%
+  rename(AUARIC = V1,
+         "Methods of\nmerging" = "mergeMethods")
   
+kableExtra::kable(AUARIC, format = "html", digits = 2) %>%
+  kable_styling("striped") %>%
+  column_spec(1:2, width = "1cm")
 ```
 
 # Panel d
@@ -90,34 +111,34 @@ For now, this only include the brain data. It will also include the Pancreas dat
 #   ) %>%
 df <- read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
                        stringsAsFactors = FALSE) %>%
-  mutate(scenario = paste(dataset, method, comp, sep = "_"))
+  mutate(scenario = paste0(dataset, "\n", method, "_", comp))
 p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
               filter(Merge_method != "Param") %>%
-              mutate(rk = dense_rank(desc(AUARIC)),
-                     rk = as.character(rk)),
-            aes(x = scenario, y = Merge_method, fill = rk)) +
+              mutate(AUARIC = scale(AUARIC)),
+            aes(x = scenario, y = Merge_method, fill = AUARIC)) +
   geom_tile() +
-  scale_fill_viridis_d() +
-  theme_classic() +
+  scale_fill_viridis_c(begin = 1, end = 0) +
+  my_theme() +
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
-  labs(x = "", y = "")
+  labs(x = "", y = "", fill = "Scaled\nAUARIC") +
+  theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 8),
+        legend.title = element_text(size = 12))
 p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.pdf"),
-       height = 8)
+       width = 10)
 ```
 
 ```{r}
 p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
-              # filter(Merge_method != "Param") %>%
-              mutate(rk = dense_rank(desc(AUARIC)),
-                     rk = as.character(rk)),
+              mutate(rk = scale(AUARIC)),
             aes(x = scenario, y = Merge_method, fill = rk)) +
   geom_tile() +
-  scale_fill_viridis_d() +
-  theme_classic() +
+  scale_fill_viridis_c(begin = 1, end = 0) +
+  my_theme() +
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
   labs(x = "", y = "")
