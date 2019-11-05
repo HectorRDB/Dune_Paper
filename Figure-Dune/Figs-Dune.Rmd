@@ -1,3 +1,4 @@
+---
 author: "Hector Roux de Bézieux"
 date: '`r format(Sys.time(), "%d %B , %Y")`'
 title: "Dune's inner workings"
@@ -5,8 +6,10 @@ output:
   html_document:
     toc: true
     toc_depth: 2
+    toc_float: TRUE
     number_sections: true
     code_download: TRUE
+---
 
 ```{r load packages, include=F}
 library(knitr)
@@ -24,7 +27,7 @@ mergers <- readRDS(here("Brain", "data", "Dune",
                         "SMARTer_cells_MOp_mergers.rds"))
 ```
 
-# Set of all three confusion matrices
+# Initial confusion matrices
 
 ```{r}
 p1 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Monocle")]) +
@@ -43,13 +46,29 @@ rm(p1, p2, p3)
 
 ```{r ARI imp no allen cell}
 plot_grid(
-  plotARIs(mergers$initialMat) + ggtitle("Before merging"),
-  plotARIs(mergers$currentMat) + ggtitle("After merging")
+  plotARIs(mergers$initialMat) + ggtitle("Before merging") +
+    labs(x = "", y = ""),
+  plotARIs(mergers$currentMat) + ggtitle("After merging") +
+    labs(x = "", y = "")
 )
 ```
 
-
+# Trend of ARI improvements and number of clusters
 ```{r ARI trend, fig.width=9}
 ARItrend(merger = mergers)
 ```
 
+# Confusion matrices after merging
+
+```{r}
+p1 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Monocle")]) +
+  labs(x = "Sc3", y = "Monocle")
+p1
+p2 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Seurat")]) +
+  labs(x = "Sc3", y = "Seurat")
+p2
+p3 <- ConfusionPlot(mergers$currentMat[, c("Seurat", "Monocle")]) +
+  labs(x = "Seurat", y = "Monocle")
+p3
+rm(p1, p2, p3)
+```
