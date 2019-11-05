@@ -1,3 +1,12 @@
+# Packages ----
+library(knitr)
+libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
+          "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "devtools",
+          "pkgload")
+suppressMessages(
+  suppressWarnings(sapply(libs, require, character.only = TRUE))
+)
+rm(libs)
 # Load ref ----
 # monocle comp1 smarter-nuclei
 allen_clusters <- read.csv(here("Brain", "data", "Smart-Seq",
@@ -41,6 +50,7 @@ interpolate <- function(df, ns) {
   if (any(df$n_clus == ns)) {
     return(df %>% filter(n_clus >= ns))
   } else {
+    df <- df %>% arrange(desc(n_clus))
     cutoff <- which(df$n_clus < ns)[1]
     slope <- (df$ARI[cutoff] - df$ARI[cutoff - 1]) / 
       (df$n_clus[cutoff] - df$n_clus[cutoff - 1])
@@ -48,7 +58,7 @@ interpolate <- function(df, ns) {
     filt <- df %>% filter(n_clus >= ns) %>%
       add_row(n_clus = ns,
               ARI = slope * (ns - df$n_clus[cutoff]) + intercept)
-    return(filt)
+    return(filt %>% arrange(n_clus))
   }
   
   
