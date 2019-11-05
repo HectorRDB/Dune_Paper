@@ -32,19 +32,38 @@ mergers <- readRDS(here("Brain", "data", "Dune",
 ```{r}
 p1 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Monocle")]) +
   labs(x = "SC3", y = "Monocle") +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                        limits = c(0, 1)) +
+  scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
+legend_common <- get_legend(
+  p1 +
+    theme(legend.position = "right") +
+    guides(size = guide_legend(title.position = "top", fill = "grey", ncol = 1),
+           col = guide_colourbar(title.position = "top"))
+  )
+legend_common <- plot_grid(legend_common)
+ggsave(plot = legend_common,
+       filename = here("Figure-Dune", "figures", "legend.pdf"))
+p1 <- p1 +
   guides(col = FALSE, size = FALSE)
 p1
 ggsave(plot = p1, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_1.pdf"))
 p2 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Seurat")]) +
   labs(x = "SC3", y = "Seurat") +
-  guides(col = FALSE, size = FALSE)
+  guides(col = FALSE, size = FALSE) +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                        limits = c(0, 1)) +
+  scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
 p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_2.pdf"))
 p3 <- ConfusionPlot(mergers$initialMat[, c("Seurat", "Monocle")]) +
   labs(x = "Seurat", y = "Monocle") +
-  guides(col = FALSE, size = FALSE)
+  guides(col = FALSE, size = FALSE) +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                        limits = c(0, 1)) +
+  scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
 p3
 ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_3.pdf"))
@@ -70,8 +89,8 @@ ggsave(plot = p2, filename = here("Figure-Dune", "figures",
 
 # Trend of ARI improvements and number of clusters
 ```{r ARI trend, fig.width=9}
-ARItrend(merger = mergers)
-
+ARItrend(merger = mergers) +
+  theme(text = element_text(size = 25))
 ```
 
 # Confusion matrices after merging
@@ -79,19 +98,28 @@ ARItrend(merger = mergers)
 ```{r}
 p1 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Monocle")]) +
   labs(x = "Sc3", y = "Monocle") +
-  guides(col = FALSE, size = FALSE)
+  guides(col = FALSE, size = FALSE) +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                        limits = c(0, 1)) +
+  scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
 p1
 ggsave(plot = p1, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_1.pdf"))
 p2 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Seurat")]) +
   labs(x = "Sc3", y = "Seurat") +
-  guides(col = FALSE, size = FALSE)
+  guides(col = FALSE, size = FALSE) +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                        limits = c(0, 1)) +
+  scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
 p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_2.pdf"))
 p3 <- ConfusionPlot(mergers$currentMat[, c("Seurat", "Monocle")]) +
   labs(x = "Seurat", y = "Monocle") +
-  guides(col = FALSE, size = FALSE)
+  guides(col = FALSE, size = FALSE) +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                        limits = c(0, 1)) +
+  scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
 p3
 ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_3.pdf"))
