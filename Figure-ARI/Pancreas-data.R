@@ -11,6 +11,21 @@ rm(libs)
 # Helper functions ----
 setwd(here("Pancreas"))
 reload(inst("here"))
+interpolate <- function(df, ns) {
+  if (any(df$n_clus == ns)) {
+    return(df %>% filter(n_clus >= ns))
+  } else {
+    df <- df %>% arrange(desc(n_clus))
+    cutoff <- which(df$n_clus < ns)[1]
+    slope <- (df$ARI[cutoff] - df$ARI[cutoff - 1]) / 
+      (df$n_clus[cutoff] - df$n_clus[cutoff - 1])
+    intercept <- df$ARI[cutoff]
+    filt <- df %>% filter(n_clus >= ns) %>%
+      add_row(n_clus = ns,
+              ARI = slope * (ns - df$n_clus[cutoff]) + intercept)
+    return(filt %>% arrange(n_clus))
+  }
+}
 ## function to get the ARI ----
 comp_merger_with_ref <- function(clusMat, clus, ref) {
   return(adjustedRandIndex(as.matrix(clusMat)[,clus], ref))
@@ -53,7 +68,7 @@ comp_dune_ref <- function(dataset, comp = "", ref) {
   ARI_ref_monocle <- trapz(x = ARI_ref_monocle$n_clus, y = ARI_ref_monocle$ARI)
   
   df <- data.frame("comp" = comp,
-                   "method" = c("SC3", "Monocle", "Seurat"),
+                   "method" = c("SC3", "Seurat", "Monocle"),
                    "AUARIC" = c(ARI_ref_sc3, ARI_ref_seurat, ARI_ref_monocle))
   return(df)
 }
@@ -113,7 +128,7 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
   ARI_ref_monocle <- trapz(x = ARI_ref_monocle$n_clus, y = ARI_ref_monocle$ARI)
   
   df <- data.frame("comp" = comp,
-                   "method" = c("SC3", "Monocle", "Seurat"),
+                   "method" = c("SC3", "Seurat", "Monocle"),
                    "AUARIC" = c(ARI_ref_sc3, ARI_ref_seurat, ARI_ref_monocle))
   
   return(df)
@@ -232,7 +247,7 @@ comp_single_ref <- function(dataset, comp, ref) {
   ARI_ref_monocle <- trapz(x = ARI_ref_monocle$n_clus, y = ARI_ref_monocle$ARI)
   
   df <- data.frame("comp" = comp,
-                   "method" = c("SC3", "Monocle", "Seurat"),
+                   "method" = c("SC3", "Seurat", "Monocle"),
                    "AUARIC" = c(ARI_ref_sc3, ARI_ref_seurat, ARI_ref_monocle))
   
   return(df)
@@ -276,4 +291,4 @@ df <- bind_rows(
 
 setwd("..")
 reload(inst("here"))
-write.table(df, here("Figure-ARI", "data", "Pancreas.txt"), row.names = F)
+write.table(df, here("Figure-ARI", "data", "Pancreas.txt"), row.names = FALSE)
