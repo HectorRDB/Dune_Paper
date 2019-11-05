@@ -1,0 +1,46 @@
+---
+title: "Supplementary plots"
+author: "Hector Roux de Bézieux"
+date: '`r format(Sys.time(), "%d %B , %Y")`'
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+---
+
+```{r packages, include=F}
+library(knitr)
+opts_chunk$set(
+  fig.pos = "!h", out.extra = "", warning = F, message = F,
+  fig.align = "center", echo = F
+)
+libs <- c("here", "tidyverse", "DailyHRB")
+suppressMessages(
+  suppressWarnings(sapply(libs, require, character.only = TRUE))
+)
+rm(libs)
+```
+
+# Seurat k-param
+
+```{r seurat k}
+Seurat <- read.table(here("Brain", "data", "Replicability", "SingleMethod",
+                          "smart", "consensus_cluster_replicability.txt")) %>% 
+  filter(clustering_name == "Seurat") %>%
+  mutate(level = str_extract(clustering_method, ",.*$") %>%
+           str_remove(., "^,") %>%
+           factor(., levels = c("30", "50", "100")),
+         clustering_method = 
+           str_extract(clustering_method, "^.*,") %>%
+           str_remove(., "Seurat\\.") %>%
+           str_remove(., ",$") %>%
+           str_replace(., "_", "."))
+p <- ggplot(Seurat, aes( y = (replicable_clusters + non_replicable_clusters) / 2,
+                         x = as.numeric(clustering_method), col = level)) +
+  geom_line() +
+  my_theme() +
+  labs(x = "Resolution", y = "Number of clusters", col = "K parameter")
+p
+ggsave(filename = here("Supp", "figures", "Supp-Seurat-param.pdf"), p)
+```
