@@ -76,6 +76,7 @@ AUARIC <- map_df(types, function(type){
 kable(AUARIC)
   
 ```
+
 # Panel d
 
 ```{r}
