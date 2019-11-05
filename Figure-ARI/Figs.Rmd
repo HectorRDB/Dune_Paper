@@ -18,7 +18,7 @@ opts_chunk$set(
   fig.align = "center", echo = F
 )
 libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
-          "mclust", "RColorBrewer", "purrr", "Dune")
+          "mclust", "RColorBrewer", "purrr", "Dune", "pracma")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -30,20 +30,63 @@ rm(libs)
 ```{r}
 df <- read.table(here("Figure-ARI", "data", "sc3-comp1.txt"), header = TRUE,
                        stringsAsFactors = FALSE)
-ggplot(df, aes(x = n_clus, y = ARI, col = mergeMethod)) +
-  geom_line() +
-  theme_classic()
+p <- ggplot(df, aes(x = n_clus, y = ARI, col = mergeMethod)) +
+  geom_line(size = 2) +
+  theme_classic() +
+  scale_color_brewer(palette = "Dark2")
+p
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.pdf"))
 ```
 
+# Panel b
+
+```{r}
+df2 <- df %>% filter(mergeMethod == "Dune")
+p <- ggplot(df2, aes(x = n_clus, y = ARI)) +
+  geom_area(aes(y = ARI), fill = "gray", alpha = .5) +
+  geom_line(size = 2, col = "#7570B3") +
+  theme_classic() +
+  geom_segment(x = min(df2$n_clus), xend = max(df2$n_clus), y = 0, yend = 0) +
+  geom_segment(x = min(df2$n_clus), xend = min(df2$n_clus), y = 0,
+               yend = df2$ARI[1]) +
+  geom_segment(x = max(df2$n_clus), xend = max(df2$n_clus), y = 0,
+               yend = df2$ARI[nrow(df2)]) +
+  annotate("text", x = (min(df2$n_clus) + max(df2$n_clus)) / 2,
+           y = mean(df2$ARI) / 2, label = "Area Under the ARI Curve\n(AUARIC)")
+p
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "AUARIC.pdf"))
+```
+
+# Panel c
+
+```{r}
+types <- unique(df$mergeMethod)
+names(types) <- types
+AUARIC <- map_df(types, function(type){
+  df <- df %>% 
+    filter(mergeMethod == type) %>%
+    arrange(n_clus)
+  return(trapz(x = df$n_clus, y = df$ARI))
+}) %>%
+  t() %>%
+  as.data.frame() %>%
+  mutate("mergeMethods" = rownames(.)) %>%
+  rename(AUARIC = V1) %>%
+  select(mergeMethods, AUARIC)
+kable(AUARIC)
+  
+```
 # Panel d
 
 ```{r}
-df <- bind_rows(
-  "Brain" = read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
-                       stringsAsFactors = FALSE),
-  "Pancreas" = read.table(here("Figure-ARI", "data", "Pancreas.txt"),
-                          header = TRUE, stringsAsFactors = FALSE)
-  ) %>%
+# df <- bind_rows(
+#   "Brain" = read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
+#                        stringsAsFactors = FALSE),
+#   "Pancreas" = read.table(here("Figure-ARI", "data", "Pancreas.txt"),
+#                           header = TRUE, stringsAsFactors = FALSE)
+#   ) %>%
+df <- read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
+                       stringsAsFactors = FALSE) %>%
   mutate(scenario = paste(dataset, method, comp, sep = "_"))
 p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
