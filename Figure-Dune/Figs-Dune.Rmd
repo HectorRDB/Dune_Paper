@@ -31,44 +31,69 @@ mergers <- readRDS(here("Brain", "data", "Dune",
 
 ```{r}
 p1 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Monocle")]) +
-  labs(x = "Sc3", y = "Monocle")
+  labs(x = "SC3", y = "Monocle") +
+  guides(col = FALSE, size = FALSE)
 p1
+ggsave(plot = p1, filename = here("Figure-Dune", "figures",
+                                  "confusion_plot_before_1.pdf"))
 p2 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Seurat")]) +
-  labs(x = "Sc3", y = "Seurat")
+  labs(x = "SC3", y = "Seurat") +
+  guides(col = FALSE, size = FALSE)
 p2
+ggsave(plot = p2, filename = here("Figure-Dune", "figures",
+                                  "confusion_plot_before_2.pdf"))
 p3 <- ConfusionPlot(mergers$initialMat[, c("Seurat", "Monocle")]) +
-  labs(x = "Seurat", y = "Monocle")
+  labs(x = "Seurat", y = "Monocle") +
+  guides(col = FALSE, size = FALSE)
 p3
+ggsave(plot = p3, filename = here("Figure-Dune", "figures",
+                                  "confusion_plot_before_3.pdf"))
 rm(p1, p2, p3)
 ```
 
 # Improvement in ARI
 
 ```{r ARI imp no allen cell}
-plot_grid(
-  plotARIs(mergers$initialMat) + ggtitle("Before merging") +
-    labs(x = "", y = ""),
-  plotARIs(mergers$currentMat) + ggtitle("After merging") +
-    labs(x = "", y = "")
-)
+p1 <- plotARIs(mergers$initialMat) + ggtitle("ARI matrix before Merging") +
+  labs(x = "", y = "") +
+  theme(plot.title = element_text(hjust = 0.5))
+p1
+ggsave(plot = p1, filename = here("Figure-Dune", "figures", 
+                                  "ARI_Matrix_Before.pdf"))
+p2 <- plotARIs(mergers$currentMat) + ggtitle("ARI matrix after Merging") +
+  labs(x = "", y = "") +
+  theme(plot.title = element_text(hjust = 0.5))
+p2
+ggsave(plot = p2, filename = here("Figure-Dune", "figures", 
+                                  "ARI_Matrix_After.pdf"))
 ```
 
 # Trend of ARI improvements and number of clusters
 ```{r ARI trend, fig.width=9}
 ARItrend(merger = mergers)
+
 ```
 
 # Confusion matrices after merging
 
 ```{r}
 p1 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Monocle")]) +
-  labs(x = "Sc3", y = "Monocle")
+  labs(x = "Sc3", y = "Monocle") +
+  guides(col = FALSE, size = FALSE)
 p1
+ggsave(plot = p1, filename = here("Figure-Dune", "figures",
+                                  "confusion_plot_after_1.pdf"))
 p2 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Seurat")]) +
-  labs(x = "Sc3", y = "Seurat")
+  labs(x = "Sc3", y = "Seurat") +
+  guides(col = FALSE, size = FALSE)
 p2
+ggsave(plot = p2, filename = here("Figure-Dune", "figures",
+                                  "confusion_plot_after_2.pdf"))
 p3 <- ConfusionPlot(mergers$currentMat[, c("Seurat", "Monocle")]) +
-  labs(x = "Seurat", y = "Monocle")
+  labs(x = "Seurat", y = "Monocle") +
+  guides(col = FALSE, size = FALSE)
 p3
+ggsave(plot = p3, filename = here("Figure-Dune", "figures",
+                                  "confusion_plot_after_3.pdf"))
 rm(p1, p2, p3)
 ```
