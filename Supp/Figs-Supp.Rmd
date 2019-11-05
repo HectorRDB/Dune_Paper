@@ -38,7 +38,7 @@ Seurat <- read.table(here("Brain", "data", "Replicability", "SingleMethod",
            str_replace(., "_", "."))
 p <- ggplot(Seurat, aes( y = (replicable_clusters + non_replicable_clusters) / 2,
                          x = as.numeric(clustering_method), col = level)) +
-  geom_line() +
+  geom_line(size = 3) +
   my_theme() +
   labs(x = "Resolution", y = "Number of clusters", col = "K parameter")
 p

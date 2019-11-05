@@ -166,7 +166,7 @@ p <- ggplot(
     mutate(n_clus = (replicable_clusters + non_replicable_clusters) / 2) %>%
     filter(n_clus > 10),
   aes(x = n_clus, y = fraction_replicable_cells, col = clustering_name)) +
-  geom_point() +
+  geom_point(size = 3, alpha = .8) +
   my_theme() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Resolution", y = "Replicability", col = "Clustering Method") +
