@@ -79,6 +79,8 @@ kable(AUARIC)
 
 # Panel d
 
+For now, this only include the brain data. It will also include the Pancreas data once it is ready
+
 ```{r}
 # df <- bind_rows(
 #   "Brain" = read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
