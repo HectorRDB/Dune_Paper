@@ -26,11 +26,12 @@ comp_tree_with_ref <- function(x, ref) {
 comp_dune_ref <- function(dataset, comp = "", ref) {
   df <- readRDS(here("data", "Dune",
                        paste(dataset, comp, "merger.rds", sep = "_")))
+  df$initialMat <- df$initialMat[sort(rownames(df$initialMat)), ]
   
   ARI_ref_sc3 <- data.frame(
     "n_clus" = functionTracking(df, n_clus, clus = "sc3"),
     "ARI" = functionTracking(df, comp_merger_with_ref, clus = "sc3",
-                             ref = ref))[-1, ] %>%
+                             ref = ref)) %>%
     arrange(n_clus) %>%
     distinct()
   ARI_ref_sc3 <- trapz(x = ARI_ref_sc3$n_clus, y = ARI_ref_sc3$ARI)
@@ -38,7 +39,7 @@ comp_dune_ref <- function(dataset, comp = "", ref) {
   ARI_ref_seurat <- data.frame(
     "n_clus" = functionTracking(df, n_clus, clus = "Seurat"),
     "ARI" = functionTracking(df, comp_merger_with_ref, clus = "Seurat",
-                             ref = ref))[-1, ] %>%
+                             ref = ref)) %>%
     arrange(n_clus) %>%
     distinct()
   ARI_ref_seurat <- trapz(x = ARI_ref_seurat$n_clus, y = ARI_ref_seurat$ARI)
@@ -46,7 +47,7 @@ comp_dune_ref <- function(dataset, comp = "", ref) {
   ARI_ref_monocle <- data.frame(
     "n_clus" = functionTracking(df, n_clus, clus = "Monocle"),
     "ARI" = functionTracking(df, comp_merger_with_ref, clus = "Monocle",
-                             ref = ref))[-1, ] %>%
+                             ref = ref)) %>%
     arrange(n_clus) %>%
     distinct()
   ARI_ref_monocle <- trapz(x = ARI_ref_monocle$n_clus, y = ARI_ref_monocle$ARI)

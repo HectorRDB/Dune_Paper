@@ -11,6 +11,20 @@ rm(libs)
 # Helper functions ----
 setwd(here("Brain"))
 reload(inst("here"))
+interpolate <- function(df, ns) {
+  if (any(df$n_clus == ns)) {
+    return(df %>% filter(n_clus >= ns))
+  } else {
+    cutoff <- which(df$n_clus < ns)[1]
+    slope <- (df$ARI[cutoff] - df$ARI[cutoff - 1]) / 
+      (df$n_clus[cutoff] - df$n_clus[cutoff - 1])
+    intercept <- df$ARI[cutoff]
+    filt <- df %>% filter(n_clus >= ns) %>%
+      add_row(n_clus = ns,
+              ARI = slope * (ns - df$n_clus[cutoff]) + intercept)
+    return(filt)
+  }
+}
 ## function to get the ARI ----
 comp_merger_with_ref <- function(clusMat, clus, ref) {
   return(adjustedRandIndex(as.matrix(clusMat)[,clus], ref))
@@ -31,11 +45,12 @@ comp_dune_ref <- function(dataset, comp = "", ref) {
     df <- readRDS(here("data", "singleTree",
                        paste0(dataset, comp, "_merger.rds")))
   }
+  df$initialMat <- df$initialMat[sort(rownames(df$initialMat)), ]
   
   ARI_ref_sc3 <- data.frame(
     "n_clus" = functionTracking(df, n_clus, clus = "sc3"),
     "ARI" = functionTracking(df, comp_merger_with_ref, clus = "sc3",
-                             ref = ref))[-1, ] %>%
+                             ref = ref)) %>%
     arrange(n_clus) %>%
     distinct()
   ARI_ref_sc3 <- trapz(x = ARI_ref_sc3$n_clus, y = ARI_ref_sc3$ARI)
@@ -43,7 +58,7 @@ comp_dune_ref <- function(dataset, comp = "", ref) {
   ARI_ref_seurat <- data.frame(
     "n_clus" = functionTracking(df, n_clus, clus = "Seurat"),
     "ARI" = functionTracking(df, comp_merger_with_ref, clus = "Seurat",
-                             ref = ref))[-1, ] %>%
+                             ref = ref)) %>%
     arrange(n_clus) %>%
     distinct()
   ARI_ref_seurat <- trapz(x = ARI_ref_seurat$n_clus, y = ARI_ref_seurat$ARI)
@@ -51,7 +66,7 @@ comp_dune_ref <- function(dataset, comp = "", ref) {
   ARI_ref_monocle <- data.frame(
     "n_clus" = functionTracking(df, n_clus, clus = "Monocle"),
     "ARI" = functionTracking(df, comp_merger_with_ref, clus = "Monocle",
-                             ref = ref))[-1, ] %>%
+                             ref = ref)) %>%
     arrange(n_clus) %>%
     distinct()
   ARI_ref_monocle <- trapz(x = ARI_ref_monocle$n_clus, y = ARI_ref_monocle$ARI)
@@ -84,7 +99,9 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
     dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
     distinct() %>%
     arrange(n_clus) %>%
-    filter(n_clus >= ns$sc3)
+    group_by(n_clus) %>%
+    summarise(ARI = mean(ARI)) %>%
+    interpolate(df = ., ns = ns$sc3)
   ARI_ref_sc3 <- trapz(x = ARI_ref_sc3$n_clus, y = ARI_ref_sc3$ARI)
   
   ARI_ref_seurat <- read.csv(here("Data", "singleTree",
@@ -98,7 +115,9 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
     dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
     distinct() %>%
     arrange(n_clus) %>%
-    filter(n_clus >= ns$Seurat)
+    group_by(n_clus) %>%
+    summarise(ARI = mean(ARI)) %>%
+    interpolate(df = ., ns = ns$Seurat)
   ARI_ref_seurat <- trapz(x = ARI_ref_seurat$n_clus, y = ARI_ref_seurat$ARI)
   
   ARI_ref_monocle <- read.csv(here("Data", "singleTree",
@@ -112,7 +131,9 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
     dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
     distinct() %>%
     arrange(n_clus) %>%
-    filter(n_clus >= ns$Monocle)
+    group_by(n_clus) %>%
+    summarise(ARI = mean(ARI)) %>%
+    interpolate(df = ., ns = ns$Monocle)
   ARI_ref_monocle <- trapz(x = ARI_ref_monocle$n_clus, y = ARI_ref_monocle$ARI)
   
   df <- data.frame("comp" = comp,
@@ -212,7 +233,9 @@ comp_single_ref <- function(dataset, comp, ref) {
     dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
     distinct() %>%
     arrange(n_clus) %>%
-    filter(n_clus >= ns$sc3)
+    group_by(n_clus) %>%
+    summarise(ARI = mean(ARI)) %>%
+    interpolate(df = ., ns = ns$sc3)
   ARI_ref_sc3 <- trapz(x = ARI_ref_sc3$n_clus, y = ARI_ref_sc3$ARI)
   
   ARI_ref_seurat <- Seurat %>%
@@ -222,7 +245,9 @@ comp_single_ref <- function(dataset, comp, ref) {
     dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
     distinct() %>%
     arrange(n_clus) %>%
-    filter(n_clus >= ns$Seurat)
+    group_by(n_clus) %>%
+    summarise(ARI = mean(ARI)) %>%
+    interpolate(df = ., ns = ns$Seurat)
   ARI_ref_seurat <- trapz(x = ARI_ref_seurat$n_clus, y = ARI_ref_seurat$ARI)
   
   ARI_ref_monocle <- Monocle %>%
@@ -231,8 +256,10 @@ comp_single_ref <- function(dataset, comp, ref) {
     as.data.frame() %>%
     dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
     distinct() %>%
-    arrange(n_clus) %>%
-    filter(n_clus >= ns$Monocle)
+    arrange(n_clus)  %>%
+    group_by(n_clus) %>%
+    summarise(ARI = mean(ARI)) %>%
+    interpolate(df = ., ns = ns$Monocle)
   ARI_ref_monocle <- trapz(x = ARI_ref_monocle$n_clus, y = ARI_ref_monocle$ARI)
   
   df <- data.frame("comp" = comp,

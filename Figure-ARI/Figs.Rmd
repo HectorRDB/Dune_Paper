@@ -18,12 +18,24 @@ opts_chunk$set(
   fig.align = "center", echo = F
 )
 libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
-          "mclust", "RColorBrewer", "purrr", "Dune", "pracma")
+          "mclust", "RColorBrewer", "purrr", "Dune")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
 rm(libs)
 ```
+
+# Panel a
+
+```{r}
+df <- read.table(here("Figure-ARI", "data", "sc3-comp1.txt"), header = TRUE,
+                       stringsAsFactors = FALSE)
+ggplot(df, aes(x = n_clus, y = ARI, col = mergeMethod)) +
+  geom_line() +
+  theme_classic()
+```
+
+# Panel d
 
 ```{r}
 df <- bind_rows(
