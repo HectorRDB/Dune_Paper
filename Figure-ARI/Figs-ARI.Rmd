@@ -92,6 +92,7 @@ AUARIC <- map_df(types, function(type){
   filter(mergeMethods != "Params") %>%
   rename(AUARIC = V1,
          "Methods of\nmerging" = "mergeMethods")
+AUARIC$`scaled AUAIRC` <- scale(AUARIC$AUARIC)
   
 kableExtra::kable(AUARIC, format = "html", digits = 2) %>%
   kable_styling("striped") %>%
@@ -122,10 +123,12 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
   my_theme() +
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
-  labs(x = "", y = "", fill = "Scaled\nAUARIC") +
+  labs(x = "", y = "", fill = "Scaled\nAUARIC",
+       title = bquote("3 clustering methods × 3" ~ theta ~
+                        " × 4 datasets = 36 comparisons")) +
   theme(axis.text.y = element_text(size = 15),
         axis.text.x = element_text(size = 8),
-        legend.title = element_text(size = 12))
+        legend.title = element_text(size = 14, hjust = .5))
 p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.pdf"),
        width = 10, height = 3)
