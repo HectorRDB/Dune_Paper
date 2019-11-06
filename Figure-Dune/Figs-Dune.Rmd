@@ -24,7 +24,7 @@ suppressMessages(
 )
 rm(libs)
 mergers <- readRDS(here("Brain", "data", "Dune",
-                        "SMARTer_cells_MOp_mergers.rds"))
+                       "SMARTer_cells_MOp_mergers.rds"))
 ```
 
 # Initial confusion matrices
@@ -34,9 +34,18 @@ p1 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Monocle")]) +
   labs(x = "SC3", y = "Monocle") +
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
                         limits = c(0, 1)) +
+  scale_size_continuous(breaks = c(100, 200, 300, 400, 600)) +
+  guides(col = FALSE, size = FALSE)
+p1
+ggsave(plot = p1, filename = here("Figure-Dune", "figures",
+                                  "confusion_plot_before_1.pdf"))
+p2 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Seurat")]) +
+  labs(x = "SC3", y = "Seurat") +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                        limits = c(0, 1)) +
   scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
 legend_common <- get_legend(
-  p1 +
+  p2 +
     theme(legend.position = "right") +
     guides(size = guide_legend(title.position = "top", fill = "grey", ncol = 1),
            col = guide_colourbar(title.position = "top"))
@@ -44,17 +53,9 @@ legend_common <- get_legend(
 legend_common <- plot_grid(legend_common)
 ggsave(plot = legend_common,
        filename = here("Figure-Dune", "figures", "legend.pdf"))
-p1 <- p1 +
+
+p2 <- p2 +
   guides(col = FALSE, size = FALSE)
-p1
-ggsave(plot = p1, filename = here("Figure-Dune", "figures",
-                                  "confusion_plot_before_1.pdf"))
-p2 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Seurat")]) +
-  labs(x = "SC3", y = "Seurat") +
-  guides(col = FALSE, size = FALSE) +
-  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
-                        limits = c(0, 1)) +
-  scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
 p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_2.pdf"))
@@ -67,7 +68,7 @@ p3 <- ConfusionPlot(mergers$initialMat[, c("Seurat", "Monocle")]) +
 p3
 ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_3.pdf"))
-rm(p1, p2, p3)
+rm(p1, p2, p3, legend_common)
 ```
 
 # Improvement in ARI
@@ -75,22 +76,18 @@ rm(p1, p2, p3)
 ```{r ARI imp no allen cell}
 p1 <- plotARIs(mergers$initialMat) + ggtitle("ARI matrix before Merging") +
   labs(x = "", y = "") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5),
+        rect = element_blank())
 p1
 ggsave(plot = p1, filename = here("Figure-Dune", "figures", 
                                   "ARI_Matrix_Before.pdf"))
 p2 <- plotARIs(mergers$currentMat) + ggtitle("ARI matrix after Merging") +
   labs(x = "", y = "") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5),
+        rect = element_blank())
 p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures", 
                                   "ARI_Matrix_After.pdf"))
-```
-
-# Trend of ARI improvements and number of clusters
-```{r ARI trend, fig.width=9}
-ARItrend(merger = mergers) +
-  theme(text = element_text(size = 25))
 ```
 
 # Confusion matrices after merging
@@ -125,3 +122,52 @@ ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_3.pdf"))
 rm(p1, p2, p3)
 ```
+
+# Trend of ARI improvements and number of clusters
+
+```{r ARI trend}
+ARI <- ARIImp(mergers)
+df <- data.frame(step = 0:length(mergers$ImpARI),
+                 ARI = ARI)
+p <- ggplot(df, aes(x = step, y = ARI)) +
+  geom_path(size = 2) +
+  scale_x_continuous(breaks = c(0, length(mergers$ImpARI)),
+                       labels = c("Initial", "Final"))  +
+  theme_classic() +
+  theme(rect = element_blank()) +
+  labs(x = "Merging steps", y = "mean ARI between partitions")
+ggsave(plot = p, width = 6, height = 6,
+       filename = here("Figure-Dune", "figures", "ARI-imp.pdf"))
+p
+```
+
+```{r}
+baseMat <- mergers$initialMat
+n_clus <- lapply(1:nrow(mergers$merges), function(m){
+  diff <- rep(0, ncol(baseMat))
+  diff[mergers$merges[m, 1]] <- -1
+  matrix(diff, nrow = 1)
+  }) %>%
+    do.call('rbind', args = .)
+n_clus <- rbind(apply(baseMat, 2, n_distinct) %>% matrix(data = ., nrow = 1),
+                n_clus)
+n_clus <- apply(n_clus, 2, cumsum)
+colnames(n_clus) <- colnames(baseMat)
+df <- data.frame(step = 0:length(mergers$ImpARI),
+                 n_clus) %>%
+  pivot_longer(-step, values_to = "n_clus", names_to = "Partitions")
+p <- ggplot(df,
+            aes(x = step, y = n_clus, col = Partitions, group = Partitions)) +
+  geom_path(size = 2, alpha = .7) +
+  scale_x_continuous(breaks = c(0, length(mergers$ImpARI)),
+                       labels = c("Initial", "Final"))  +
+  theme_classic() +
+  theme(rect = element_blank()) +
+  labs(x = "Merging steps", y = "Number of clusters") +
+  scale_color_brewer(palette = "Set1") +
+  guides(col = guide_legend(override.aes = list(alpha = 1)))
+ggsave(plot = p, width = 6, height = 2 * 7 / 3,
+       filename = here("Figure-Dune", "figures", "number_clusters.pdf"))
+p
+```
+

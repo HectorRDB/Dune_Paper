@@ -128,7 +128,7 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
         legend.title = element_text(size = 12))
 p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.pdf"),
-       width = 10)
+       width = 10, height = 3)
 ```
 
 ```{r}
@@ -143,5 +143,5 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
         axis.line = element_blank()) +
   labs(x = "", y = "")
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp_param.pdf"),
-       height = 8)
+       width = 10, height = 4)
 ```
