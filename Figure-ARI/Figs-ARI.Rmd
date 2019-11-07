@@ -47,7 +47,9 @@ p <- ggplot(df %>% filter(mergeMethod != "Params"),
   scale_x_continuous(breaks = c(20, 25, 30)) +
   guides(color = guide_legend(
     override.aes = list(size = 2, alpha = 1))
-  )
+  ) +
+  theme(legend.position = c(.9, .8),
+        legend.title.align = 0.5)
 p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.pdf"))
 ```
@@ -124,7 +126,7 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
   labs(x = "", y = "", fill = "Scaled\nAUARIC",
-       title = bquote("3 clustering methods × 3" ~ theta ~
+       title = bquote("3 clustering methods × 3" ~ theta[method] ~
                         " × 4 datasets = 36 comparisons")) +
   theme(axis.text.y = element_text(size = 15),
         axis.text.x = element_text(size = 8),
