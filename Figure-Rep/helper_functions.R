@@ -21,7 +21,7 @@ toRank <- function(i) {
 
 load_Dune <- function() {
   df <- read.table(here("Brain", "data", "Replicability", "Dune_Smart",
-                        "Normal", "consensus_cluster_replicability.txt"))
+                        "Large2", "consensus_cluster_replicability.txt"))
   df <- df %>% filter(!str_detect(clustering_method, "Consensus")) %>%
     mutate(nb_clusters = replicable_clusters + non_replicable_clusters)
   df$level <- lapply(df$level, toRank) %>% unlist()
@@ -31,7 +31,7 @@ load_Dune <- function() {
 
 load_DE_tree <- function() {
   df <- read.table(here("Brain", "data", "Replicability", "SingleTree",
-                        "Normal_DE", "consensus_cluster_replicability.txt"))
+                        "Large2_DE", "consensus_cluster_replicability.txt"))
   df <- df %>% filter(!str_detect(clustering_method, "Consensus")) %>%
     mutate(nb_clusters = replicable_clusters + non_replicable_clusters,
            level = str_remove(clustering_method, "^.*\\."),
@@ -42,7 +42,7 @@ load_DE_tree <- function() {
 
 load_Dist_tree <- function() {
   df <- read.table(here("Brain", "data", "Replicability", "SingleTree",
-                        "Normal_Dist", "consensus_cluster_replicability.txt"))
+                        "Large2_Dist", "consensus_cluster_replicability.txt"))
   df <- df %>% filter(!str_detect(clustering_method, "Consensus")) %>%
     mutate(nb_clusters = replicable_clusters + non_replicable_clusters,
            level = str_remove(clustering_method, "^.*_"),

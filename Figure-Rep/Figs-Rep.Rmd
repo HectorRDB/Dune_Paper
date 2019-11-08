@@ -189,7 +189,7 @@ ggplot(df %>% arrange(level) %>%
            linetype = clustering_method)) +
   geom_path(size = 2) +
   theme_classic() +
-  facet_wrap(~clustering_method) +
+  facet_wrap(~clustering_method, scales = "free_x") +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "Resolution", y = "Replicability", linetype = "Partitions")
 ```
