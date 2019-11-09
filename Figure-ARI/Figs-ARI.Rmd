@@ -106,14 +106,14 @@ kableExtra::kable(AUARIC, format = "html", digits = 2) %>%
 For now, this only include the brain data. It will also include the Pancreas data once it is ready
 
 ```{r}
-# df <- bind_rows(
-#   "Brain" = read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
-#                        stringsAsFactors = FALSE),
-#   "Pancreas" = read.table(here("Figure-ARI", "data", "Pancreas.txt"),
-#                           header = TRUE, stringsAsFactors = FALSE)
-#   ) %>%
-df <- read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
-                       stringsAsFactors = FALSE) %>%
+df <- bind_rows(
+  "Brain" = read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
+                       stringsAsFactors = FALSE),
+  "Pancreas" = read.table(here("Figure-ARI", "data", "Pancreas.txt"),
+                          header = TRUE, stringsAsFactors = FALSE)
+  ) %>%
+# df <- read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
+#                        stringsAsFactors = FALSE) %>%
   mutate(scenario = paste0(dataset, "\n", method, "_", comp))
 p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%

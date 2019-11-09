@@ -144,7 +144,7 @@ comp_Dist_tree <- function(dataset, comp, ref) {
 
 # Load param data (if we end up using it) ----
 load_sc3 <- function(dataset, dune) {
-  sc3_init <- dune[, "sc3.Initial"]
+  sc3_init <- dune[, "sc3.00"]
   SC3 <- read.csv(here("Data", "singleMethod",
                        paste0(dataset, "_SC3.csv"))) %>%
     select(-X) %>%
@@ -161,7 +161,7 @@ load_sc3 <- function(dataset, dune) {
 }
 
 load_monocle <- function(dataset, dune) {
-  Monocle_init <- dune[, "Monocle.Initial"]
+  Monocle_init <- dune[, "Monocle.00"]
   Monocle <- read.csv(here("Data", "singleMethod",
                            paste0(dataset, "_Monocle.csv"))) %>%
     select(-X) %>%
@@ -177,7 +177,7 @@ load_monocle <- function(dataset, dune) {
 }
 
 load_seurat <- function(dataset, dune) {
-  Seurat_init <- dune[, "Seurat.Initial"]
+  Seurat_init <- dune[, "Seurat.00"]
   Seurat <- read.csv(here("Data", "singleMethod",
                           paste0(dataset, "_Seurat.csv"))) %>%
     select(-X) %>%
