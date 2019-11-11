@@ -18,13 +18,16 @@ opts_chunk$set(
   fig.width = 5, fig.align = "center", echo = F
 )
 libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
-          "clusterExperiment", "mclust", "RColorBrewer", "Dune", "purrr")
+          "clusterExperiment", "mclust", "RColorBrewer", "Dune", "purrr",
+          "DailyHRB")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
 rm(libs)
 mergers <- readRDS(here("Brain", "data", "Dune",
-                       "SMARTer_cells_MOp_mergers.rds"))
+                        "SMARTer_cells_MOp_mergers.rds"))
+tSNE <- read.csv(here("Brain", "data", "tSNE", "SMARTer_cells_MOp_tnse.csv")) %>%
+  select(-X)
 ```
 
 # Initial confusion matrices
@@ -69,6 +72,36 @@ p3
 ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_3.pdf"))
 rm(p1, p2, p3, legend_common)
+```
+
+# 2d plot of overlap
+
+```{r}
+overlap <- table(mergers$initialMat$sc3, mergers$initialMat$Monocle) %>%
+    as.data.frame() %>%
+    group_by(Var1) %>%
+    mutate(total_x = sum(Freq)) %>%
+    group_by(Var2) %>%
+    mutate(total_y = sum(Freq),
+           union = total_x + total_y - Freq,
+           overlap = Freq / union) %>%
+    ungroup() %>%
+    arrange(desc(Freq)) %>%
+    filter(Freq > 0)
+df <- mergers$initialMat %>% mutate(cells = rownames(.)) %>%
+  inner_join(tSNE) %>%
+  mutate(sc3 = as.character(sc3),
+         Monocle = as.character(Monocle)) %>%
+  inner_join(overlap, by = c("sc3" = "Var1", "Monocle" = "Var2"))
+
+p <- ggplot(df, aes(x = x, y = y, col = overlap)) +
+  geom_point(size = .5, alpha = .5) +
+  my_theme() +
+  labs(x = "t-SNE 1", y = "t-SNE 2", col = "Overlap") +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"))
+p
+ggsave(plot = p, filename = here("Figure-Dune", "figures", "2d.png"),
+       bg = "transparent")
 ```
 
 # Improvement in ARI
