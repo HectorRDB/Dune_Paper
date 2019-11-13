@@ -51,7 +51,8 @@ p <- ggplot(df %>% filter(mergeMethod != "Params"),
   theme(legend.position = c(.9, .8),
         legend.title.align = 0.5)
 p
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.pdf"))
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.png"),
+       bg = "transparent")
 ```
 
 # Panel b
@@ -59,7 +60,8 @@ ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.pdf"))
 ```{r}
 df2 <- df %>% filter(mergeMethod == "Dune")
 p <- ggplot(df2, aes(x = n_clus, y = ARI)) +
-  geom_area(aes(y = ARI), fill = "gray", alpha = .5) +
+  geom_ribbon(aes(ymax = ARI), ymin = min(df$ARI) - 5,
+              fill = "gray", alpha = .5) +
   geom_line(size = 2, col = "#7570B3") +
   my_theme() +
   geom_segment(x = min(df2$n_clus), xend = max(df2$n_clus), y = 0, yend = 0) +
@@ -68,12 +70,15 @@ p <- ggplot(df2, aes(x = n_clus, y = ARI)) +
   geom_segment(x = max(df2$n_clus), xend = max(df2$n_clus), y = 0,
                yend = df2$ARI[nrow(df2)]) +
   annotate("text", x = (min(df2$n_clus) + max(df2$n_clus)) / 2,
-           y = mean(df2$ARI) / 2,
-           label = "Area Under the ARI Curve\n(AUARIC)") +
+           y = .66 * min(df$ARI) + .33 * max(df$ARI),
+           label = "Area Under the ARI Curve\n(AUARIC)",
+           size = 7) +
   labs(x = "Number of clusters", y = "ARI with gold standard") +
-  scale_x_continuous(breaks = c(20, 25, 30))
+  scale_x_continuous(breaks = c(20, 25, 30)) +
+  scale_y_continuous(limits = c(min(df$ARI), max(df$ARI)))
 p
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "AUARIC.pdf"))
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "AUARIC.png"),
+       bg = "transparent", height = 4.51, width = 7.29)
 ```
 
 # Panel c
@@ -121,7 +126,8 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               mutate(AUARIC = scale(AUARIC)),
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
   geom_tile() +
-  scale_fill_viridis_c(begin = 1, end = 0) +
+  scale_fill_viridis_c(begin = 0, end = 1) +
+  # scale_fill_gradientn(colors = brewer.pal(9, "Spectral")[9:1]) +
   my_theme() +
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
@@ -133,7 +139,7 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
         legend.title = element_text(size = 14, hjust = .5),
         legend.position = "bottom")
 p
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.png"),
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp_col2.png"),
        width = 10, height = 4,
        bg = "transparent")
 ```
