@@ -126,7 +126,7 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               mutate(AUARIC = scale(AUARIC)),
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
   geom_tile() +
-  scale_fill_viridis_c(begin = 0, end = 1) +
+  scale_fill_viridis_c(begin = 1, end = 0) +
   # scale_fill_gradientn(colors = brewer.pal(9, "Spectral")[9:1]) +
   my_theme() +
   theme(axis.text.x = element_text(angle = 90),
@@ -139,7 +139,7 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
         legend.title = element_text(size = 14, hjust = .5),
         legend.position = "bottom")
 p
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp_col2.png"),
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.png"),
        width = 10, height = 4,
        bg = "transparent")
 ```
@@ -155,6 +155,4 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
   labs(x = "", y = "")
-# ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp_param.pdf"),
-#        width = 10, height = 4)
 ```
