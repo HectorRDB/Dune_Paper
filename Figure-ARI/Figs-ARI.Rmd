@@ -130,10 +130,12 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
                         " × 4 datasets = 36 comparisons")) +
   theme(axis.text.y = element_text(size = 15),
         axis.text.x = element_text(size = 8),
-        legend.title = element_text(size = 14, hjust = .5))
+        legend.title = element_text(size = 14, hjust = .5),
+        legend.position = "bottom")
 p
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.pdf"),
-       width = 10, height = 3)
+ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.png"),
+       width = 10, height = 4,
+       bg = "transparent")
 ```
 
 ```{r}
@@ -147,6 +149,6 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
   labs(x = "", y = "")
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp_param.pdf"),
-       width = 10, height = 4)
+# ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp_param.pdf"),
+#        width = 10, height = 4)
 ```
