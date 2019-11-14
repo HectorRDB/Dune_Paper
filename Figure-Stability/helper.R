@@ -25,7 +25,7 @@ df <- bind_rows(
   "3" = garb_3,
   .id = "nb_garb"
 ) %>%
-  filter(!str_detect(clustering_name, "garbage"))
+  filter(!str_detect(clustering_name, "Garbage"))
 
 rm(no_garb, garb_1, garb_2, garb_3, i)
 

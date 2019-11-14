@@ -81,7 +81,8 @@ df <- bind_rows(
   "DE" = comp_DE_tree(),
   "Dist" = comp_Dist_tree(),
   .id = "Merge_method"
-)
+) %>%
+  filter(clustering_name == "Seurat")
 p <- ggplot(df %>% arrange(nb_clusters),
        aes(x = nb_clusters, y = fraction_replicable_cells, col = Merge_method)) +
   geom_line(aes(linetype = clustering_name), size = 2, alpha = .9,
@@ -92,13 +93,14 @@ p <- ggplot(df %>% arrange(nb_clusters),
   # annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
   # label = "Start", fontface = "bold") +
   theme_classic() +
-  facet_wrap(~clustering_name, scales = "free_x") +
+  # facet_wrap(~clustering_name, scales = "free_x") +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "Resolution", y = "Replicability", linetype = "Partitions") +
+  labs(x = "Resolution", y = "Replicability", col = "Method\nof Merging") +
   guides(color = guide_legend(
     override.aes = list(size = 2, alpha = 1))
   ) +
-  theme(legend.position = "bottom")
+  theme(legend.position = c(.9, .2),
+        legend.title.align = 0.5)
 p
 ggsave(plot = p, filename = here("Figure-Rep", "figures", "example.png"),
        bg = "transparent")
