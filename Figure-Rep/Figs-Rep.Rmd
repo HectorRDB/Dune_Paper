@@ -92,15 +92,16 @@ p <- ggplot(df %>% arrange(nb_clusters),
   geom_line(size = 0, alpha = 0) +
   # annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
   # label = "Start", fontface = "bold") +
-  theme_classic() +
   # facet_wrap(~clustering_name, scales = "free_x") +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "Resolution", y = "Replicability", col = "Method\nof Merging") +
   guides(color = guide_legend(
     override.aes = list(size = 2, alpha = 1))
   ) +
+  my_theme() +
   theme(legend.position = c(.9, .2),
         legend.title.align = 0.5)
+  
 p
 ggsave(plot = p, filename = here("Figure-Rep", "figures", "example.png"),
        bg = "transparent")
