@@ -82,18 +82,26 @@ df <- bind_rows(
   "Dist" = comp_Dist_tree(),
   .id = "Merge_method"
 )
-ggplot(df %>% arrange(nb_clusters),
-       aes(x = nb_clusters, y = fraction_replicable_cells, col = Merge_method,
-           linetype = clustering_name)) +
-  geom_line(size = 2, alpha = .9,
+p <- ggplot(df %>% arrange(nb_clusters),
+       aes(x = nb_clusters, y = fraction_replicable_cells, col = Merge_method)) +
+  geom_line(aes(linetype = clustering_name), size = 2, alpha = .9,
             arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
-                          type = "closed")) +
+                          type = "closed"),
+            show.legend = F) +
+  geom_line(size = 0, alpha = 0) +
   # annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
   # label = "Start", fontface = "bold") +
   theme_classic() +
   facet_wrap(~clustering_name, scales = "free_x") +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "Resolution", y = "Replicability", linetype = "Partitions")
+  labs(x = "Resolution", y = "Replicability", linetype = "Partitions") +
+  guides(color = guide_legend(
+    override.aes = list(size = 2, alpha = 1))
+  ) +
+  theme(legend.position = "bottom")
+p
+ggsave(plot = p, filename = here("Figure-Rep", "figures", "example.png"),
+       bg = "transparent")
 ```
 
 # Panel c
