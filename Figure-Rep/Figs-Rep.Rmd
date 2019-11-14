@@ -101,9 +101,10 @@ df <- bind_rows(
   "Brain" = read.table(here("Figure-Rep", "data", "Brain.txt"), header = TRUE,
                        stringsAsFactors = FALSE),
   "Pancreas" = read.table(here("Figure-Rep", "data", "Pancreas.txt"),
-                          header = TRUE, stringsAsFactors = FALSE)
+                          header = TRUE, stringsAsFactors = FALSE),
+  .id = "Contrast"
   ) %>%
-  mutate(scenario = paste0(dataset, "\n", method, "_", comp))
+  mutate(scenario = paste0(Contrast, "\n", method, "_", comp))
 p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
               filter(Merge_method != "Param") %>%
@@ -123,6 +124,6 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
         legend.position = "bottom")
 p
 ggsave(plot = p, filename = here("Figure-Rep", "figures", "all_comp.png"),
-       width = 5, height = 4,
+       width = 8, height = 3,
        bg = "transparent")
 ```
