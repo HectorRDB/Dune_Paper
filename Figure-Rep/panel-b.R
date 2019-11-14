@@ -42,7 +42,7 @@ n_clus  <- function(clusMat, clus) {
 ## Load Dune ----
 comp_dune <- function() {
   df <- read.table(here("Brain", "Data", "Replicability", "Dune_Smart",
-                        "Normal", "consensus_cluster_replicability.txt"))
+                        "Large2", "consensus_cluster_replicability.txt"))
   df <- df %>% filter(!str_detect(clustering_method, "Consensus")) %>%
     mutate(nb_clusters = replicable_clusters + non_replicable_clusters) %>%
     select(nb_clusters, fraction_replicable_cells, clustering_name)
@@ -52,7 +52,7 @@ comp_dune <- function() {
 ## Load Tree data ----
 comp_tree <- function(comp, type) {
   dune <- read.table(here("Brain", "Data", "Replicability", "Dune_Smart",
-                          "Normal", "consensus_cluster_replicability.txt")) %>%
+                          "Large2", "consensus_cluster_replicability.txt")) %>%
     filter(!str_detect(clustering_method, "Consensus"),
            level == 100) %>%
     mutate(nb_clusters = replicable_clusters + non_replicable_clusters)
@@ -61,7 +61,7 @@ comp_tree <- function(comp, type) {
   
   sep <- if_else(type == "DE", "\\.", "_")
   df <- read.table(here("Brain", "Data", "Replicability", "SingleTree",
-                        paste0("Normal_", type),
+                        paste0("Large2_", type),
                         "consensus_cluster_replicability.txt")) %>%
     mutate(level = word(clustering_method, 2, sep = sep) %>%
              as.numeric(),
