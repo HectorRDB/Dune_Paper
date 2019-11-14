@@ -39,7 +39,7 @@ n_clus  <- function(clusMat, clus) {
 
 ## Load Dune ----
 comp_dune <- function(comp = "comp1") {
-  df <- read.table(here("Data", "Replicability", "Dune", comp,
+  df <- read.table(here("Data", "Replicability", "Dune_Smart", comp,
                         "consensus_cluster_replicability.txt"))
   df <- df %>% filter(!str_detect(clustering_method, "Consensus")) %>%
     mutate(nb_clusters = replicable_clusters + non_replicable_clusters)
@@ -70,7 +70,7 @@ comp_dune <- function(comp = "comp1") {
 }
 ## Load Tree data ----
 comp_tree <- function(comp, type) {
-  dune <- read.table(here("Data", "Replicability", "Dune", comp,
+  dune <- read.table(here("Data", "Replicability", "Dune_Smart", comp,
                           "consensus_cluster_replicability.txt")) %>%
     filter(!str_detect(clustering_method, "Consensus"),
            level == 100) %>%
@@ -79,8 +79,9 @@ comp_tree <- function(comp, type) {
   names(ns) <- dune$clustering_name
   
   sep <- if_else(type == "DE", "\\.", "_")
-  df <- read.table(here("Data", "Replicability", type,
-                        comp, "consensus_cluster_replicability.txt")) %>%
+  df <- read.table(here("Data", "Replicability", "SingleTree",
+                        paste0(comp, "_", type),
+                        "consensus_cluster_replicability.txt")) %>%
     mutate(level = word(clustering_method, 2, sep = sep) %>%
              as.numeric(),
            nb_clusters = replicable_clusters + non_replicable_clusters,
@@ -133,14 +134,14 @@ comp_all <- function(comp){
 }
 
 df <- bind_rows(
-  comp_all(comp = "comp1"),
-  comp_all(comp = "comp2"),
-  comp_all(comp = "comp3")
+  comp_all(comp = "Normal"),
+  comp_all(comp = "large2"),
+  comp_all(comp = "large3")
 ) %>%
-  mutate(comp = case_when(comp == "comp1" ~ "x1",
-                          comp == "comp2" ~ "x2",
-                          comp == "comp3" ~ "x3"))
+  mutate(comp = case_when(comp == "Normal" ~ "x1",
+                          comp == "large2" ~ "x2",
+                          comp == "large3" ~ "x3"))
 
 setwd("..")
 reload(inst("here"))
-write.table(df, here("Figure-Rep", "data", "Pancreas.txt"), row.names = FALSE)
+write.table(df, here("Figure-Rep", "data", "Brain.txt"), row.names = FALSE)
