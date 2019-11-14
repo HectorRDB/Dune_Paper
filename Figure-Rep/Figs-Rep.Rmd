@@ -24,27 +24,6 @@ rm(libs)
 
 
 ```{r laod data}
-toRank <- function(i) {
-  case_when(
-    i == "Initial" ~ 1,
-    i == 33 ~ 2,
-    i == 66 ~ 3,
-    i == 90 ~ 4,
-    i == "Final" ~ 5
-  )
-}
-
-load_Dune <- function(comparison) {
-  df <- read.table(here("Brain", "data", "Replicability", "Dune_Smart",
-                        comparison, "consensus_cluster_replicability.txt"))
-  df <- df %>% filter(!str_detect(clustering_method, "Consensus")) %>%
-    mutate(clustering_name = as.character(clustering_name))
-  df$level <- lapply(df$level, toRank) %>% unlist()
-  df$level <- as.numeric(df$level)
-  df$clustering_name[df$clustering_name == "sc3"] <- "SC3"
-  return(df)
-}
-
 read_single_method <- function(Method,
                                result_dir = here("Brain", "data",
                                                  "Replicability", 
@@ -53,91 +32,6 @@ read_single_method <- function(Method,
   df <- df %>% filter(clustering_name == Method)
 }
 
-filter_sc3_param <- function(dune, SC3) {
-  sc3_init <- dune %>% filter(clustering_method == "sc3.Initial")
-  sc3_param <- SC3 %>% filter(
-    fraction_replicable_clusters == sc3_init$fraction_replicable_clusters &
-    fraction_replicable_cells == sc3_init$fraction_replicable_cells)
-  sc3_param <- sc3_param$level %>% as.character() %>% as.numeric()
-  df <- SC3 %>% 
-    mutate(level = as.numeric(as.character(level))) %>%
-    filter(level <= sc3_param) 
-  return(df)
-}
-
-filter_monocle_param <- function(dune, Monocle) {
-  monocle_init <- dune %>% filter(clustering_method == "Monocle.Initial")
-  monocle_param <- Monocle %>% filter(
-    fraction_replicable_clusters == monocle_init$fraction_replicable_clusters &
-    fraction_replicable_cells == monocle_init$fraction_replicable_cells)
-  monocle_param <- monocle_param$level %>% str_remove("^k_") %>% as.numeric()
-  df <- Monocle %>% 
-    mutate(level = str_remove(level, "^k_") %>% as.numeric()) %>%
-    filter(level >= monocle_param) 
-  return(df)
-}
-
-filter_seurat_param <- function(dune, Seurat) {
-  df <- Seurat %>%
-    mutate(res = str_remove(level, ",.*$") %>% str_replace("_", "\\.") %>%
-             as.numeric(),
-           k = str_remove(level, "^.*,") %>% as.numeric())
-  seurat_init <- dune %>% filter(clustering_method == "Seurat.Initial")
-  seurat_param <- df %>% filter(
-    fraction_replicable_clusters == seurat_init$fraction_replicable_clusters &
-    fraction_replicable_cells == seurat_init$fraction_replicable_cells)
-  df <- df %>% 
-    filter(res <= seurat_param$res & k == seurat_param$k)  %>%
-    mutate(level = res) %>%
-    select(-res, -k)
-  return(df)
-}
-
-read_all <- function(comparison = "Normal") {
-  dune <- load_Dune(comparison = comparison)
-  Seurat <- read_single_method(Method = "Seurat") %>%
-    filter_seurat_param(dune = dune, Seurat = .)
-  SC3 <- read_single_method(Method = "SC3") %>%
-    filter_sc3_param(dune = dune, SC3 = .)
-  Monocle <- read_single_method(Method = "Monocle") %>%
-    filter_monocle_param(dune = dune, Monocle = .)
-  single_method <- bind_rows(
-    SC3, Monocle, Seurat
-  )
-  df <- bind_rows(
-    Dune = dune,
-    single_method = single_method,
-    .id = "method"
-  )
-}
-
-plot_comp <- function(df) {
-  linetypes <- c("solid", "dotted")
-  names(linetypes) <- c("Dune", "single_method")
-
-  p <- ggplot(df %>% 
-           mutate(nb_clusters = replicable_clusters + non_replicable_clusters) %>%
-           arrange(level),
-         aes(x = nb_clusters / 2,
-             y = fraction_replicable_cells,
-             col = clustering_name,
-             linetype = method,
-             group = interaction(clustering_name, method))) +
-    geom_path(size = 1.8) +
-    my_theme() +
-    scale_linetype_manual(values = linetypes) +
-    scale_color_brewer(type = "qual") +
-    labs(x = "Resolution",
-         y = "Replicability",
-         col = "Clustering\nmethod",
-         linetype = "Method of\nmerging")
-  return(p)
-}
-```
-
-# Panel a
-
-```{r seurat k}
 Seurat <- read_single_method(Method = "Seurat") %>% 
   mutate(level = str_extract(clustering_method, ",.*$") %>%
            str_remove(., "^,") %>%
@@ -155,8 +49,6 @@ Monocle <- read_single_method(Method = "Monocle") %>%
   mutate(level = str_remove(level, "^k_") %>% as.numeric()) %>%
   filter(level >= 10)
 ```
-  
-## All at once
 
 ```{r all}
 p <- ggplot(
@@ -175,21 +67,62 @@ p <- ggplot(
   theme(legend.position = c(.8, .8),
         legend.title.align = 0.5)
 p
-ggsave(filename = here("Figure-rep", "figures", "Rep-trade-off.pdf"), plot = p)
+ggsave(filename = here("Figure-rep", "figures", "Rep-trade-off.png"), plot = p,
+       bg = "transparent")
+rm(p, SC3, Monocle, Seurat, read_single_method)
 ```
 
 # Panel b
 
 ```{r}
-source(here("Figure-Rep", "helper_functions.R"))
+source(here("Figure-Rep", "panel-b.R"))
 df <- load_single_method()
-ggplot(df %>% arrange(level) %>%
-         filter(nb_clusters > 30),
+ggplot(df %>% arrange(level),
        aes(x = nb_clusters, y = fraction_replicable_cells, col = Method,
            linetype = clustering_method)) +
-  geom_path(size = 2) +
+  geom_line(size = 2, alpha = .9,
+            arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
+                          type = "closed"),
+            show.legend = FALSE) +
+  annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
+           label = "Start", fontface = "bold") +
   theme_classic() +
   facet_wrap(~clustering_method, scales = "free_x") +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "Resolution", y = "Replicability", linetype = "Partitions")
+```
+
+# Panel c
+
+For now, this only include the brain data. It will also include the Pancreas data once it is ready
+
+```{r}
+df <- bind_rows(
+  "Brain" = read.table(here("Figure-Rep", "data", "Brain.txt"), header = TRUE,
+                       stringsAsFactors = FALSE),
+  "Pancreas" = read.table(here("Figure-Rep", "data", "Pancreas.txt"),
+                          header = TRUE, stringsAsFactors = FALSE)
+  ) %>%
+  mutate(scenario = paste0(dataset, "\n", method, "_", comp))
+p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+              group_by(scenario) %>%
+              filter(Merge_method != "Param") %>%
+              mutate(AUARIC = scale(AUARIC)),
+            aes(x = scenario, y = Merge_method, fill = AUARIC)) +
+  geom_tile() +
+  scale_fill_viridis_c(begin = 1, end = 0) +
+  my_theme() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.line = element_blank()) +
+  labs(x = "", y = "", fill = "Scaled\nAUARIC",
+       title = bquote("3 clustering methods × 3" ~ theta[method] ~
+                        " × 2 pairs of datasets = 18 comparisons")) +
+  theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 8),
+        legend.title = element_text(size = 14, hjust = .5),
+        legend.position = "bottom")
+p
+ggsave(plot = p, filename = here("Figure-Rep", "figures", "all_comp.png"),
+       width = 5, height = 4,
+       bg = "transparent")
 ```

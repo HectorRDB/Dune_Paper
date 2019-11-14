@@ -22,7 +22,7 @@ allen_clusters <- full_join(allen_clusters, clusters) %>%
 
 # Helper function ----
 load_monocle <- function(dataset, dune) {
-  Monocle_init <- dune[, "Monocle.Initial"]
+  Monocle_init <- dune[, "Monocle.00"]
   Monocle <- read.csv(here("Brain", "Data", "singleMethod",
                            paste0(dataset, "_Monocle.csv"))) %>%
     select(-X) %>%

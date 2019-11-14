@@ -37,7 +37,6 @@ p <- ggplot(df %>% filter(mergeMethod != "Params"),
             arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
                           type = "closed"),
             show.legend = FALSE) +
-  geom_line(size = 0, alpha = 0) +
   my_theme() +
   scale_color_brewer(palette = "Dark2") +
   annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
@@ -107,8 +106,6 @@ kableExtra::kable(AUARIC, format = "html", digits = 2) %>%
 ```
 
 # Panel d
-
-For now, this only include the brain data. It will also include the Pancreas data once it is ready
 
 ```{r}
 df <- bind_rows(

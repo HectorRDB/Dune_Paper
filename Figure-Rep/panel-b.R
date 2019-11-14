@@ -9,16 +9,6 @@ suppressMessages(
 rm(libs)
 
 # Helper functions ----
-toRank <- function(i) {
-  case_when(
-    i == "Initial" ~ 1,
-    i == 33 ~ 2,
-    i == 66 ~ 3,
-    i == 90 ~ 4,
-    i == "Final" ~ 5
-  )
-}
-
 load_Dune <- function() {
   df <- read.table(here("Brain", "data", "Replicability", "Dune_Smart",
                         "Large2", "consensus_cluster_replicability.txt"))

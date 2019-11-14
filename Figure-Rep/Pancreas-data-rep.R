@@ -5,7 +5,7 @@ suppressMessages(
 )
 rm(libs)
 
-# Helper functions
+# Helper functions ----
 setwd(here("Pancreas"))
 reload(inst("here"))
 toRank <- function(i) {
@@ -33,13 +33,12 @@ interpolate <- function(df, ns) {
     return(filt %>% arrange(nb_clusters))
   }
 }
-## function to get the ARI ----
 n_clus  <- function(clusMat, clus) {
   return(n_distinct(as.matrix(clusMat)[,clus]))
 }
 
 ## Load Dune ----
-comp_dune <- function(dataset, comp = "comp1") {
+comp_dune <- function(comp = "comp1") {
   df <- read.table(here("Data", "Replicability", "Dune", comp,
                         "consensus_cluster_replicability.txt"))
   df <- df %>% filter(!str_detect(clustering_method, "Consensus")) %>%
@@ -70,7 +69,7 @@ comp_dune <- function(dataset, comp = "comp1") {
   return(df)
 }
 ## Load Tree data ----
-comp_tree <- function(dataset, comp, ref, type) {
+comp_tree <- function(comp, type) {
   dune <- read.table(here("Data", "Replicability", "Dune", comp,
                           "consensus_cluster_replicability.txt")) %>%
     filter(!str_detect(clustering_method, "Consensus"),
@@ -115,41 +114,32 @@ comp_tree <- function(dataset, comp, ref, type) {
   return(df)
 }
 
-comp_DE_tree <- function(dataset, comp, ref) {
-  return(comp_tree_ref(dataset, comp, ref, type = "DE"))
+comp_DE_tree <- function(comp) {
+  return(comp_tree(comp, type = "DE"))
 }
 
-comp_Dist_tree <- function(dataset, comp, ref) {
-  return(comp_tree_ref(dataset, comp, ref, type = "Dist"))
+comp_Dist_tree <- function(comp) {
+  return(comp_tree(comp, type = "Dist"))
 }
 # Create the data used for the table ----
-comp_all <- function(dataset, comp){
+comp_all <- function(comp){
   df <- bind_rows(
-    "Dune" = comp_dune(dataset, comp),
-    "DE" = comp_DE_tree(dataset, comp),
-    "Dist" = comp_Dist_tree(dataset, comp),
+    "Dune" = comp_dune(comp),
+    "DE" = comp_DE_tree(comp),
+    "Dist" = comp_Dist_tree(comp),
     .id = "Merge_method"
   )
   return(df)
 }
 
-comp_dataset <- function(dataset){
-  df <- bind_rows(
-    comp_all(dataset, comp = "comp1"),
-    comp_all(dataset, comp = "comp2"),
-    comp_all(dataset, comp = "comp3")
-  ) %>%
-    mutate(comp = case_when(comp == "comp1" ~ "x1",
-                            comp == "comp2" ~ "x2",
-                            comp == "comp3" ~ "x3"))
-  return(df)
-}
-
 df <- bind_rows(
-  "Baron" = comp_dataset(dataset = "Baron"),
-  "Segerstolpe" = comp_dataset(dataset = "Segerstolpe"),
-  .id = "dataset"
-)
+  comp_all(comp = "comp1"),
+  comp_all(comp = "comp2"),
+  comp_all(comp = "comp3")
+) %>%
+  mutate(comp = case_when(comp == "comp1" ~ "x1",
+                          comp == "comp2" ~ "x2",
+                          comp == "comp3" ~ "x3"))
 
 setwd("..")
 reload(inst("here"))
