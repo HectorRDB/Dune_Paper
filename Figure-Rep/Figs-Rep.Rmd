@@ -119,7 +119,6 @@ df <- bind_rows(
   mutate(scenario = paste0(Contrast, "\n", method, "_", comp))
 p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
-              filter(Merge_method != "Param") %>%
               mutate(AUARIC = scale(AUARIC)),
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
   geom_tile() +
