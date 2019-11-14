@@ -76,18 +76,22 @@ rm(p, SC3, Monocle, Seurat, read_single_method)
 
 ```{r}
 source(here("Figure-Rep", "panel-b.R"))
-df <- load_single_method()
-ggplot(df %>% arrange(level),
-       aes(x = nb_clusters, y = fraction_replicable_cells, col = Method,
-           linetype = clustering_method)) +
+df <- bind_rows(
+  "Dune" = comp_dune(),
+  "DE" = comp_DE_tree(),
+  "Dist" = comp_Dist_tree(),
+  .id = "Merge_method"
+)
+ggplot(df %>% arrange(nb_clusters),
+       aes(x = nb_clusters, y = fraction_replicable_cells, col = Merge_method,
+           linetype = clustering_name)) +
   geom_line(size = 2, alpha = .9,
             arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
-                          type = "closed"),
-            show.legend = FALSE) +
-  annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
-           label = "Start", fontface = "bold") +
+                          type = "closed")) +
+  # annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
+  # label = "Start", fontface = "bold") +
   theme_classic() +
-  facet_wrap(~clustering_method, scales = "free_x") +
+  facet_wrap(~clustering_name, scales = "free_x") +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "Resolution", y = "Replicability", linetype = "Partitions")
 ```
