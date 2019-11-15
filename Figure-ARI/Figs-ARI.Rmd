@@ -79,10 +79,13 @@ p <- ggplot(df2, aes(x = n_clus, y = ARI)) +
            size = 7) +
   labs(x = "Number of clusters", y = "ARI with gold standard") +
   scale_x_continuous(breaks = c(20, 25, 30)) +
-  scale_y_continuous(limits = c(min(df$ARI), max(df$ARI)))
+  scale_y_continuous(limits = c(min(df$ARI), max(df$ARI))) +
+  theme(axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 10))
 p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "AUARIC.png"),
-       bg = "transparent", height = 4.51, width = 7.29)
+       bg = "transparent")
 ```
 
 # Panel c
