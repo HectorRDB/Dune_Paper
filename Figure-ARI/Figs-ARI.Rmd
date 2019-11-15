@@ -19,7 +19,7 @@ opts_chunk$set(
 )
 libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
           "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "kableExtra",
-          "DailyHRB")
+          "DailyHRB", "cowplot")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -31,7 +31,7 @@ rm(libs)
 ```{r}
 df <- read.table(here("Figure-ARI", "data", "sc3-comp1.txt"), header = TRUE,
                        stringsAsFactors = FALSE)
-p <- ggplot(df %>% filter(mergeMethod != "Params"),
+p1 <- ggplot(df %>% filter(mergeMethod != "Params"),
             aes(x = n_clus, y = ARI, col = mergeMethod)) +
   geom_line(size = 2, alpha = .9,
             arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
@@ -54,8 +54,8 @@ p <- ggplot(df %>% filter(mergeMethod != "Params"),
         axis.title = element_text(size = 15),
         axis.text = element_text(size = 10),
         legend.text = element_text(size = 10))
-p
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.png"),
+p1
+ggsave(plot = p1, filename = here("Figure-ARI", "figures", "sc3-example.png"),
        bg = "transparent")
 ```
 
@@ -63,7 +63,7 @@ ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.png"),
 
 ```{r}
 df2 <- df %>% filter(mergeMethod == "Dune")
-p <- ggplot(df2, aes(x = n_clus, y = ARI)) +
+p2 <- ggplot(df2, aes(x = n_clus, y = ARI)) +
   geom_ribbon(aes(ymax = ARI), ymin = min(df$ARI) - 5,
               fill = "gray", alpha = .5) +
   geom_line(size = 2, col = "#7570B3") +
@@ -83,8 +83,8 @@ p <- ggplot(df2, aes(x = n_clus, y = ARI)) +
   theme(axis.title = element_text(size = 15),
         axis.text = element_text(size = 10),
         legend.text = element_text(size = 10))
-p
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "AUARIC.png"),
+p2
+ggsave(plot = p2, filename = here("Figure-ARI", "figures", "AUARIC.png"),
        bg = "transparent")
 ```
 
@@ -125,7 +125,7 @@ df <- bind_rows(
 # df <- read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
 #                        stringsAsFactors = FALSE) %>%
   mutate(scenario = paste0(dataset, "\n", method, "_", comp))
-p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
               filter(Merge_method != "Param") %>%
               mutate(AUARIC = scale(AUARIC)),
@@ -143,8 +143,8 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
         axis.text.x = element_text(size = 8),
         legend.title = element_text(size = 14, hjust = .5),
         legend.position = "bottom")
-p
-ggsave(plot = p, filename = here("Figure-ARI", "figures", "all_comp.png"),
+p3
+ggsave(plot = p3, filename = here("Figure-ARI", "figures", "all_comp.png"),
        width = 10, height = 4,
        bg = "transparent")
 ```

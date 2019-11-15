@@ -111,22 +111,30 @@ ggsave(plot = p, filename = here("Figure-Dune", "figures", "2d.png"),
 # Improvement in ARI
 
 ```{r ARI imp no allen cell}
-p1 <- plotARIs(mergers$initialMat) + ggtitle("ARI matrix before Merging") +
+p1 <- plotARIs(mergers$initialMat) +
   labs(x = "", y = "") +
   theme(plot.title = element_text(hjust = 0.5),
-        rect = element_blank())
+        rect = element_blank()) +
+   theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 8),
+        legend.title = element_text(size = 14, hjust = .5),
+        legend.position = "bottom")
 p1
 ggsave(plot = p1, filename = here("Figure-Dune", "figures", 
                                   "ARI_Matrix_Before.png"),
-       bg = "transparent")
-p2 <- plotARIs(mergers$currentMat) + ggtitle("ARI matrix after Merging") +
+       bg = "transparent", width = 7, height = 7)
+p2 <- plotARIs(mergers$currentMat) +
   labs(x = "", y = "") +
   theme(plot.title = element_text(hjust = 0.5),
-        rect = element_blank())
+        rect = element_blank()) +
+   theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 8),
+        legend.title = element_text(size = 14, hjust = .5),
+        legend.position = "bottom")
 p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures", 
                                   "ARI_Matrix_After.png"),
-       bg = "transparent")
+       bg = "transparent", width = 7, height = 7)
 ```
 
 # Confusion matrices after merging

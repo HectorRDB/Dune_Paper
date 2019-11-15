@@ -15,7 +15,7 @@ opts_chunk$set(
   fig.pos = "!h", out.extra = "", warning = F, message = F,
   fig.align = "center", echo = F
 )
-libs <- c("here", "tidyverse", "DailyHRB")
+libs <- c("here", "tidyverse", "DailyHRB", "mclust", "Dune", "purrr")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -42,5 +42,37 @@ p <- ggplot(Seurat, aes( y = (replicable_clusters + non_replicable_clusters) / 2
   my_theme() +
   labs(x = "Resolution", y = "Number of clusters", col = "K parameter")
 p
-ggsave(filename = here("Supp", "figures", "Supp-Seurat-param.pdf"), p)
+ggsave(filename = here("Supp", "figures", "Supp-Seurat-param.png"), p,
+       bg = "transparent", width = 7, height = 7)
+```
+
+# Monocle ARI
+
+```{r}
+Monocle <- read.csv(here("Brain", "data", "SingleMethod",
+                         "SMARTer_cells_MOp_Monocle.csv")) %>%
+  select(-X, -cells)
+colnames(Monocle) <- str_remove(colnames(Monocle), "k_")
+p <- plotARIs(Monocle , values = FALSE, numericalLabels = TRUE) +
+  labs(x = "Monocle K Parameter", y = "Monocle K Parameter", fill = 'ARI') +
+  theme(rect = element_blank(),
+        axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 15),
+        legend.title = element_text(size = 14, hjust = .5))
+p
+ggsave(filename = here("Supp", "figures", "Monocle_ARI.png"),
+       bg = "transparent", width = 7, height = 5)
+```
+
+# ARI null distribution
+
+```{r}
+A <- rep(seq_len(10), each = 100)
+aris <- purrr::map(seq_len(10^5), function(i){
+  adjustedRandIndex(sample(A, size = length(A)), A)
+}) %>% unlist()
+df <- data.frame(ARI = aris)
+ggplot(df, aes(x = ARI)) +
+  geom_density() +
+  theme_classic()
 ```
