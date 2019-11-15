@@ -40,8 +40,8 @@ p <- ggplot(df %>% filter(mergeMethod != "Params"),
   geom_line(size = 0, alpha = 0) +
   my_theme() +
   scale_color_brewer(palette = "Dark2") +
-  annotate("text", x = max(df$n_clus), y = min(df$ARI) + .025,
-           label = "Start", fontface = "bold") +
+  annotate("text", x = max(df$n_clus), y = min(df$ARI) + .03,
+           label = "Start", fontface = "bold", size = 6) +
   labs(x = "Number of clusters", y = "ARI with gold standard",
        col = "Method of\nmerging") +
   scale_x_continuous(breaks = c(20, 25, 30)) +
@@ -49,7 +49,11 @@ p <- ggplot(df %>% filter(mergeMethod != "Params"),
     override.aes = list(size = 2, alpha = 1))
   ) +
   theme(legend.position = c(.9, .8),
-        legend.title.align = 0.5)
+        legend.title.align = 0.5,
+        legend.title = element_text(size = 20),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 10))
 p
 ggsave(plot = p, filename = here("Figure-ARI", "figures", "sc3-example.png"),
        bg = "transparent")

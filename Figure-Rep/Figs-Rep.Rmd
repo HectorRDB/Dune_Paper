@@ -90,16 +90,23 @@ p <- ggplot(df %>% arrange(nb_clusters),
                           type = "closed"),
             show.legend = F) +
   geom_line(size = 0, alpha = 0) +
-  facet_wrap(~clustering_name, scales = "free_x") +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "Resolution", y = "Replicability", col = "Method\nof Merging") +
   guides(color = guide_legend(
-    override.aes = list(size = 2, alpha = 1))
+    override.aes = list(size = 3, alpha = 1))
   ) +
   my_theme() +
+  annotate("text", x = max(df$nb_clusters) - 1,
+           y = min(df$fraction_replicable_cells) + .01,
+           label = "Start", fontface = "bold",
+           size = 6) +
+  scale_x_continuous(breaks = c(40, 45, 50, 55)) +
   theme(legend.position = c(.9, .8),
-        legend.title.align = 0.5)
-  
+        legend.title.align = 0.5,
+        legend.title = element_text(size = 20),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 10))
 p
 ggsave(plot = p, filename = here("Figure-Rep", "figures", "example.png"),
        bg = "transparent")
