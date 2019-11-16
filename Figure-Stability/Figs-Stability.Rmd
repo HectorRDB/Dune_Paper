@@ -18,7 +18,7 @@ opts_chunk$set(
   fig.align = "center", echo = F
 )
 libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
-          "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "kableExtra",
+          "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "purrr",
           "DailyHRB")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
@@ -26,7 +26,7 @@ suppressMessages(
 rm(libs)
 ```
 
-# Garbage
+# Garbage Replicability
 
 ```{r}
 df <- read.table(here("Figure-Stability", "data", "garbage.txt")) %>%
@@ -41,12 +41,18 @@ p <- ggplot(df %>% arrange(level),
              ncol = 1) +
   scale_color_brewer(type = "div") +
   labs(x = "Resolution", y = "Replicability",
-       col = "Number of random inputs")
+       col = "Number\nof\nrandom\ninputs") +
+  theme(legend.title = element_text(size = 20),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12))
 p
-ggsave(filename = here("Figure-Stability", "data", "garbage.png"),
-       plot = p,
+ggsave(filename = here("Figure-Stability", "figures", "garbage_rep.png"),
+       plot = p, width = 7, height = 14,
        bg = "transparent")
 ```
+
+# Garbage ARI
 
 ```{r}
 df <- read.table(here("Figure-Stability", "data", "garbage_ari.txt"))
@@ -60,7 +66,14 @@ p <- ggplot(df,
              scales = "free",
              ncol = 1) +
   scale_color_brewer(type = "div") +
-  labs(x = "Merging Steps", y = "mean ARI between\nSeurat, Monocle and SC3",
-       col = "Number of\nrandom inputs")
+  labs(x = "Merging Steps", y = "mean ARI between Seurat, Monocle and SC3",
+       col = "Number\nof\nrandom\ninputs") +
+  theme(legend.title = element_text(size = 20),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12))
 p
+ggsave(filename = here("Figure-Stability", "figures", "garbage_ari.png"),
+       plot = p, width = 7, height = 10,
+       bg = "transparent")
 ```
