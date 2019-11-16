@@ -64,11 +64,19 @@ p <- ggplot(
   labs(x = "Resolution", y = "Replicability", col = "Partitions") +
   scale_color_brewer(palette = "Set1") +
   guides(col = guide_legend(override.aes = list(alpha = 1))) +
-  theme(legend.position = c(.8, .8),
-        legend.title.align = 0.5)
+  theme(legend.position = c(.8, .75),
+        legend.title.align = 0.5,
+        legend.title = element_text(size = 20),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12))
+
 p
 ggsave(filename = here("Figure-rep", "figures", "Rep-trade-off.png"), plot = p,
-       bg = "transparent")
+       bg = "transparent", width = 7, height = 7)
+```
+
+```{r}
 rm(p, SC3, Monocle, Seurat, read_single_method)
 ```
 
@@ -99,17 +107,17 @@ p <- ggplot(df %>% arrange(nb_clusters),
   annotate("text", x = max(df$nb_clusters) - 1,
            y = min(df$fraction_replicable_cells) + .01,
            label = "Start", fontface = "bold",
-           size = 6) +
+           size = 4) +
   scale_x_continuous(breaks = c(40, 45, 50, 55)) +
   theme(legend.position = c(.9, .8),
         legend.title.align = 0.5,
         legend.title = element_text(size = 20),
         axis.title = element_text(size = 15),
         axis.text = element_text(size = 10),
-        legend.text = element_text(size = 10))
+        legend.text = element_text(size = 12))
 p
 ggsave(plot = p, filename = here("Figure-Rep", "figures", "example.png"),
-       bg = "transparent")
+       bg = "transparent", width = 7, height = 7)
 ```
 
 # Panel c

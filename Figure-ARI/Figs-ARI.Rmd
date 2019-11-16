@@ -41,7 +41,7 @@ p1 <- ggplot(df %>% filter(mergeMethod != "Params"),
   my_theme() +
   scale_color_brewer(palette = "Dark2") +
   annotate("text", x = max(df$n_clus), y = min(df$ARI) + .03,
-           label = "Start", fontface = "bold", size = 6) +
+           label = "Start", fontface = "bold", size = 4) +
   labs(x = "Number of clusters", y = "ARI with gold standard",
        col = "Method of\nmerging") +
   scale_x_continuous(breaks = c(20, 25, 30)) +
@@ -53,10 +53,10 @@ p1 <- ggplot(df %>% filter(mergeMethod != "Params"),
         legend.title = element_text(size = 20),
         axis.title = element_text(size = 15),
         axis.text = element_text(size = 10),
-        legend.text = element_text(size = 10))
+        legend.text = element_text(size = 12))
 p1
 ggsave(plot = p1, filename = here("Figure-ARI", "figures", "sc3-example.png"),
-       bg = "transparent")
+       bg = "transparent", width = 7, height = 7)
 ```
 
 # Panel b
@@ -76,7 +76,7 @@ p2 <- ggplot(df2, aes(x = n_clus, y = ARI)) +
   annotate("text", x = (min(df2$n_clus) + max(df2$n_clus)) / 2,
            y = .66 * min(df$ARI) + .33 * max(df$ARI),
            label = "Area Under the ARI Curve\n(AUARIC)",
-           size = 7) +
+           size = 5) +
   labs(x = "Number of clusters", y = "ARI with gold standard") +
   scale_x_continuous(breaks = c(20, 25, 30)) +
   scale_y_continuous(limits = c(min(df$ARI), max(df$ARI))) +
@@ -85,7 +85,7 @@ p2 <- ggplot(df2, aes(x = n_clus, y = ARI)) +
         legend.text = element_text(size = 10))
 p2
 ggsave(plot = p2, filename = here("Figure-ARI", "figures", "AUARIC.png"),
-       bg = "transparent")
+       bg = "transparent", width = 7, height = 7)
 ```
 
 # Panel c
@@ -141,23 +141,9 @@ p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
                         " × 4 datasets = 36 comparisons")) +
   theme(axis.text.y = element_text(size = 15),
         axis.text.x = element_text(size = 8),
-        legend.title = element_text(size = 14, hjust = .5),
-        legend.position = "bottom")
+        legend.title = element_text(size = 14, hjust = .5))
 p3
 ggsave(plot = p3, filename = here("Figure-ARI", "figures", "all_comp.png"),
-       width = 10, height = 4,
+       width = 14, height = 3,
        bg = "transparent")
-```
-
-```{r}
-p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
-              group_by(scenario) %>%
-              mutate(rk = scale(AUARIC)),
-            aes(x = scenario, y = Merge_method, fill = rk)) +
-  geom_tile() +
-  scale_fill_viridis_c(begin = 1, end = 0) +
-  my_theme() +
-  theme(axis.text.x = element_text(angle = 90),
-        axis.line = element_blank()) +
-  labs(x = "", y = "")
 ```

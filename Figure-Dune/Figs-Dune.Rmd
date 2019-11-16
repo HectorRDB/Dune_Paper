@@ -42,7 +42,7 @@ p1 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Monocle")]) +
 p1
 ggsave(plot = p1, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_1.png"),
-       bg = "transparent")
+       bg = "transparent", width = 5, height = 5)
 p2 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Seurat")]) +
   labs(x = "SC3", y = "Seurat") +
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
@@ -57,14 +57,14 @@ legend_common <- get_legend(
 legend_common <- plot_grid(legend_common)
 ggsave(plot = legend_common,
        filename = here("Figure-Dune", "figures", "legend.png"),
-       bg = "transparent")
+       bg = "transparent", width = 1, height = 3.5)
 
 p2 <- p2 +
   guides(col = FALSE, size = FALSE)
 p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_2.png"),
-       bg = "transparent")
+       bg = "transparent", width = 5, height = 5)
 p3 <- ConfusionPlot(mergers$initialMat[, c("Seurat", "Monocle")]) +
   labs(x = "Seurat", y = "Monocle") +
   guides(col = FALSE, size = FALSE) +
@@ -74,7 +74,7 @@ p3 <- ConfusionPlot(mergers$initialMat[, c("Seurat", "Monocle")]) +
 p3
 ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_3.png"),
-       bg = "transparent")
+       bg = "transparent", width = 5, height = 5)
 rm(p1, p2, p3, legend_common)
 ```
 
@@ -99,13 +99,13 @@ df <- mergers$initialMat %>% mutate(cells = rownames(.)) %>%
   inner_join(overlap, by = c("sc3" = "Var1", "Monocle" = "Var2"))
 
 p <- ggplot(df, aes(x = x, y = y, col = overlap)) +
-  geom_point(size = .5, alpha = .5) +
+  geom_point(size = .8, alpha = .7) +
   my_theme() +
   labs(x = "t-SNE 1", y = "t-SNE 2", col = "Overlap") +
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"))
 p
 ggsave(plot = p, filename = here("Figure-Dune", "figures", "2d.png"),
-       bg = "transparent")
+       bg = "transparent", width = 9, height = 7)
 ```
 
 # Improvement in ARI
@@ -149,7 +149,7 @@ p1 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Monocle")]) +
 p1
 ggsave(plot = p1, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_1.png"),
-       bg = "transparent")
+       bg = "transparent", width = 5, height = 5)
 p2 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Seurat")]) +
   labs(x = "Sc3", y = "Seurat") +
   guides(col = FALSE, size = FALSE) +
@@ -159,7 +159,7 @@ p2 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Seurat")]) +
 p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_2.png"),
-       bg = "transparent")
+       bg = "transparent", width = 5, height = 5)
 p3 <- ConfusionPlot(mergers$currentMat[, c("Seurat", "Monocle")]) +
   labs(x = "Seurat", y = "Monocle") +
   guides(col = FALSE, size = FALSE) +
@@ -169,7 +169,7 @@ p3 <- ConfusionPlot(mergers$currentMat[, c("Seurat", "Monocle")]) +
 p3
 ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_3.png"),
-       bg = "transparent")
+       bg = "transparent", width = 5, height = 5)
 rm(p1, p2, p3)
 ```
 
@@ -217,8 +217,12 @@ p <- ggplot(df,
   labs(x = "Merging steps", y = "Number of clusters") +
   scale_color_brewer(palette = "Set1") +
   guides(col = guide_legend(override.aes = list(alpha = 1))) +
-  theme(legend.position = c(.9, .8),
-        legend.title.align = 0.5)
+  theme(legend.position = c(.85, .8),
+        legend.title.align = 0.5,
+        legend.title = element_text(size = 20),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12))
 ggsave(plot = p, width = 6, height = 2 * 7 / 3,
        filename = here("Figure-Dune", "figures", "number_clusters.png"),
        bg = "transparent")
