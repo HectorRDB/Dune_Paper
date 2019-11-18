@@ -142,7 +142,7 @@ p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
   my_theme() +
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
-  labs(x = "", y = "", fill = "Scaled\nAUARIC",
+  labs(x = "", y = "", fill = "Scaled\nAUC",
        title = bquote("3 clustering methods × 3" ~ theta[method] ~
                         " × 2 pairs of datasets = 18 comparisons")) +
   theme(axis.text.y = element_text(size = 15),
