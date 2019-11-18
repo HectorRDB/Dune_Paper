@@ -121,7 +121,9 @@ p1 <- plotARIs(mergers$initialMat) +
    theme(axis.text.y = element_text(size = 8),
         axis.text.x = element_text(size = 8),
         legend.title = element_text(size = 14, hjust = .5),
-        legend.position = "bottom")
+        legend.position = "bottom") +
+  scale_x_discrete(limits = c("Seurat", "sc3", "Monocle"))
+p1
 p12 <- p1
 ggsave(plot = p1, filename = here("Figure-Dune", "figures", 
                                   "ARI_Matrix_Before.png"),
@@ -133,7 +135,8 @@ p2 <- plotARIs(mergers$currentMat) +
    theme(axis.text.y = element_text(size = 8),
         axis.text.x = element_text(size = 8),
         legend.title = element_text(size = 14, hjust = .5),
-        legend.position = "bottom")
+        legend.position = "bottom") +
+  scale_x_discrete(limits = c("Seurat", "sc3", "Monocle"))
 p2
 p22 <- p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures", 
