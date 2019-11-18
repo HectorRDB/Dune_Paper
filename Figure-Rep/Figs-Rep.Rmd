@@ -51,7 +51,7 @@ Monocle <- read_single_method(Method = "Monocle") %>%
 ```
 
 ```{r all}
-p <- ggplot(
+p1 <- ggplot(
   bind_rows(SC3 %>% select(-level),
             Monocle %>% select(-level),
             Seurat %>% select(-level)) %>%
@@ -66,13 +66,13 @@ p <- ggplot(
   guides(col = guide_legend(override.aes = list(alpha = 1))) +
   theme(legend.position = c(.8, .75),
         legend.title.align = 0.5,
-        legend.title = element_text(size = 20),
-        axis.title = element_text(size = 15),
-        axis.text = element_text(size = 10),
-        legend.text = element_text(size = 12))
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 13),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 10))
 
-p
-ggsave(filename = here("Figure-rep", "figures", "Rep-trade-off.png"), plot = p,
+p1
+ggsave(filename = here("Figure-rep", "figures", "Rep-trade-off.png"), plot = p1,
        bg = "transparent", width = 7, height = 7)
 ```
 
@@ -91,7 +91,7 @@ df <- bind_rows(
   .id = "Merge_method"
 ) %>%
   filter(clustering_name == "Seurat")
-p <- ggplot(df %>% arrange(nb_clusters),
+p2 <- ggplot(df %>% arrange(nb_clusters),
        aes(x = nb_clusters, y = fraction_replicable_cells, col = Merge_method)) +
   geom_line(aes(linetype = clustering_name), size = 2, alpha = .9,
             arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
@@ -111,12 +111,12 @@ p <- ggplot(df %>% arrange(nb_clusters),
   scale_x_continuous(breaks = c(40, 45, 50, 55)) +
   theme(legend.position = c(.9, .8),
         legend.title.align = 0.5,
-        legend.title = element_text(size = 20),
-        axis.title = element_text(size = 15),
-        axis.text = element_text(size = 10),
-        legend.text = element_text(size = 12))
-p
-ggsave(plot = p, filename = here("Figure-Rep", "figures", "example.png"),
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 13),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 10))
+p2
+ggsave(plot = p2, filename = here("Figure-Rep", "figures", "example.png"),
        bg = "transparent", width = 7, height = 7)
 ```
 
@@ -133,7 +133,7 @@ df <- bind_rows(
   .id = "Contrast"
   ) %>%
   mutate(scenario = paste0(Contrast, "\n", method, "_", comp))
-p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
               mutate(AUARIC = scale(AUARIC)),
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
@@ -146,11 +146,30 @@ p <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
        title = bquote("3 clustering methods × 3" ~ theta[method] ~
                         " × 2 pairs of datasets = 18 comparisons")) +
   theme(axis.text.y = element_text(size = 15),
-        axis.text.x = element_text(size = 8),
+        axis.text.x = element_text(size = 10),
         legend.title = element_text(size = 14, hjust = .5),
-        legend.position = "bottom")
-p
-ggsave(plot = p, filename = here("Figure-Rep", "figures", "all_comp.png"),
+        legend.position = "bottom",
+        title = element_text(size = 15))
+p3
+ggsave(plot = p3, filename = here("Figure-Rep", "figures", "all_comp.png"),
        width = 8, height = 3,
        bg = "transparent")
+```
+
+# Panel 
+
+```{r}
+# first align the top-row plot (p3) with the left-most plot of the
+# bottom row (p1)
+plots <- align_plots(p1, p3 + theme(legend.position = "bottom"),
+                     align = 'v', axis = 'l')
+# then build the top row
+top_row <- plot_grid(plots[[1]], p2, labels = c('a)', 'b)'), label_size = 15,
+                     scale = .9)
+
+# then combine with the top row for final plot
+p <- plot_grid(top_row, plots[[2]], labels = c('', 'c)'), label_size = 15,
+               ncol = 1, rel_heights = c(2, 1.5))
+ggsave(filename = here("Figure-Rep", "figures", "panel.png"),
+       plot = p, height = 9, width = 12)
 ```

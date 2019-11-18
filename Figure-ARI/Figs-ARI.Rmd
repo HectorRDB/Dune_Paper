@@ -147,3 +147,21 @@ ggsave(plot = p3, filename = here("Figure-ARI", "figures", "all_comp.png"),
        width = 14, height = 3,
        bg = "transparent")
 ```
+
+# Panel 
+
+```{r}
+# first align the top-row plot (p3) with the left-most plot of the
+# bottom row (p1)
+plots <- align_plots(p1, p3 + theme(legend.position = "bottom"),
+                     align = 'v', axis = 'l')
+# then build the top row
+top_row <- plot_grid(plots[[1]], p2, labels = c('a)', 'b)'), label_size = 15,
+                     scale = .8)
+
+# then combine with the top row for final plot
+p <- plot_grid(top_row, plots[[2]], labels = c('', 'c)'), label_size = 15,
+               ncol = 1, rel_heights = c(2, 1.5))
+ggsave(filename = here("Figure-ARI", "figures", "panel.png"),
+       plot = p, height = 9, width = 12)
+```
