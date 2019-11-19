@@ -34,13 +34,13 @@ tSNE <- read.csv(here("Brain", "data", "tSNE", "SMARTer_cells_MOp_tnse.csv")) %>
 
 ```{r}
 p1 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Monocle")]) +
-  labs(x = "SC3", y = "Monocle") +
+  labs(x = "Partition 1", y = "Partition 2") + 
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
                         limits = c(0, 1)) +
   scale_size_continuous(breaks = c(100, 200, 300, 400, 600)) +
   guides(col = FALSE, size = FALSE)
 p1
-p11 <- p1 + labs(x = "Partition 1", y = "Partition 2")
+p11 <- p1 
 ggsave(plot = p1, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_1.png"),
        bg = "transparent", width = 5, height = 5)
@@ -152,13 +152,12 @@ ggsave(plot = p2, filename = here("Figure-Dune", "figures",
 
 ```{r}
 p1 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Monocle")]) +
-  labs(x = "Sc3", y = "Monocle") +
+  labs(x = "Partition 1", y = "Partition 2") + 
   guides(col = FALSE, size = FALSE) +
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
                         limits = c(0, 1)) +
   scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
 p1
-p21 <- p1 + labs(x = "Partition 1", y = "Partition 2")
 ggsave(plot = p1, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_1.png"),
        bg = "transparent", width = 5, height = 5)
@@ -239,29 +238,26 @@ p32
 ```
 
 ```{r}
-# plots <- align_plots(,
-#       ggdraw() +
-#       draw_image(here("Figure-Dune", "figures", "confusion_plot_after_1.png")),
-#       p31, align = 'v', axis = 'l')
 first_row <- plot_grid(ggdraw() +
       draw_image(here("Figure-Dune", "figures", "confusion_plot_before_1.png")),
       p12, ggdraw() +
       draw_image(here("Figure-Dune", "figures", "legend.png"), scale = 1.5),
-                       labels = c('a)', 'b)', ''), label_size = 15,
+                       labels = c('a)', 'b)', ''), label_size = 10,
                      scale = .95,
                      rel_heights = c(1, .2), rel_widths = c(1, 1))
 
 second_row <- plot_grid(ggdraw() +
       draw_image(here("Figure-Dune", "figures", "confusion_plot_after_1.png")),
-      p22, labels = c('c)', 'd)'), label_size = 15, scale = .95)
+      p22, labels = c('c)', 'd)'), label_size = 10, scale = .95)
 
-third_row <- plot_grid(p31, p32, labels = c('e)', 'f)'), label_size = 15,
+third_row <- plot_grid(p31, p32, labels = c('e)', 'f)'), label_size = 10,
                      scale = .95)
 
 p <- plot_grid(first_row, second_row, third_row,
                ncol = 1, rel_heights = c(1.2, 1, 1))
-ggsave(plot = p, 
-       filename = here("Figure-Dune", "figures", "panel.png"),
-       width = 6, height = 9)
+save_plot(plot = p, 
+          filename = here("Figure-Dune", "figures", "panel.png"),
+          base_width = 6, base_height = 9,
+          bg = "transparent")
 ```
 

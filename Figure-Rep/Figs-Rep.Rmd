@@ -170,6 +170,8 @@ top_row <- plot_grid(plots[[1]], p2, labels = c('a)', 'b)'), label_size = 15,
 # then combine with the top row for final plot
 p <- plot_grid(top_row, plots[[2]], labels = c('', 'c)'), label_size = 15,
                ncol = 1, rel_heights = c(2, 1.5))
-ggsave(filename = here("Figure-Rep", "figures", "panel.png"),
-       plot = p, height = 9, width = 12)
+save_plot(plot = p, 
+          filename = here("Figure-Rep", "figures", "panel.png"),
+          base_width = 12, base_height = 9,
+          bg = "transparent")
 ```
