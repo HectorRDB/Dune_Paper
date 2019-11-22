@@ -124,6 +124,14 @@ df <- bind_rows(
   ) %>%
   mutate(scenario = paste0(dataset, "\n", method, "_", comp))
 df <- df %>% arrange(scenario)
+rank <- df %>%
+  group_by(scenario) %>%
+  filter(Merge_method != "Param") %>%
+  mutate(rk = rank(desc(AUARIC))) %>%
+  ungroup() %>%
+  select(Merge_method, rk) %>%
+  table
+  
 labels <- paste0(str_replace_all(df$dataset, "_", "-"), "\n", df$method,
                  "-$\\Theta_", 1:3, "$") %>%
   unique()

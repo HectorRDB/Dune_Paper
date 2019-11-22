@@ -134,6 +134,12 @@ df <- bind_rows(
   ) %>%
   mutate(scenario = paste0(Contrast, "\n", method, "_", comp))
 df <- df %>% arrange(scenario)
+top <- df %>% group_by(scenario) %>%
+  arrange(desc(AUARIC)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(Merge_method) %>%
+  table()
 labels <- paste0(df$Contrast, "\n", df$method,
                  "-$\\Theta_", 1:3, "$") %>%
   unique()
