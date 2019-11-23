@@ -66,13 +66,4 @@ ggsave(filename = here("Supp", "figures", "Monocle_ARI.png"),
 
 # ARI null distribution
 
-```{r}
-A <- rep(seq_len(10), each = 100)
-aris <- purrr::map(seq_len(10^5), function(i){
-  adjustedRandIndex(sample(A, size = length(A)), A)
-}) %>% unlist()
-df <- data.frame(ARI = aris)
-ggplot(df, aes(x = ARI)) +
-  geom_density() +
-  theme_classic()
-```
+Read the papers from the *CrossClustering* package, function _ari_.
