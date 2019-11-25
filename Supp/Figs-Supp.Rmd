@@ -64,6 +64,55 @@ ggsave(filename = here("Supp", "figures", "Monocle_ARI.png"),
        bg = "transparent", width = 7, height = 5)
 ```
 
-# ARI null distribution
+# Rep trade-off on pancreas
 
-Read the papers from the *CrossClustering* package, function _ari_.
+```{r}
+read_single_method <- function(Method,
+                               result_dir = here("Pancreas", "data",
+                                                 "Replicability", 
+                                                 "SingleMethod")) {
+  df <- read.table(file.path(result_dir, Method, 
+                             "consensus_cluster_replicability.txt")) %>%
+    filter(clustering_name == Method)
+}
+
+Seurat <- read_single_method(Method = "Seurat") %>% 
+  mutate(level = str_extract(clustering_method, ",.*$") %>%
+           str_remove(., "^,") %>%
+           factor(., levels = c("30", "50", "100")),
+         clustering_method = 
+           str_extract(clustering_method, "^.*,") %>%
+           str_remove(., "Seurat\\.") %>%
+           str_remove(., ",$") %>%
+           str_replace(., "_", "."))
+
+SC3 <- read_single_method("SC3") %>%
+         mutate(level = as.numeric(as.character(level)))
+
+Monocle <- read_single_method(Method = "Monocle") %>% 
+  mutate(level = str_remove(level, "^k_") %>% as.numeric()) %>%
+  filter(level >= 10)
+p1 <- ggplot(
+  bind_rows(SC3 %>% select(-level),
+            Monocle %>% select(-level),
+            Seurat %>% select(-level)) %>%
+    mutate(n_clus = (replicable_clusters + non_replicable_clusters) / 2) %>%
+    filter(n_clus > 10),
+  aes(x = n_clus, y = fraction_replicable_cells, col = clustering_name)) +
+  geom_point(size = 3, alpha = .7) +
+  my_theme() +
+  # scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Resolution", y = "Replicability", col = "Partitions") +
+  scale_color_brewer(palette = "Set1") +
+  guides(col = guide_legend(override.aes = list(alpha = 1))) +
+  theme(legend.position = c(.7, .8),
+        legend.title.align = 0.5,
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 13),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 10))
+
+p1
+ggsave(filename = here("Supp", "figures", "Rep-trade-off.png"), plot = p1,
+       bg = "transparent", width = 7, height = 7)
+```
