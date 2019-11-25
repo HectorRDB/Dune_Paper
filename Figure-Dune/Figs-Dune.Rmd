@@ -247,7 +247,7 @@ first_row <- plot_grid(ggdraw() +
 
 second_row <- plot_grid(ggdraw() +
       draw_image(here("Figure-Dune", "figures", "confusion_plot_after_1.png")),
-      p22, p32, labels = c('c)', 'd)', 'e)'), label_size = 10, scale = .95,
+      p22, p32, labels = c('d)', 'e)', 'f)'), label_size = 10, scale = .95,
       ncol = 3)
 
 # third_row <- plot_grid(p31, p32, labels = c('e)', 'f)'), label_size = 10,
