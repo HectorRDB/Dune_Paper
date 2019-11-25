@@ -1,7 +1,7 @@
 ---
 author: "Hector Roux de Bézieux"
 date: '`r format(Sys.time(), "%d %B , %Y")`'
-title: 'Impact of all the methods on ARI merging'
+title: 'Panel on Dune specificities'
 output:
   html_document:
     toc: true
@@ -77,3 +77,7 @@ ggsave(filename = here("Figure-Stability", "figures", "garbage_ari.png"),
        plot = p, width = 7, height = 10,
        bg = "transparent")
 ```
+
+# Dune's stoppping point.
+
+```{r}
