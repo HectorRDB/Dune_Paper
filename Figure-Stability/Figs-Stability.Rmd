@@ -27,6 +27,7 @@ rm(libs)
 ```
 
 # Garbage Replicability
+## Rep curves
 
 ```{r}
 df <- read.table(here("Figure-Stability", "data", "garbage.txt")) %>%
@@ -35,7 +36,7 @@ p <- ggplot(df %>% arrange(level),
        aes(x = nb_clusters,
            y = fraction_replicable_cells,
            col = as.character(nb_garb))) +  
-  geom_path(size = 2) +
+  geom_path(size = 2, alpha = .8) +
   theme_classic() +
   facet_wrap(~clustering_name, scales = "free",
              ncol = 1) +
@@ -45,11 +46,32 @@ p <- ggplot(df %>% arrange(level),
   theme(legend.title = element_text(size = 20),
         axis.title = element_text(size = 15),
         axis.text = element_text(size = 10),
-        legend.text = element_text(size = 12))
+        legend.text = element_text(size = 12),
+        plot.background = element_blank(),
+        legend.background = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.box.background = element_blank(),
+        strip.background = element_rect(fill = "transparent"))
 p
 ggsave(filename = here("Figure-Stability", "figures", "garbage_rep.png"),
-       plot = p, width = 7, height = 14,
+       plot = p, width = 7, height = 10,
        bg = "transparent")
+```
+
+## AUC
+
+```{r}
+AUC <- df %>%
+  group_by(clustering_name, nb_garb) %>%
+  summarise(AUC = -trapz(x = nb_clusters, y = fraction_replicable_cells)) %>%
+  ungroup() %>% 
+  group_by(clustering_name) %>%
+  arrange(nb_garb) %>%
+  mutate(AUC = AUC / first(AUC))
+ggplot(AUC, aes(x = nb_garb, y = AUC, col = clustering_name)) +
+  geom_line() +
+  theme_classic()
 ```
 
 # Garbage ARI
@@ -71,7 +93,13 @@ p <- ggplot(df,
   theme(legend.title = element_text(size = 20),
         axis.title = element_text(size = 15),
         axis.text = element_text(size = 10),
-        legend.text = element_text(size = 12))
+        legend.text = element_text(size = 12),
+        plot.background = element_blank(),
+        legend.background = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.box.background = element_blank(),
+        strip.background = element_rect(fill = "transparent"))
 p
 ggsave(filename = here("Figure-Stability", "figures", "garbage_ari.png"),
        plot = p, width = 7, height = 10,
