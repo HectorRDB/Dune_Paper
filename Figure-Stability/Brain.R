@@ -50,4 +50,4 @@ df <- bind_rows(
 
 setwd("..")
 reload(inst("here"))
-write.table(df, here("Figure-Stability", "data", "Pancreas-methods.txt"), row.names = FALSE)
+write.table(df, here("Figure-Stability", "data", "Brain-methods.txt"), row.names = FALSE)
