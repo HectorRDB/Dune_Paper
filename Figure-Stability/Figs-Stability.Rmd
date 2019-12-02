@@ -91,28 +91,53 @@ ggsave(filename = here("Figure-Stability", "figures", "garbage_ari.png"),
        bg = "transparent")
 ```
 
-# Dune's stoppping point.
+# Dune's stoppping point is meaningfull
 
 ```{r}
 mergers <- readRDS(here("Brain", "data", "Dune",
-                        "SMARTer_cells_MOp_mergers.rds"))
+                        "SMARTer_nuclei_MOp_mergers.rds"))
 allen_clusters <- read.csv(here("Brain", "data", "Smart-Seq",
-                                  "SMARTer_cells_MOp_cluster.membership.csv"),
+                                  "SMARTer_nuclei_MOp_cluster.membership.csv"),
                            col.names = c("cells", "cluster_id"))
 clusters <- read.csv(here("Brain", "data", "Smart-Seq",
-                          "SMARTer_cells_MOp_cluster.annotation.csv"),
+                          "SMARTer_nuclei_MOp_cluster.annotation.csv"),
                        header = T)
 allen_clusters <- full_join(allen_clusters, clusters) %>%
   arrange(cells) %>%
-  mutate(cells = as.character(cells))
+  mutate(cells = as.character(cells)) %>%
+  filter(class_label != "Noise") %>%
+  arrange(class_label)
+allen_clusters$subclass_label <- factor(allen_clusters$subclass_label,
+                                levels = unique(allen_clusters$subclass_label))
 rm(clusters)
-# mergers$currentMat <- mergers$currentMat[allen_clusters$cells, ]
-ConfusionPlot(y = mergers$currentMat[allen_clusters$cells, "Seurat"],
-              x = allen_clusters$cluster_label)
+
+p <- ConfusionPlot(y = mergers$currentMat[allen_clusters$cells, "sc3"],
+              x = allen_clusters$subclass_label) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  theme(rect = element_blank()) +
+  labs(x = "Allen Subclass Labels", y = "Dune's stopping point")
+p
+ggsave(filename = here("Figure-Stability", "figures", "Stoppping_Point.png"),
+       plot = p, bg = "transparent")
 ```
 
 # Stability to inputs
 
 ```{r}
+df <- bind_rows(
+  read.table(here("Figure-Stability", "data", "Brain-methods.txt"),
+             header = TRUE),
+  read.table(here("Figure-Stability", "data", "Pancreas-methods.txt"),
+             header = TRUE)
+)
+df <- df %>% 
+  pivot_longer(-c("steps", "dataset"), names_to = "methods",
+               values_to = "meanARI") %>%
+  group_by(dataset, methods) %>%
+  arrange(steps) %>%
+  summarise(begin = first(meanARI),
+            end = last(meanARI)) %>%
+  group_by(dataset) %>%
+  summarise(begin = mean(begin), end = mean(end))
 
 ```
