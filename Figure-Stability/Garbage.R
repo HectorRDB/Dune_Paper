@@ -11,7 +11,7 @@ setwd(here("Pancreas"))
 reload(inst("here"))
 
 comps <- 1:3
-names(comps)
+names(comps) <- 1:3
 df <- map(comps, function(comp) {
   print(paste0("Comp ", comp))
   no_garb <- read.table(here("Data", "Replicability", "Dune",
