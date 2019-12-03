@@ -104,7 +104,7 @@ AUARIC <- map_df(types, function(type){
   mutate("mergeMethods" = rownames(.)) %>%
   select(mergeMethods, V1) %>%
   filter(mergeMethods != "Params") %>%
-  rename(AUARIC = V1,
+  dplyr::rename(AUARIC = V1,
          "Methods of\nmerging" = "mergeMethods")
 AUARIC$`scaled AUAIRC` <- scale(AUARIC$AUARIC)
   
@@ -127,7 +127,7 @@ df <- df %>% arrange(scenario)
 rank <- df %>%
   group_by(scenario) %>%
   filter(Merge_method != "Param") %>%
-  mutate(rk = rank(desc(AUARIC))) %>%
+  mutate(rk = rank(dplyr::desc(AUARIC))) %>%
   ungroup() %>%
   select(Merge_method, rk) %>%
   table
@@ -181,4 +181,21 @@ save_plot(plot = p,
           filename = here("Figure-ARI", "figures", "panel.png"),
           base_width = 12, base_height = 9,
           bg = "transparent")
+```
+
+```{r with patchwork}
+library(patchwork)
+patch <- 
+  ((p1 | plot_spacer() | p2) + plot_layout(widths = c(1, .1, 1))) /
+  (p3 + theme(legend.position = "bottom")) +
+  plot_layout(heights = c(3, 1)) +
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 20),
+        rect = element_blank())
+save_plot(plot = patch, 
+          filename = here("Figure-ARI", "figures", "panel2.png"),
+          base_width = 12, base_height = 8,
+          bg = "transparent")  
+
+
 ```
