@@ -135,8 +135,8 @@ df <- bind_rows(
   mutate(scenario = paste0(Contrast, "\n", method, "_", comp))
 df <- df %>% arrange(scenario)
 top <- df %>% group_by(scenario) %>%
-  arrange(desc(AUARIC)) %>%
-  slice(1) %>%
+  arrange(dplyr::desc(AUARIC)) %>%
+  dplyr::slice(1) %>%
   ungroup() %>%
   select(Merge_method) %>%
   table()
