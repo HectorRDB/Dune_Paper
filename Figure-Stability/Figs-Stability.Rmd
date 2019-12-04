@@ -100,18 +100,19 @@ df <- read.table(here("Figure-Stability", "data", "downsampling.txt")) %>%
   arrange(desc(fraction)) %>%
   mutate(AUC = AUC / first(AUC))
 p3 <- ggplot(df, aes(x = fraction, y = 100 * AUC)) +
-  geom_boxplot(aes(group = fraction), outlier.shape = NA) +
+  geom_boxplot(aes(group = fraction), outlier.shape = NA, width = 4) +
   my_theme() +
   scale_y_continuous(limits = c(25, 170),
                      breaks = 1:4 * 40,
                      labels = paste(1:4 * 40, "%")) +
+  scale_x_continuous(breaks = c(1, 5, 1:10 * 10)) +
   labs(x = "Fraction of cells used as input for Dune",
        y = "Ratio of AUC over AUC with no random inputs") +
   # theme() +
   NULL
 p3
-ggsave(filename = here("Figure-Stability", "figures", "down.png"),
-       bg = "transparent", plot = p3)
+# ggsave(filename = here("Figure-Stability", "figures", "down.png"),
+       # bg = "transparent", plot = p3)
 ```
 
 # Stability to inputs
