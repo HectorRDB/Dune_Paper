@@ -244,12 +244,12 @@ first_row <- plot_grid(ggdraw() +
       draw_image(here("Figure-Dune", "figures", "confusion_plot_before_1.png")),
       p12, p13, ggdraw() +
       draw_image(here("Figure-Dune", "figures", "legend.png"), scale = 1.5),
-      labels = c('a)', 'b)', 'c)', ''), label_size = 10, ncol = 3, 
-      scale = .95, rel_heights = c(1, .2), rel_widths = c(1, 1, 1))
+      labels = c('a)', 'b)', 'c)', ''), label_size = 14, ncol = 3, 
+      scale = .95, rel_heights = c(1, .3), rel_widths = c(1, 1, 1))
 
 second_row <- plot_grid(ggdraw() +
       draw_image(here("Figure-Dune", "figures", "confusion_plot_after_1.png")),
-      p22, p23, labels = c('d)', 'e)', 'f)'), label_size = 10, scale = .95,
+      p22, p23, labels = c('d)', 'e)', 'f)'), label_size = 14, scale = .95,
       ncol = 3)
 
 # third_row <- plot_grid(p31, p32, labels = c('e)', 'f)'), label_size = 10,
@@ -257,10 +257,10 @@ second_row <- plot_grid(ggdraw() +
 
 p <- plot_grid(first_row, second_row,
                # third_row,
-               ncol = 1, rel_heights = c(1.2, 1))
+               ncol = 1, rel_heights = c(1.3, 1))
 save_plot(plot = p, 
           filename = here("Figure-Dune", "figures", "panel.png"),
-          base_width = 12, base_height = 8,
+          base_width = 10, base_height = 7.5,
           bg = "transparent")
 ```
 
