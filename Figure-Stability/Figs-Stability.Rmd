@@ -77,19 +77,42 @@ allen_clusters$subclass_label <- factor(allen_clusters$subclass_label,
                                 levels = unique(allen_clusters$subclass_label))
 rm(clusters)
 
-p <- ConfusionPlot(y = mergers$currentMat[allen_clusters$cells, "sc3"],
-              x = allen_clusters$subclass_label) +
+p2 <- ConfusionPlot(y = mergers$currentMat[allen_clusters$cells, "sc3"],
+                    x = allen_clusters$subclass_label) +
   theme(axis.text.x = element_text(angle = 90)) +
   theme(rect = element_blank()) +
   labs(x = "Allen Subclass Labels", y = "Dune's stopping point")
-p
+p2
 ggsave(filename = here("Figure-Stability", "figures", "Stoppping_Point.png"),
-       plot = p, bg = "transparent")
+       plot = p2, bg = "transparent", width = 7, height = 7)
 ```
 
 # Stability to downsampling
 
-
+```{r}
+df <- read.table(here("Figure-Stability", "data", "downsampling.txt")) %>%
+  mutate(nb_clusters = (replicable_clusters + non_replicable_clusters) / 2) %>%
+  group_by(Comp, fraction, clustering_name) %>%
+  arrange(level) %>%
+  summarise(AUC = -trapz(x = nb_clusters, y = fraction_replicable_clusters)) %>%
+  ungroup() %>%
+  group_by(Comp, clustering_name) %>%
+  arrange(desc(fraction)) %>%
+  mutate(AUC = AUC / first(AUC))
+p3 <- ggplot(df, aes(x = fraction, y = 100 * AUC)) +
+  geom_boxplot(aes(group = fraction), outlier.shape = NA) +
+  my_theme() +
+  scale_y_continuous(limits = c(25, 170),
+                     breaks = 1:4 * 40,
+                     labels = paste(1:4 * 40, "%")) +
+  labs(x = "Fraction of cells used as input for Dune",
+       y = "Ratio of AUC over AUC with no random inputs") +
+  # theme() +
+  NULL
+p3
+ggsave(filename = here("Figure-Stability", "figures", "down.png"),
+       bg = "transparent", plot = p3)
+```
 
 # Stability to inputs
 
@@ -109,5 +132,22 @@ df <- df %>%
             end = last(meanARI)) %>%
   group_by(dataset) %>%
   summarise(begin = mean(begin), end = mean(end))
+```
 
+# Panel
+
+```{r}
+top_row <- plot_grid(p1, p3, labels = c('a)', 'b)'), label_size = 15,
+                     scale = .9)
+second_row <- plot_grid(NULL, p2 + theme(legend.position = "right") +
+                        guides(col = 
+                                 guide_colourbar(title.position = "top",
+                                                 barwidth = unit(.05, "npc"))),
+                        NULL, labels = c('', 'c)', ''), label_size = 15,
+                        ncol = 3, rel_widths = c(3, 7, 1), scale = .9)
+
+p <- plot_grid(top_row, second_row, label_size = 15, ncol = 1)
+p
+ggsave(filename = here("Figure-Stability", "figures", "panel.png"),
+       bg = "transparent", plot = p, width = 11, height = 8)
 ```
