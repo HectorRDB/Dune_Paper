@@ -101,6 +101,7 @@ p2 <- ggplot(df %>% arrange(nb_clusters),
   scale_color_brewer(palette = "Dark2") +
   labs(x = "Resolution", y = "Replicability", col = "Method\nof Merging") +
   guides(color = guide_legend(
+    reverse = TRUE,
     override.aes = list(size = 3, alpha = 1))
   ) +
   my_theme() +

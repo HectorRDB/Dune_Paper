@@ -30,9 +30,8 @@ rm(libs)
 
 ```{r}
 df <- read.table(here("Figure-ARI", "data", "sc3-comp1.txt"), header = TRUE,
-                       stringsAsFactors = FALSE)
-p1 <- ggplot(df %>% filter(mergeMethod != "Params"),
-            aes(x = n_clus, y = ARI, col = mergeMethod)) +
+                       stringsAsFactors = FALSE) %>% filter(mergeMethod != "Params")
+p1 <- ggplot(df, aes(x = n_clus, y = ARI, col = mergeMethod)) +
   geom_line(size = 2, alpha = .9,
             arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
                           type = "closed"),
@@ -46,6 +45,7 @@ p1 <- ggplot(df %>% filter(mergeMethod != "Params"),
        col = "Method of\nmerging") +
   scale_x_continuous(breaks = c(20, 25, 30)) +
   guides(color = guide_legend(
+    reverse = TRUE,
     override.aes = list(size = 2, alpha = 1))
   ) +
   theme(legend.position = c(.9, .8),
