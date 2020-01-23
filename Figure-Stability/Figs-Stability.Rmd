@@ -77,7 +77,7 @@ p3 <- ggplot(df, aes(x = fraction, y = 100 * AURC)) +
                      labels = paste(1:4 * 40, "%")) +
   scale_x_continuous(breaks = c(1, 5, 1:10 * 10)) +
   labs(x = "Fraction of cells used as input for Dune",
-       y = "Ratio of AURC over\nAURC with no random inputs") +
+       y = "Ratio of AURC over\nAURC with the full dataset") +
   # theme() +
   NULL
 p3
