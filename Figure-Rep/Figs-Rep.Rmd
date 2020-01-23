@@ -123,8 +123,6 @@ ggsave(plot = p2, filename = here("Figure-Rep", "figures", "example.png"),
 
 # Panel c
 
-For now, this only include the brain data. It will also include the Pancreas data once it is ready
-
 ```{r}
 df <- bind_rows(
   "Brain" = read.table(here("Figure-Rep", "data", "Brain.txt"), header = TRUE,
