@@ -109,7 +109,7 @@ p2 <- ConfusionPlot(y = mergers$currentMat[allen_clusters$cells, "sc3"],
                     x = allen_clusters$subclass_label) +
   theme(axis.text.x = element_text(angle = 90)) +
   theme(rect = element_blank()) +
-  labs(x = "Allen Subclass Labels", y = "Dune's stopping point")
+  labs(x = "Allen Subclass Labels", y = "SC3 merged with Dune")
 p2
 ggsave(filename = here("Figure-Stability", "figures", "Stoppping_Point.png"),
        plot = p2, bg = "transparent", width = 7, height = 7)
@@ -136,7 +136,7 @@ df <- df %>%
 
 # Panel
 
-```{r}
+```{r, eval = F}
 top_row <- plot_grid(p1, p3, labels = c('a)', 'b)'), label_size = 15,
                      scale = .9)
 second_row <- plot_grid(NULL, p2 + theme(legend.position = "right") +
@@ -147,6 +147,25 @@ second_row <- plot_grid(NULL, p2 + theme(legend.position = "right") +
                         ncol = 3, rel_widths = c(3, 7, 1), scale = .9)
 
 p <- plot_grid(top_row, second_row, label_size = 15, ncol = 1)
+ggsave(filename = here("Figure-Stability", "figures", "panel.png"),
+       bg = "transparent", plot = p, width = 11, height = 8)
+```
+
+```{r}
+second_column <- plot_grid(p1, p3, labels = c('b)', 'c)'), label_size = 15,
+                     scale = .9, ncol = 1)
+first_colum <- plot_grid(p2 + theme(legend.position = "bottom",
+                                    legend.box = 'vertical') +
+                           guides(col = 
+                                    guide_colourbar(title.position = "top",
+                                                    barwidth = unit(.4, "npc"))),
+                         NULL,
+                         labels = c('a)', ''), label_size = 15,
+                         ncol = 1, rel_heights = c(7, 2),
+                         scale = .9)
+
+p <- plot_grid(first_colum, second_column, label_size = 15, ncol = 2)
+p
 ggsave(filename = here("Figure-Stability", "figures", "panel.png"),
        bg = "transparent", plot = p, width = 11, height = 8)
 ```
