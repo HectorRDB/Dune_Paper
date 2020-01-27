@@ -154,11 +154,14 @@ ggsave(filename = here("Figure-Stability", "figures", "panel.png"),
 ```{r}
 second_column <- plot_grid(p1, p3, labels = c('b)', 'c)'), label_size = 15,
                      scale = .9, ncol = 1)
-first_colum <- plot_grid(p2 + theme(legend.position = "bottom",
-                                    legend.box = 'vertical') +
-                           guides(col = 
-                                    guide_colourbar(title.position = "top",
-                                                    barwidth = unit(.4, "npc"))),
+first_colum <- plot_grid(p2 +
+                           theme(legend.position = c(.5, -.35),
+                                 legend.box = 'vertical') +
+  guides(col = guide_colourbar(title.position = "top",
+                               barheight = unit(.05, "npc"),
+                               barwidth = unit(.4, "npc"),
+                               direction = "horizontal"),
+         size = guide_legend(direction = "horizontal")),
                          NULL,
                          labels = c('a)', ''), label_size = 15,
                          ncol = 1, rel_heights = c(7, 2),
