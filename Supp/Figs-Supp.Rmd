@@ -40,7 +40,7 @@ p <- ggplot(Seurat, aes( y = (replicable_clusters + non_replicable_clusters) / 2
                          x = as.numeric(clustering_method), col = level)) +
   geom_line(size = 3) +
   my_theme() +
-  labs(x = "Resolution", y = "Number of clusters", col = "K parameter")
+  labs(x = "Resolution", y = "Number of clusters", col = "k parameter")
 p
 ggsave(filename = here("Supp", "figures", "Supp-Seurat-param.png"), p,
        bg = "transparent", width = 7, height = 7)
