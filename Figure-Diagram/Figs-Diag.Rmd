@@ -1,0 +1,162 @@
+---
+author: "Hector Roux de Bézieux"
+date: '`r format(Sys.time(), "%d %B , %Y")`'
+title: "Dune's inner workings"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: TRUE
+    number_sections: true
+    code_download: TRUE
+---
+
+We use a subset of the Allen Smart-Seq nuclei dataset. Run `?Dune::nuclei` for more details on pre-processing.
+
+```{r setup}
+suppressPackageStartupMessages({
+  library(RColorBrewer)
+  library(dplyr)
+  library(ggplot2)
+  library(tidyr)
+  library(knitr)
+  library(purrr)
+  library(Dune)
+  library(here)
+})
+data("nuclei", package = "Dune")
+theme_set(theme_classic())
+```
+
+# Initial visualization
+
+We can also see how the three clustering algorithm partitioned the dataset initially:
+
+```{r}
+walk(c("SC3", "Seurat", "Monocle"), function(clus_algo){
+  df <- nuclei
+  df$clus_algo <- nuclei[, clus_algo]
+  p <- ggplot(df, aes(x = x, y = y, col = as.character(clus_algo))) +
+    geom_point(size = .5) +
+    guides(color = FALSE) +
+    labs(title = clus_algo)
+  ggsave(here("Figure-Diagram", "figures", paste0("Init-", clus_algo, ".pdf")),
+         p, height = 3, width = 5)
+})
+```
+
+# Merging with **Dune**
+## Initial ARI
+
+The adjusted Rand Index between the three methods can be computed.
+
+```{r}
+ggsave(filename = here("Figure-Diagram", "figures", "ARI_init.pdf"),
+       height = 7, width = 7,
+       plot = plotARIs(nuclei %>% select(SC3, Seurat, Monocle)))
+       
+```
+
+As we can see, the ARI between the three methods is initially quite low.
+
+```{r}
+walk(combn(c("SC3", "Seurat", "Monocle"), 2) %>%
+       as.data.frame(stringsAsFactors = FALSE), 
+     function(pair){
+      p <- ConfusionPlot(nuclei[, pair[1]], nuclei[, pair[2]]) +
+        labs(x = pair[1], y = pair[2])
+      ggsave(plot = p, 
+             filename = here("Figure-Diagram", "figures",
+             paste0("Conf_init-", pair[1], "-", pair[2], ".pdf")),
+             width = 5, height = 3)
+     })
+```
+
+
+# Merging one cluster
+
+```{r}
+Monocle <- nuclei$Monocle
+Monocle[Monocle %in% c(3, 16)] <- 3
+nuclei$Monocle <- Monocle
+```
+
+## Actual merging
+
+We can now try to merge clusters with the `Dune` function. At each step, the algorithm will print which clustering label is merged (by its number, so `1~SC3` and so on), as well as the pair of clusters that get merged.
+
+```{r}
+merger <- Dune(clusMat = nuclei %>% select(SC3, Seurat, Monocle),
+               verbose = TRUE, keepAll = TRUE)
+```
+
+The output from `Dune` is a list with four compoments:
+
+```{r}
+names(merger)
+```
+
+`initialMat` is the initial matrix. of cluster labels. `currentMat` is the final matrix of cluster labels. `merges` is a matrix that recapitulates what has been printed above, while `ImpARI` list the ARI improvement over the merges.
+
+## ARI improvement
+
+We can now see how much the ARI has improved:
+
+```{r}
+plotARIs(clusMat = merger$currentMat)
+```
+
+The methods now look much more similar, as can be expected.
+
+We can also see how the number of clusters got reduced.
+
+```{r}
+plotPrePost(merger)
+```
+
+For SC3 for example, we can visualize how the clusters got merged:
+
+```{r}
+ConfusionPlot(merger$initialMat[, "SC3"], merger$currentMat[, "SC3"]) +
+  labs(x = "Before merging", y = "After merging")
+```
+
+Finally, the ARIImp function tracks mean ARI improvement as pairs of clusters get merged down.
+
+```{r}
+ARItrend(merger)
+```
+
+# 
+```{r}
+evol <- merger$intermediary[[2]]
+names(evol) <- colnames(merger$initialMat)
+evol <- map2(evol, names(evol), function(ARI, clus){
+  clusters <- unique(merger$initialMat[, clus]) %>% as.numeric() %>%
+    sort() %>% as.character()
+  pairs <- combn(clusters, 2)
+  df <- data.frame(ARI_imp = ARI,
+                   clus1 = pairs[1,],
+                   clus2 = pairs[2, ])
+}) %>% bind_rows(.id = "clus") %>%
+  mutate(clus1 = as.numeric(clus1),
+         clus1 = as.factor(clus1),
+         clus2 = as.numeric(clus2),
+         clus2 = as.factor(clus2))
+ggplot(evol, aes(x = clus1, y = clus2, fill = ARI_imp)) +
+  geom_tile(col = "black") +
+  facet_wrap(~clus, scales = "free") +
+  scale_fill_gradientn(colours = c("#54278F", "#9E9AC8", "#006D2C"),
+    values = scales::rescale(c(min(evol$ARI_imp), 10^(-3), max(evol$ARI_imp)))) +
+  geom_tile(fill = "transparent", col = "red", size = 3,
+            data = evol %>% filter(ARI_imp == max(ARI_imp))) +
+  scale_x_discrete(position = "top") +
+  labs(x = "")
+
+```
+
+# Session
+
+```{r}
+sessionInfo()
+```
