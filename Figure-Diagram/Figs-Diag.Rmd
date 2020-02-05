@@ -1,13 +1,13 @@
 ---
 author: "Hector Roux de Bézieux"
 date: '`r format(Sys.time(), "%d %B , %Y")`'
-title: "Dune's inner workings"
+title: "Diagram for Dune"
 output:
   html_document:
-    toc: true
+    toc: TRUE
     toc_depth: 2
     toc_float: TRUE
-    number_sections: true
+    number_sections: TRUE
     code_download: TRUE
 ---
 
@@ -23,164 +23,216 @@ suppressPackageStartupMessages({
   library(purrr)
   library(Dune)
   library(here)
+  library(DailyHRB)
+  library(cowplot)
 })
 data("nuclei", package = "Dune")
-theme_set(theme_classic())
 ```
 
-# Initial visualization
+# Panel a
+## Initial 2D visualization
 
 We can also see how the three clustering algorithm partitioned the dataset initially:
 
 ```{r}
-nuclei <- nuclei %>% filter(SC3 != 4, SC3 != 24)
-cols <- brewer.pal(n = n_distinct(nuclei$SC3), name = "Dark2")
-names(cols) <- unique(nuclei$SC3)
-p <- ggplot(nuclei, aes(x = x, y = y, col = as.character(SC3))) +
-  geom_point(size = .5) +
-  guides(color = FALSE) +
-  labs(title = "SC3") +
-  scale_color_manual(values = cols)
-p
-ggsave(here("Figure-Diagram", "figures", "Init-SC3.pdf"),
-       p, height = 3, width = 5)
+nuclei <- nuclei %>% filter(!SC3 %in% c(4, 24, 28),
+                            Monocle != 23,
+                            !Seurat %in% c(2, 8))
+inits <- map(c("SC3", "Seurat", "Monocle"), function(clus_algo){
+  df <- nuclei
+  df$clus_algo <- nuclei[, clus_algo]
+  cols <- brewer.pal(n = n_distinct(df$clus_algo), name = "Dark2")
+  names(cols) <- unique(df$clus_algo)
+
+  p <- ggplot(df, aes(x = x, y = y, col = as.character(clus_algo))) +
+    geom_point(size = 2, alpha = .8) +
+    guides(color = FALSE) +
+    ggtitle(label = clus_algo) +
+    scale_color_manual(values = cols) +
+    theme_bw() + 
+    theme(plot.title = element_text(hjust = .5, size = 25),
+          rect = element_blank(),
+          panel.border = element_blank(),
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank())
+  return(p)
+})
 ```
+
+## ARI matrix
 
 The adjusted Rand Index between the three methods can be computed.
 
 ```{r}
-plotARIs(nuclei %>% select(SC3, Seurat, Monocle))
-ggsave(filename = here("Figure-Diagram", "figures", "Init-ARI.pdf"),
-       height = 7, width = 7,
-       plot = plotARIs(nuclei %>% select(SC3, Seurat, Monocle)))
+ARI_mat <- ARIs(nuclei %>% select(SC3, Seurat, Monocle)) %>%
+  as.data.frame() %>%
+  mutate(method1 = rownames(.)) %>%
+  pivot_longer(-method1, names_to = "method2", values_to = "ARI") %>%
+  filter(method1 != method2) %>%
+  group_by(method1, method2) %>%
+  mutate(pair = paste0(max(method1, method2), " - ", min(method1, method2))) %>%
+  ungroup() %>%
+  select(pair, ARI) %>%
+  distinct() %>%
+  arrange(pair)
+ARI <- ggplot(ARI_mat, aes(x = pair, y = 0)) +
+  geom_tile(aes(fill = ARI), col = "black", size = 1) +
+  scale_fill_gradientn(colours = brewer.pal(9, "Spectral"),
+                         limits = c(0, 1)) +
+  geom_text(aes(label = round(ARI, 2)), size = 8) +
+  my_theme() +
+  guides(fill = FALSE) +
+  theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        axis.text.y = element_blank(),
+        axis.text.x = element_text(size = 8, colour = "black")) +
+  scale_x_discrete(
+    limits = c("Seurat - SC3", "SC3 - Monocle", "Seurat - Monocle"))
+rm(ARI_mat)
 ```
+
+## Pairwise confusion matrix
 
 As we can see, the ARI between the three methods is initially quite low.
 
 ```{r}
-p <- ConfusionPlot(nuclei$SC3, nuclei$Monocle) +
-  labs(x = "SC3", y = "Monocle")
-p
-ggsave(plot = p, width = 5, height = 3,
-       filename = here("Figure-Diagram", "figures", "Init-Confusion.pdf"))
+pairs <- combn(c("SC3", "Seurat", "Monocle"), 2) %>%
+  as.data.frame(stringsAsFactors = FALSE)
+confusion <- lapply(pairs, function(pair){
+  p <- ConfusionPlot(nuclei[, pair[1]], nuclei[, pair[2]]) +
+    labs(x = pair[1], y = pair[2]) +
+    scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                          limits = c(0, 1)) +
+    scale_size_continuous(limits = c(1, 420)) +
+    guides(col = FALSE, size = FALSE)
+  return(p)
+})
+rm(pairs)
 ```
 
+```{r}
+legend_size <- get_legend(
+  confusion[[1]] +
+    theme(legend.position = "right") +
+    guides(size = guide_legend(title.position = "top", fill = "grey",
+                               title.hjust = .5)) +
+    theme(legend.margin = margin(0, 0, 0, 0),
+          legend.text = element_text(size = 5),
+          ))
+legend_colour <- get_legend(
+  confusion[[1]] +
+    theme(legend.position = "right") +
+    guides(col = guide_colourbar(title.position = "top", title.hjust = .5)) +
+    theme(legend.margin = margin(0, 0, 0, 0),
+          legend.text = element_text(size = 5),
+          ))
+legend <- plot_grid(legend_size, legend_colour, ncol = 2)
+rm(legend_colour, legend_size)
+```
 
-# Merging one cluster
+## Full panel
+
+```{r}
+first_row <- plot_grid(plotlist = inits, ncol = 3, scale = .95)
+second_row <- plot_grid(plotlist = confusion, ncol = 3, scale = .95)
+ARI <- plot_grid(NULL, ARI, NULL, ncol = 1,
+                 rel_heights = c(.4, 1, .4))
+third_row <- plot_grid(legend, ARI, NULL, ncol = 3, rel_widths = c(1, 1, 1), 
+                       scale = .95)
+p_a <- plot_grid(first_row, NULL, second_row, NULL, third_row,
+                 ncol = 1, rel_heights = c(2, .5, 2, .3, 1))
+rm(first_row, second_row, third_row, inits, confusion, legend, ARI)
+```
+
+# Impact of merging
+## Confusion matrix with rectangle
 
 ```{r}
 pOG <- ConfusionPlot(nuclei$SC3, nuclei$Monocle) +
-  labs(x = "SC3", y = "Monocle")
-SC3 <- nuclei$SC3
+  labs(x = "SC3", y = "Monocle") +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                          limits = c(0, 1)) +
+    scale_size_continuous(limits = c(1, 420)) +
+  guides(col = FALSE, size = FALSE) +
+  annotate("tile",  x = 4.5, y = "20", fill = "NA", col = "black", width = 2,
+           height = 5, size = 2) +
+  annotate("curve", x = 4, y  = "20", yend = "20", xend = 5,
+           arrow = arrow(length = unit(5, "pt"))) +
+  annotate("curve", x = 4, y  = "19", yend = "19", xend = 5,
+           arrow = arrow(length = unit(5, "pt")), curvature = -.5)
+pOG
+```
+
+## Confusion matrix after merging
+
+```{r}
 df <- nuclei
+SC3 <- nuclei$SC3
 SC3[SC3 %in% c(21, 20)] <- 20
 df$SC3 <- SC3
-
-p <- ggplot(df, aes(x = x, y = y, col = as.character(SC3))) +
-  geom_point(size = .5) +
-  guides(color = FALSE) +
-  labs(title = "SC3") +
-  scale_color_manual(values = cols)  
-p
-ggsave(here("Figure-Diagram", "figures", "OneMerge-SC3.pdf"),
-         p, height = 3, width = 5)
-p <- ConfusionPlot(df$SC3, df$Monocle) +
+pMerg <- ConfusionPlot(df$SC3, df$Monocle) +
   labs(x = "SC3", y = "Monocle") +
   scale_x_discrete(limits = levels(pOG$data$x)) +
-  scale_y_discrete(limits = levels(pOG$data$y))
-p
-ggsave(plot = p, width = 5, height = 3,
-       filename = here("Figure-Diagram", "figures", "OneMerge-Confusion.pdf"))
+  scale_y_discrete(limits = levels(pOG$data$y)) +
+  scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
+                          limits = c(0, 1)) +
+  scale_size_continuous(limits = c(1, 420)) +
+  guides(col = FALSE, size = FALSE) +
+  annotate("tile",  x = 4.5, y = "20", fill = "NA", col = "black", width = 2,
+           height = 5, size = 2)
 
-plotARIs(df %>% select(SC3, Seurat, Monocle))
-ggsave(filename = here("Figure-Diagram", "figures", "OneMerge-ARI.pdf"),
-       height = 7, width = 7,
-       plot = plotARIs(df %>% select(SC3, Seurat, Monocle)))
+pMerg
+rm(SC3, nuclei)
 ```
 
-## Actual merging
+## ARI matrix
 
 ```{r}
-clusMat <- nuclei %>% select(SC3, Seurat, Monocle)
-rownames(clusMat) <- nuclei$cells
-merger <- Dune(clusMat = clusMat, verbose = TRUE, keepAll = TRUE)
+ARI_mat <- ARIs(df %>% select(SC3, Seurat, Monocle)) %>%
+  as.data.frame() %>%
+  mutate(method1 = rownames(.)) %>%
+  pivot_longer(-method1, names_to = "method2", values_to = "ARI") %>%
+  filter(method1 != method2) %>%
+  group_by(method1, method2) %>%
+  mutate(pair = paste0(max(method1, method2), " - ", min(method1, method2))) %>%
+  ungroup() %>%
+  select(pair, ARI) %>%
+  distinct() %>%
+  arrange(pair)
+ARI_Final <- ggplot(ARI_mat, aes(x = pair, y = 0)) +
+  geom_tile(aes(fill = ARI), col = "black", size = 1) +
+  scale_fill_gradientn(colours = brewer.pal(9, "Spectral"),
+                         limits = c(0, 1)) +
+  geom_text(aes(label = round(ARI, 2)), size = 8) +
+  my_theme() +
+  guides(fill = FALSE) +
+  theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        axis.text.y = element_blank(),
+        axis.text.x = element_text(size = 8, colour = "black")) +
+  scale_x_discrete(
+    limits = c("Seurat - SC3", "SC3 - Monocle", "Seurat - Monocle"))
+rm(ARI_mat, df)
 ```
 
-## ARI improvement
-
-We can now see how much the ARI has improved:
+## Full panel
 
 ```{r}
-df <- merger$currentMat %>%
-  mutate(cells = rownames(merger$currentMat)) %>%
-  full_join(nuclei %>% select(x, y, cells))
-p <- ggplot(df,
-            aes(x = x, y = y, col = as.character(SC3))) +
-  geom_point(size = .5) +
-  guides(color = FALSE) +
-  labs(title = "SC3") +
-  scale_color_manual(values = cols)  
-p
-ggsave(here("Figure-Diagram", "figures", "AllMerge-SC3.pdf"),
-         p, height = 3, width = 5)
-p <- ConfusionPlot(df$SC3, df$Monocle) +
-  labs(x = "SC3", y = "Monocle") +
-  scale_x_discrete(limits = levels(pOG$data$x)) +
-  scale_y_discrete(limits = levels(pOG$data$y))
-p
-ggsave(plot = p, width = 5, height = 3,
-       filename = here("Figure-Diagram", "figures", "AllMerge-Confusion.pdf"))
-
-plotARIs(df %>% select(SC3, Seurat, Monocle))
-ggsave(filename = here("Figure-Diagram", "figures", "AllMerge-ARI.pdf"),
-       height = 7, width = 7,
-       plot = plotARIs(df %>% select(SC3, Seurat, Monocle)))
+ARI_Final <- plot_grid(NULL, ARI_Final, NULL, ncol = 1, 
+                       rel_heights = c(1, 1, 1)) 
+p_b <- plot_grid(pOG, pMerg, NULL, ARI_Final, ncol = 4, 
+                 rel_widths = c(1, 1, .2, 1), scale = .95)
+rm(ARI_Final, pMerg, pOG)
 ```
 
-```{r, eval = FALSE}
-ARI <- ARIImp(merger)
-df <- data.frame(step = 0:length(merger$ImpARI),
-                 ARI = ARI)
-p <- ggplot(df, aes(x = step, y = ARI)) +
-  geom_path(size = 2) +
-  scale_x_continuous(breaks = c(0, length(merger$ImpARI)),
-                       labels = c("Initial", "Final"))  +
-  theme_classic() +
-  theme(rect = element_blank()) +
-  labs(x = "Merging steps", y = "mean ARI between partitions")
-ggsave(plot = p, width = 7, height = 7,
-       filename = here("Figure-Diagram", "figures", "ARI-Imp.pdf"))
-```
+# All together
 
-```{r, eval = FALSE}
-baseMat <- merger$initialMat
-n_clus <- lapply(1:nrow(merger$merges), function(m){
-  diff <- rep(0, ncol(baseMat))
-  diff[merger$merges[m, 1]] <- -1
-  matrix(diff, nrow = 1)
-  }) %>%
-    do.call('rbind', args = .)
-n_clus <- rbind(apply(baseMat, 2, n_distinct) %>% matrix(data = ., nrow = 1),
-                n_clus)
-n_clus <- apply(n_clus, 2, cumsum)
-colnames(n_clus) <- colnames(merger$initialMat)
-df <- data.frame(step = 0:length(merger$ImpARI),
-                 n_clus) %>%
-  pivot_longer(-step, values_to = "n_clus", names_to = "Partition")
-p <- ggplot(df,
-            aes(x = step, y = n_clus, col = Partition, group = Partition)) +
-  geom_path(size = 2, alpha = .7) +
-  scale_x_continuous(breaks = c(0, length(merger$ImpARI)),
-                       labels = c("Initial", "Final"))  +
-  theme_classic() +
-  theme(rect = element_blank()) +
-  labs(x = "Merging steps", y = "Number of clusters", col = "") +
-  scale_color_brewer(palette = "Set1") +
-  guides(col = guide_legend(override.aes = list(alpha = 1))) +
-  theme(legend.position = c(.85, .8),
-        legend.title.align = 0.5)
-ggsave(plot = p23, width = 6, height = 2 * 7 / 3,
-       filename = here("Figure-Dune", "figures", "number_clusters.png"),
-       bg = "transparent")
-p23
+```{r}
+p <- plot_grid(p_a, NULL, p_b, rel_heights = c(10, .5, 3), ncol = 1,
+               labels = c("a)", "", "b)"), label_size = 30)
+save_plot(filename = here("Figure-Diagram", "figures", "panel.svg"),
+          plot = p, base_height = 13.5, base_width = 10)
 ```
