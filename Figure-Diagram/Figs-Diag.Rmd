@@ -38,7 +38,7 @@ We can also see how the three clustering algorithm partitioned the dataset initi
 nuclei <- nuclei %>% filter(!SC3 %in% c(4, 24, 28),
                             Monocle != 23,
                             !Seurat %in% c(2, 8))
-inits <- map(c("SC3", "Seurat", "Monocle"), function(clus_algo){
+inits <- map(c("SC3", "Monocle", "Seurat"), function(clus_algo){
   df <- nuclei
   df$clus_algo <- nuclei[, clus_algo]
   cols <- brewer.pal(n = n_distinct(df$clus_algo), name = "Dark2")
@@ -65,7 +65,7 @@ inits <- map(c("SC3", "Seurat", "Monocle"), function(clus_algo){
 The adjusted Rand Index between the three methods can be computed.
 
 ```{r}
-ARI_mat <- ARIs(nuclei %>% select(SC3, Seurat, Monocle)) %>%
+ARI_mat <- ARIs(nuclei %>% select(SC3, Monocle, Seurat)) %>%
   as.data.frame() %>%
   mutate(method1 = rownames(.)) %>%
   pivot_longer(-method1, names_to = "method2", values_to = "ARI") %>%
@@ -89,7 +89,7 @@ ARI <- ggplot(ARI_mat, aes(x = pair, y = 0)) +
         axis.text.y = element_blank(),
         axis.text.x = element_text(size = 8, colour = "black")) +
   scale_x_discrete(
-    limits = c("Seurat - SC3", "SC3 - Monocle", "Seurat - Monocle"))
+    limits = c("SC3 - Monocle", "Seurat - SC3", "Seurat - Monocle"))
 rm(ARI_mat)
 ```
 
@@ -98,7 +98,7 @@ rm(ARI_mat)
 As we can see, the ARI between the three methods is initially quite low.
 
 ```{r}
-pairs <- combn(c("SC3", "Seurat", "Monocle"), 2) %>%
+pairs <- combn(c("SC3", "Monocle", "Seurat"), 2) %>%
   as.data.frame(stringsAsFactors = FALSE)
 confusion <- lapply(pairs, function(pair){
   p <- ConfusionPlot(nuclei[, pair[1]], nuclei[, pair[2]]) +
@@ -115,20 +115,24 @@ rm(pairs)
 ```{r}
 legend_size <- get_legend(
   confusion[[1]] +
-    theme(legend.position = "right") +
+    theme(legend.position = "bottom") +
     guides(size = guide_legend(title.position = "top", fill = "grey",
                                title.hjust = .5)) +
-    theme(legend.margin = margin(0, 0, 0, 0),
-          legend.text = element_text(size = 5),
-          ))
+    # theme(legend.margin = margin(0, 0, 0, 0),
+    #       legend.text = element_text(size = 5),
+    #       ) +
+  NULL)
 legend_colour <- get_legend(
   confusion[[1]] +
-    theme(legend.position = "right") +
-    guides(col = guide_colourbar(title.position = "top", title.hjust = .5)) +
-    theme(legend.margin = margin(0, 0, 0, 0),
-          legend.text = element_text(size = 5),
-          ))
-legend <- plot_grid(legend_size, legend_colour, ncol = 2)
+    labs(col = "% of Overlap") +
+    theme(legend.position = "bottom") +
+    guides(col = guide_colourbar(title.position = "top", title.hjust = .5,
+                                 barwidth = unit(.4, "npc"))) +
+    # theme(legend.margin = margin(0, 0, 0, 0),
+    #       legend.text = element_text(size = 5),
+    #       ) +
+    NULL)
+legend <- plot_grid(legend_colour, legend_size, ncol = 1)
 rm(legend_colour, legend_size)
 ```
 
@@ -139,10 +143,11 @@ first_row <- plot_grid(plotlist = inits, ncol = 3, scale = .95)
 second_row <- plot_grid(plotlist = confusion, ncol = 3, scale = .95)
 ARI <- plot_grid(NULL, ARI, NULL, ncol = 1,
                  rel_heights = c(.4, 1, .4))
-third_row <- plot_grid(legend, ARI, NULL, ncol = 3, rel_widths = c(1, 1, 1), 
-                       scale = .95)
-p_a <- plot_grid(first_row, NULL, second_row, NULL, third_row,
-                 ncol = 1, rel_heights = c(2, .5, 2, .3, 1))
+legend <- plot_grid(NULL, legend, NULL, ncol = 1, rel_heights = c(.2, 1, .2))
+third_row <- plot_grid(NULL, legend, NULL, ARI, ncol = 4,
+                       rel_widths = c(.4, 1, .9, 1), scale = .95)
+p_a <- plot_grid(first_row, NULL, second_row, third_row,
+                 ncol = 1, rel_heights = c(2, .5, 2, 1))
 rm(first_row, second_row, third_row, inits, confusion, legend, ARI)
 ```
 
@@ -214,17 +219,17 @@ ARI_Final <- ggplot(ARI_mat, aes(x = pair, y = 0)) +
         axis.text.y = element_blank(),
         axis.text.x = element_text(size = 8, colour = "black")) +
   scale_x_discrete(
-    limits = c("Seurat - SC3", "SC3 - Monocle", "Seurat - Monocle"))
+    limits = c("SC3 - Monocle", "Seurat - SC3", "Seurat - Monocle"))
 rm(ARI_mat, df)
 ```
 
 ## Full panel
 
 ```{r}
-ARI_Final <- plot_grid(NULL, ARI_Final, NULL, ncol = 1, 
-                       rel_heights = c(1, 1, 1)) 
-p_b <- plot_grid(pOG, pMerg, NULL, ARI_Final, ncol = 4, 
-                 rel_widths = c(1, 1, .2, 1), scale = .95)
+ARI_Final <- plot_grid(ARI_Final, NULL, ncol = 1, 
+                       rel_heights = c(1, 2)) 
+p_b <- plot_grid(NULL, pOG, pMerg, NULL, ARI_Final, ncol = 5, 
+                 rel_widths = c(.1, 1, 1, .2, 1), scale = .95)
 rm(ARI_Final, pMerg, pOG)
 ```
 
@@ -232,7 +237,42 @@ rm(ARI_Final, pMerg, pOG)
 
 ```{r}
 p <- plot_grid(p_a, NULL, p_b, rel_heights = c(10, .5, 3), ncol = 1,
-               labels = c("a)", "", "b)"), label_size = 30)
+               labels = c("a)", "", "b)"), label_size = 30) +
+  # Vertical arrows from first panel
+  draw_line(x = c(.185, .185), y = c(.74, .66),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  draw_line(x = c(.52, .52), y = c(.74, .66),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  draw_line(x = c(.85, .85), y = c(.74, .66),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  # diagonal arrows
+  draw_line(x = c(.3, .41), y = c(.74, .66),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  draw_line(x = c(.41, .3), y = c(.74, .66),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  draw_line(x = c(0.63, .74), y = c(.74, .66),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  draw_line(x = c(.74, 0.63), y = c(.74, .66),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  # arrow to ARI matrix
+  draw_line(x = c(.28, .72), y = c(.41, .33),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  draw_line(x = c(0.6, .85), y = c(.41, .36),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  draw_line(x = c(.85, 0.93), y = c(.42, .36),
+            arrow = arrow(angle = 45, length = unit(10, "pt"),
+                          type = "closed")) +
+  NULL
+
 save_plot(filename = here("Figure-Diagram", "figures", "panel.svg"),
           plot = p, base_height = 13.5, base_width = 10)
 ```
