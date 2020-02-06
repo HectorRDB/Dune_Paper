@@ -268,7 +268,7 @@ p <- plot_grid(p_a, NULL, p_b, rel_heights = c(10, .5, 3), ncol = 1,
   draw_line(x = c(0.6, .85), y = c(.41, .36),
             arrow = arrow(angle = 45, length = unit(10, "pt"),
                           type = "closed")) +
-  draw_line(x = c(.85, 0.93), y = c(.42, .36),
+  draw_line(x = c(.85, 0.93), y = c(.40, .36),
             arrow = arrow(angle = 45, length = unit(10, "pt"),
                           type = "closed")) +
   NULL
