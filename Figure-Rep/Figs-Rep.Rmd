@@ -125,7 +125,7 @@ ggsave(plot = p2, filename = here("Figure-Rep", "figures", "example.png"),
 
 ```{r}
 df <- bind_rows(
-  "Brain" = read.table(here("Figure-Rep", "data", "Brain.txt"), header = TRUE,
+  "Brain-AIBS" = read.table(here("Figure-Rep", "data", "Brain.txt"), header = TRUE,
                        stringsAsFactors = FALSE),
   "Pancreas" = read.table(here("Figure-Rep", "data", "Pancreas.txt"),
                           header = TRUE, stringsAsFactors = FALSE),
@@ -176,8 +176,8 @@ ggsave(plot = p3, filename = here("Figure-Rep", "figures", "all_comp.png"),
 ```{r}
 # first align the top-row plot (p3) with the left-most plot of the
 # bottom row (p1)
-plots <- align_plots(p1, p3 + theme(legend.position = "bottom"),
-                     align = 'v', axis = 'l')
+plots <- cowplot::align_plots(p1, p3 + theme(legend.position = "bottom"),
+                                align = 'v', axis = 'l')
 # then build the top row
 top_row <- plot_grid(plots[[1]], p2, labels = c('a)', 'b)'), label_size = 18,
                      scale = .9)

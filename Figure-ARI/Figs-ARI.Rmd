@@ -122,7 +122,12 @@ df <- bind_rows(
   "Pancreas" = read.table(here("Figure-ARI", "data", "Pancreas.txt"),
                           header = TRUE, stringsAsFactors = FALSE)
   ) %>%
+  mutate(dataset = 
+           case_when(dataset == "SMARTer_cells_MOp" ~ "AIBS scRNA-Smart",
+                     dataset == "SMARTer_nuclei_MOp" ~ "AIBS snRNA-Smart",
+                     TRUE ~ dataset)) %>%
   mutate(scenario = paste0(dataset, "\n", method, "_", comp))
+  
 df <- df %>% arrange(scenario)
 rank <- df %>%
   group_by(scenario) %>%
