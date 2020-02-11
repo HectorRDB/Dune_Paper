@@ -104,7 +104,7 @@ df <- mergers$initialMat %>% mutate(cells = rownames(.)) %>%
 p <- ggplot(df, aes(x = x, y = y, col = overlap)) +
   geom_point(size = .8, alpha = .7) +
   my_theme() +
-  labs(x = "t-SNE 1", y = "t-SNE 2", col = "Overlap") +
+  labs(x = "t-SNE 1", y = "t-SNE 2", col = "Jaccard Index") +
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"))
 p
 ggsave(plot = p, filename = here("Figure-Dune", "figures", "2d.png"),

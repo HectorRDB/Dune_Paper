@@ -115,7 +115,7 @@ rm(pairs)
 ```{r}
 legend_size <- get_legend(
   confusion[[1]] +
-    theme(legend.position = "bottom") +
+    theme(legend.position = "bottom", plot.background = element_blank()) +
     guides(size = guide_legend(title.position = "top", fill = "grey",
                                title.hjust = .5)) +
     # theme(legend.margin = margin(0, 0, 0, 0),
@@ -124,8 +124,8 @@ legend_size <- get_legend(
   NULL)
 legend_colour <- get_legend(
   confusion[[1]] +
-    labs(col = "% of Overlap") +
-    theme(legend.position = "bottom") +
+    labs(col = "Jaccard Index") +
+    theme(legend.position = "bottom", plot.background = element_blank()) +
     guides(col = guide_colourbar(title.position = "top", title.hjust = .5,
                                  barwidth = unit(.4, "npc"))) +
     # theme(legend.margin = margin(0, 0, 0, 0),
@@ -166,7 +166,8 @@ pOG <- ConfusionPlot(nuclei$SC3, nuclei$Monocle) +
   annotate("curve", x = 4, y  = "20", yend = "20", xend = 5,
            arrow = arrow(length = unit(5, "pt"))) +
   annotate("curve", x = 4, y  = "19", yend = "19", xend = 5,
-           arrow = arrow(length = unit(5, "pt")), curvature = -.5)
+           arrow = arrow(length = unit(5, "pt")), curvature = -.5) +
+  theme(plot.background = element_blank())
 pOG
 ```
 
@@ -186,7 +187,8 @@ pMerg <- ConfusionPlot(df$SC3, df$Monocle) +
   scale_size_continuous(limits = c(1, 420)) +
   guides(col = FALSE, size = FALSE) +
   annotate("tile",  x = 4.5, y = "20", fill = "NA", col = "black", width = 2,
-           height = 5, size = 2)
+           height = 5, size = 2) +
+  theme(plot.background = element_blank())
 
 pMerg
 rm(SC3, nuclei)
@@ -217,7 +219,8 @@ ARI_Final <- ggplot(ARI_mat, aes(x = pair, y = 0)) +
         axis.ticks = element_blank(),
         axis.line = element_blank(),
         axis.text.y = element_blank(),
-        axis.text.x = element_text(size = 8, colour = "black")) +
+        axis.text.x = element_text(size = 8, colour = "black"),
+        plot.background = element_blank()) +
   scale_x_discrete(
     limits = c("SC3 - Monocle", "Seurat - SC3", "Seurat - Monocle"))
 rm(ARI_mat, df)
@@ -236,8 +239,8 @@ rm(ARI_Final, pMerg, pOG)
 # All together
 
 ```{r}
-p <- plot_grid(p_a, NULL, p_b, rel_heights = c(10, .5, 3), ncol = 1,
-               labels = c("a)", "", "b)"), label_size = 30) +
+p <- plot_grid(p_a, ggplot() + theme_void(), p_b, rel_heights = c(10, .5, 3),
+               ncol = 1, labels = c("a)", "", "b)"), label_size = 30) +
   # Vertical arrows from first panel
   draw_line(x = c(.185, .185), y = c(.74, .66),
             arrow = arrow(angle = 45, length = unit(10, "pt"),
@@ -268,8 +271,11 @@ p <- plot_grid(p_a, NULL, p_b, rel_heights = c(10, .5, 3), ncol = 1,
   draw_line(x = c(.85, 0.93), y = c(.40, .36),
             arrow = arrow(angle = 45, length = unit(10, "pt"),
                           type = "closed")) +
+  # ARI text
+  draw_text(text = "adjusted Rand Index (ARI)", x = .85, y = .26, size = 15) +
   NULL
 
+# Main curved arrows
 save_plot(filename = here("Figure-Diagram", "figures", "panel.svg"),
           plot = p, base_height = 13.5, base_width = 10)
 ```

@@ -92,7 +92,7 @@ df <- bind_rows(
 ) %>%
   filter(clustering_name == "Seurat")
 p2 <- ggplot(df %>% arrange(nb_clusters),
-       aes(x = nb_clusters, y = fraction_replicable_cells, col = Merge_method)) +
+       aes(x = nb_clusters / 2, y = fraction_replicable_cells, col = Merge_method)) +
   geom_line(aes(linetype = clustering_name), size = 2, alpha = .9,
             arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
                           type = "closed"),
@@ -105,11 +105,11 @@ p2 <- ggplot(df %>% arrange(nb_clusters),
     override.aes = list(size = 3, alpha = 1))
   ) +
   my_theme() +
-  annotate("text", x = max(df$nb_clusters) - 1,
+  annotate("text", x = max(df$nb_clusters / 2) - .5,
            y = min(df$fraction_replicable_cells) + .01,
            label = "Start", fontface = "bold",
            size = 4) +
-  scale_x_continuous(breaks = c(40, 45, 50, 55)) +
+  # scale_x_continuous(breaks = c(, 25, 55)) +
   theme(legend.position = c(.9, .8),
         legend.title.align = 0.5,
         legend.title = element_text(size = 18),
