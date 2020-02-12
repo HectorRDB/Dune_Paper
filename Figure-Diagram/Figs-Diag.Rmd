@@ -106,7 +106,8 @@ confusion <- lapply(pairs, function(pair){
     scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
                           limits = c(0, 1)) +
     scale_size_continuous(limits = c(1, 420)) +
-    guides(col = FALSE, size = FALSE)
+    guides(col = FALSE, size = FALSE) +
+    theme(axis.title = element_text(size = 15))
   return(p)
 })
 rm(pairs)
@@ -167,8 +168,8 @@ pOG <- ConfusionPlot(nuclei$SC3, nuclei$Monocle) +
            arrow = arrow(length = unit(5, "pt"))) +
   annotate("curve", x = 4, y  = "19", yend = "19", xend = 5,
            arrow = arrow(length = unit(5, "pt")), curvature = -.5) +
-  theme(plot.background = element_blank())
-pOG
+  theme(plot.background = element_blank(),
+        axis.title = element_text(size = 15))
 ```
 
 ## Confusion matrix after merging
@@ -188,9 +189,8 @@ pMerg <- ConfusionPlot(df$SC3, df$Monocle) +
   guides(col = FALSE, size = FALSE) +
   annotate("tile",  x = 4.5, y = "20", fill = "NA", col = "black", width = 2,
            height = 5, size = 2) +
-  theme(plot.background = element_blank())
-
-pMerg
+  theme(plot.background = element_blank(),
+        axis.title = element_text(size = 15))
 rm(SC3, nuclei)
 ```
 
@@ -240,7 +240,7 @@ rm(ARI_Final, pMerg, pOG)
 
 ```{r}
 p <- plot_grid(p_a, ggplot() + theme_void(), p_b, rel_heights = c(10, .5, 3),
-               ncol = 1, labels = c("a)", "", "b)"), label_size = 30) +
+               ncol = 1, labels = c("a)", "b)", ""), label_size = 20) +
   # Vertical arrows from first panel
   draw_line(x = c(.185, .185), y = c(.74, .66),
             arrow = arrow(angle = 45, length = unit(10, "pt"),

@@ -52,9 +52,10 @@ legend_common <- plot_grid(legend_common)
 ggsave(plot = legend_common,
        filename = here("Figure-Dune", "figures", "legend.png"),
        bg = "transparent", width = 7, height = 2)
-p1 <- p1 + guides(col = FALSE, size = FALSE)
+p1 <- p1 + guides(col = FALSE, size = FALSE) +
+  theme(axis.title = element_text(size = 18))
 p11 <- p1
-
+p11
 ggsave(plot = p1, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_1.png"),
        bg = "transparent", width = 5, height = 5)
@@ -64,7 +65,6 @@ p2 <- ConfusionPlot(mergers$initialMat[, c("sc3", "Seurat")]) +
                         limits = c(0, 1)) +
   scale_size_continuous(breaks = c(100, 200, 300, 400, 600)) +
   guides(col = FALSE, size = FALSE)
-p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_2.png"),
        bg = "transparent", width = 5, height = 5)
@@ -74,7 +74,6 @@ p3 <- ConfusionPlot(mergers$initialMat[, c("Seurat", "Monocle")]) +
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
                         limits = c(0, 1)) +
   scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
-p3
 ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_before_3.png"),
        bg = "transparent", width = 5, height = 5)
@@ -118,10 +117,7 @@ p1 <- plotARIs(mergers$initialMat) +
   labs(x = "", y = "") +
   theme(plot.title = element_text(hjust = 0.5),
         rect = element_blank()) +
-   theme(axis.text.y = element_text(size = 8),
-        axis.text.x = element_text(size = 8),
-        legend.title = element_text(size = 14, hjust = .5),
-        legend.position = "bottom") +
+   theme(axis.text = element_text(size = 10)) +
   scale_y_discrete(limits = c("Seurat", "sc3", "Monocle"),
                    labels = c("Partition 3", "Partition 2", "Partition 1")) +
   scale_x_discrete(labels = c("Partition 1", "Partition 2", "Partition 3"))
@@ -134,10 +130,7 @@ p2 <- plotARIs(mergers$currentMat) +
   labs(x = "", y = "") +
   theme(plot.title = element_text(hjust = 0.5),
         rect = element_blank()) +
-   theme(axis.text.y = element_text(size = 8),
-        axis.text.x = element_text(size = 8),
-        legend.title = element_text(size = 14, hjust = .5),
-        legend.position = "bottom") +
+   theme(axis.text = element_text(size = 10)) +
   scale_y_discrete(limits = c("Seurat", "sc3", "Monocle"),
                    labels = c("Partition 3", "Partition 2", "Partition 1")) +
   scale_x_discrete(labels = c("Partition 1", "Partition 2", "Partition 3"))
@@ -157,9 +150,10 @@ p1 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Monocle")]) +
                         limits = c(0, 1)) +
   scale_size_continuous(limits = c(0, 1100)) +
   theme(legend.margin = margin(0, 0, 0, 0)) +
-  guides(col = FALSE, size = FALSE)
+  guides(col = FALSE, size = FALSE) +
+  theme(axis.title = element_text(size = 18))
 p21 <- p1 
-p1
+p21
 ggsave(plot = p1, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_1.png"),
        bg = "transparent", width = 5, height = 5)
@@ -169,7 +163,6 @@ p2 <- ConfusionPlot(mergers$currentMat[, c("sc3", "Seurat")]) +
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
                         limits = c(0, 1)) +
   scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
-p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_2.png"),
        bg = "transparent", width = 5, height = 5)
@@ -179,7 +172,6 @@ p3 <- ConfusionPlot(mergers$currentMat[, c("Seurat", "Monocle")]) +
   scale_color_gradientn(colours = brewer.pal(11, "Spectral"),
                         limits = c(0, 1)) +
   scale_size_continuous(breaks = c(100, 200, 300, 400, 600))
-p3
 ggsave(plot = p3, filename = here("Figure-Dune", "figures",
                                   "confusion_plot_after_3.png"),
        bg = "transparent", width = 5, height = 5)
@@ -244,12 +236,12 @@ first_row <- plot_grid(ggdraw() +
       draw_image(here("Figure-Dune", "figures", "confusion_plot_before_1.png")),
       p12, p13, ggdraw() +
       draw_image(here("Figure-Dune", "figures", "legend.png"), scale = 1.5),
-      labels = c('a)', 'b)', 'c)', ''), label_size = 14, ncol = 3, 
+      labels = c('a)', 'b)', 'c)', ''), label_size = 18, ncol = 3, 
       scale = .95, rel_heights = c(1, .3), rel_widths = c(1, 1, 1))
 
 second_row <- plot_grid(ggdraw() +
       draw_image(here("Figure-Dune", "figures", "confusion_plot_after_1.png")),
-      p22, p23, labels = c('d)', 'e)', 'f)'), label_size = 14, scale = .95,
+      p22, p23, labels = c('d)', 'e)', 'f)'), label_size = 18, scale = .95,
       ncol = 3)
 
 # third_row <- plot_grid(p31, p32, labels = c('e)', 'f)'), label_size = 10,
