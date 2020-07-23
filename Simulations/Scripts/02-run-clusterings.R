@@ -83,7 +83,7 @@ for (dataset in c(paste0("sce", 1:4))) {
   
   sc3 <- map_df(ks, function(k){
     SC3 <- sc3(sce, ks = k, svm_max = ncol(sce) + 1, biology = FALSE, 
-               gene_filter = F, n_cores = as.numeric(opt$n), rand_seed = 786907)
+               gene_filter = F, n_cores = NCORES, rand_seed = 786907)
     SC3 <- colData(SC3)[, paste0("sc3_", k, "_clusters")] %>% as.numeric()
     return(SC3)
   })
