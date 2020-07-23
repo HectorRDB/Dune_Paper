@@ -22,10 +22,6 @@ create_simple_balanced_data <- function(nCells, nClus, seed = 19070) {
                                DE = .25, seed = seed))
 }
 
-create_medium_balanced_data <- function(nCells, nClus, seed = 19070) {
-  return(.create_balanced_data(nCells = nCells, nClus = nClus, nBatches = 2,
-                               DE = .1, seed = seed))
-}
 
 create_hard_balanced_data <- function(nCells, nClus, seed = 19070) {
   return(.create_balanced_data(nCells = nCells, nClus = nClus, nBatches = 4,
