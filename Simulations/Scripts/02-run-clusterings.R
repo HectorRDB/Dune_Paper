@@ -41,7 +41,7 @@ for (dataset in c(paste0("sce", 1:4))) {
   sce <- sce[, !(df$libsize.drop | df$feature.drop)]
   sce <- computeSumFactors(sce, sizes = pmin(ncol(sce), seq(20, 120, 20)),
                            min.mean = 0.1)
-  sce <- normalizeCounts(sce)
+  logcounts(sce) <- scater::normalizeCounts(sce)
   # Running Seurat ----
   print("... Running Seurat")
   sSeurat <- CreateSeuratObject(counts = assays(sce)$counts, project = 'allen40K')
