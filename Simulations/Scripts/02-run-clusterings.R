@@ -30,6 +30,7 @@ for (dataset in c(paste0("sce", 1:4))) {
   # We follow the workflow from Duo et al 2018
   # https://github.com/markrobinsonuzh/scRNAseq_clustering_comparison
   sce <- get(dataset)
+  clusters <- sce$Group
   keep_features <- rowSums(counts(sce) > 0) > 0
   sce <- sce[keep_features, ]
   df <- perCellQCMetrics(sce)
@@ -108,13 +109,12 @@ for (dataset in c(paste0("sce", 1:4))) {
     return(zinb)
   })
   
-  ref_clusters <- sce$Groups
   
   for (i in 1:5) {
     type <- paste0("zinb-K-", i * 10)
     reducedDim(sce, type = type) <- zinbW <- reducedDim(zinbWs[[i]])
     TNSE <- Rtsne(zinbW, initial_dims = i  * 10)
-    df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = sce$Group)
+    df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = clusters)
     p <- ggplot(df, aes(x = x, y = y, col = col)) +
       geom_point(size = .4, alpha = .3) +
       theme_classic() +
