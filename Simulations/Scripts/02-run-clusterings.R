@@ -40,6 +40,7 @@ for (dataset in c(paste0("sce", 1:4))) {
                                          type = "lower", log = TRUE)
   df <- as.data.frame(df)
   sce <- sce[, !(df$libsize.drop | df$feature.drop)]
+  clusters <- clusters[!(df$libsize.drop | df$feature.drop)]
   sce <- computeSumFactors(sce, sizes = pmin(ncol(sce), seq(20, 120, 20)),
                            min.mean = 0.1)
   logcounts(sce) <- scater::normalizeCounts(sce)
