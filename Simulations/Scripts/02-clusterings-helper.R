@@ -6,44 +6,28 @@ libs <- c("splatter", "here", "scater", "scran", "Seurat", "dplyr",
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
-rm(libs)
-NCORES <- 10
-BiocParallel::register(MulticoreParam(NCORES))
 
-# Load data ----
-source(here("Simulations", "Scripts", "01-create_data.R"))
-set.seed(101)
-nCells <- 5000
-sce1 <- create_simple_balanced_data(nCells = nCells, nClus = 10, seed = 197)
-sce2 <- create_simple_balanced_data(nCells = nCells, nClus = 20, seed = 197)
-sce3 <- create_hard_balanced_data(nCells = nCells, nClus = 10, seed = 77865)
-sce4 <- create_unbalanced_data(nCells = nCells, nClus = 10, nBatches = 1,
-                               DE = .2, seed = 45678)
-
-# Run clustering
-Seurats <- list()
-SC3s <- list()
-Monocles <- list()
-for (dataset in c(paste0("sce", 1:4))) {
-  print(dataset)
+run_clusterings <- function(sce, id) {
   # Create data ----
   # We follow the workflow from Duo et al 2018
   # https://github.com/markrobinsonuzh/scRNAseq_clustering_comparison
-  sce <- get(dataset)
+  
+  ## Pre-processing ----
   clusters <- sce$Group
   keep_features <- rowSums(counts(sce) > 0) > 0
   sce <- sce[keep_features, ]
   df <- perCellQCMetrics(sce)
   df$libsize.drop <- isOutlier(df$total, nmads = 3,
-                                         type = "lower", log = TRUE)
+                               type = "lower", log = TRUE)
   df$feature.drop <- isOutlier(df$detected, nmads = 3,
-                                         type = "lower", log = TRUE)
+                               type = "lower", log = TRUE)
   df <- as.data.frame(df)
   sce <- sce[, !(df$libsize.drop | df$feature.drop)]
   clusters <- clusters[!(df$libsize.drop | df$feature.drop)]
   sce <- computeSumFactors(sce, sizes = pmin(ncol(sce), seq(20, 120, 20)),
                            min.mean = 0.1)
   logcounts(sce) <- scater::normalizeCounts(sce)
+  
   # Running Seurat ----
   print("... Running Seurat")
   sSeurat <- CreateSeuratObject(counts = assays(sce)$counts, project = 'allen40K')
@@ -69,7 +53,7 @@ for (dataset in c(paste0("sce", 1:4))) {
   
   clusterMatrix <- as.data.frame(clusterMatrix)
   clusterMatrix$cells <- colnames(sce)
-  Seurats[[dataset]] <- clusterMatrix
+  Seurats <- clusterMatrix
   
   # Running SC3 ----
   print("... Running SC3")
@@ -91,7 +75,7 @@ for (dataset in c(paste0("sce", 1:4))) {
   })
   
   sc3$cells <- colnames(sce)
-  SC3s[[dataset]] <- sc3
+  SC3s <- sc3
   
   # Running ZinbWave ----
   vars <- matrixStats::rowVars(logcounts(sce))
@@ -120,8 +104,7 @@ for (dataset in c(paste0("sce", 1:4))) {
       geom_point(size = .4, alpha = .3) +
       theme_classic() +
       labs(x = "dim1", y = "dim2")
-    ggsave(here("Simulations", "Figures",
-                paste0(dataset, "_K_", i * 10, ".png"), p))
+    ggsave(paste0(loc, "_K_", i * 10, ".png"), p)
   }
   
   # Running Monocle ----
@@ -145,12 +128,11 @@ for (dataset in c(paste0("sce", 1:4))) {
   })
   
   clusterMatrix$cells <- colnames(sce)
-  Monocles[[dataset]] <- clusterMatrix
+  Monocles <- clusterMatrix
+  
+  # Save results ----
+  write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
+  write.csv(Seurats, here("Simulations", "Data", paste0("SC3", id, ".csv")))
+  write.csv(Seurats, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
+  return()
 }
-
-Seurats <- bind_rows(Seurats, .id = dataset)
-write.csv(Seurats, here("Simulations", "Data", "Seurats.csv"))
-SC3s <- bind_rows(SC3s, .id = dataset)
-write.csv(Seurats, here("Simulations", "Data", "SC3s.csv"))
-Monocles <- bind_rows(Monocles, .id = dataset)
-write.csv(Seurats, here("Simulations", "Data", "Monocles.csv"))
