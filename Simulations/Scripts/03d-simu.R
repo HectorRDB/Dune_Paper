@@ -7,7 +7,7 @@ suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
 rm(libs)
-NCORES <- 10
+NCORES <- 8
 BiocParallel::register(MulticoreParam(NCORES))
 
 # Load data ----
