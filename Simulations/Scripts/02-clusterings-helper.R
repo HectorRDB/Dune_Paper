@@ -104,7 +104,8 @@ run_clusterings <- function(sce, id) {
       geom_point(size = .4, alpha = .3) +
       theme_classic() +
       labs(x = "dim1", y = "dim2")
-    ggsave(paste0(loc, "_K_", i * 10, ".png"), p)
+    ggsave(here("Simulations", "Figures", paste0(id, "_K_", i * 10, ".png")),
+           p)
   }
   
   # Running Monocle ----
