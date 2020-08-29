@@ -19,7 +19,7 @@ rm(libs)
 
 create_simple_balanced_data <- function(nCells, nClus, seed = 19070) {
   return(.create_balanced_data(nCells = nCells, nClus = nClus, nBatches = 1,
-                               DE = .25, seed = seed))
+                               DE = .1, seed = seed))
 }
 
 

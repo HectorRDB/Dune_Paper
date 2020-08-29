@@ -2,7 +2,7 @@
 libs <- c("splatter", "here", "scater", "scran", "Seurat", "dplyr",
           "stringr", "SingleCellExperiment", "SC3", "Rtsne", "clusterExperiment",
           "BiocParallel", "zinbwave", "matrixStats", "ggplot2", "reticulate",
-          "monocle3", "purrr", "mclust", "flexclust")
+          "purrr", "mclust", "flexclust", "monocle3")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -87,26 +87,18 @@ run_clusterings <- function(sce, id) {
   whichGenes <- rownames(sce)[ind]
   sceVar <- sce[ind,]
   
-  zinbWs <- lapply( 1:5 * 10, function(zinbDim) {
-    cat("Running with K = ", zinbDim, " on the filtered data\n")
-    cat("Time to run zinbwave (seconds):\n")
-    print(system.time(zinb <- zinbwave(sceVar, K = zinbDim)))
-    return(zinb)
-  })
+  cat("Running with K = ", zinbDim, " on the filtered data\n")
+  cat("Time to run zinbwave (seconds):\n")
+  print(system.time(zinbW <- zinbwave(sceVar, K = 30, X = "~Batch")))
   
-  
-  for (i in 1:5) {
-    type <- paste0("zinb-K-", i * 10)
-    reducedDim(sce, type = type) <- zinbW <- reducedDim(zinbWs[[i]])
-    TNSE <- Rtsne(zinbW, initial_dims = i  * 10)
-    df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = clusters)
-    p <- ggplot(df, aes(x = x, y = y, col = col)) +
-      geom_point(size = .4, alpha = .3) +
-      theme_classic() +
-      labs(x = "dim1", y = "dim2")
-    ggsave(here("Simulations", "Figures", paste0(id, "_K_", i * 10, ".png")),
-           p)
-  }
+  reducedDim(sce, type = "zinb-K-30") <- zinbW
+  TNSE <- Rtsne(zinbW, initial_dims = 30)
+  df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = clusters)
+  p <- ggplot(df, aes(x = x, y = y, col = col)) +
+    geom_point(size = .4, alpha = .3) +
+    theme_classic() +
+    labs(x = "dim1", y = "dim2")
+  ggsave(here("Simulations", "Figures", paste0(id, "_K_30.png")), p)
   
   # Running Monocle ----
   pd <- as.data.frame(sce@colData)
