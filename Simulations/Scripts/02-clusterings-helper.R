@@ -79,17 +79,19 @@ run_clusterings <- function(sce, id) {
   
   # Running ZinbWave ----
   vars <- matrixStats::rowVars(logcounts(sce))
-  print("... Running Zinbwave")
-  cat("...... Running with K = 0 on the full data\n")
-  cat("...... Time to run zinbwave (seconds):\n")
-  
   ind <- vars > sort(vars,decreasing = TRUE)[1000]
   whichGenes <- rownames(sce)[ind]
   sceVar <- sce[ind,]
   
   cat("Running with K = 30 on the filtered data\n")
   cat("Time to run zinbwave (seconds):\n")
-  print(system.time(zinbW <- zinbwave(sceVar, K = 30, X = "~Batch")))
+  sceVar$Batch <- as.factor(sceVar$Batch)
+  if (nlevels(sceVar$Batch) > 1) {
+    print(system.time(zinbW <- zinbwave(Y = sceVar, X = "~Batch", K = 30)))  
+  } else {
+    print(system.time(zinbW <- zinbwave(Y = sceVar, K = 30)))
+  }
+  
   
   reducedDim(sce, type = "zinb-K-30") <- zinbW
   TNSE <- Rtsne(zinbW, initial_dims = 30)
