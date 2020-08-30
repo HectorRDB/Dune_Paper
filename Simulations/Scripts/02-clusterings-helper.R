@@ -87,7 +87,7 @@ run_clusterings <- function(sce, id) {
   whichGenes <- rownames(sce)[ind]
   sceVar <- sce[ind,]
   
-  cat("Running with K = ", zinbDim, " on the filtered data\n")
+  cat("Running with K = 30 on the filtered data\n")
   cat("Time to run zinbwave (seconds):\n")
   print(system.time(zinbW <- zinbwave(sceVar, K = 30, X = "~Batch")))
   
