@@ -96,7 +96,7 @@ run_clusterings <- function(sce, id) {
   
   
   reducedDim(sce, type = "zinb-K-30") <- reducedDim(zinbW)
-  TNSE <- Rtsne(zinbW, initial_dims = 30)
+  TNSE <- Rtsne(reducedDim(zinbW), initial_dims = 30)
   df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = clusters)
   p <- ggplot(df, aes(x = x, y = y, col = col)) +
     geom_point(size = .4, alpha = .3) +
@@ -107,7 +107,7 @@ run_clusterings <- function(sce, id) {
   # Running Monocle ----
   pd <- as.data.frame(sce@colData)
   fd <- data.frame(gene_short_name = rownames(assays(sce)$counts))
-  zinbW <- reducedDim(sce, type = reducedDimNames(sce)[3])
+  zinbW <- reducedDim(sce, type = "zinb-K-30")
   rownames(fd) <- rownames(assays(sce)$counts)
   sce <- new_cell_data_set(assays(sce)$counts,
                            cell_metadata = pd,
