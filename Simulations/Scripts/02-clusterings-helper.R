@@ -27,6 +27,7 @@ run_clusterings <- function(sce, id) {
   sce <- computeSumFactors(sce, sizes = pmin(ncol(sce), seq(20, 120, 20)),
                            min.mean = 0.1)
   logcounts(sce) <- scater::normalizeCounts(sce)
+  sce_og <- sce
   
   # Running Seurat ----
   print("... Running Seurat")
@@ -64,7 +65,7 @@ run_clusterings <- function(sce, id) {
   K <- metadata(sce)$sc3$k_estimation
   
   print(paste0("...... The optimal number of clusters defined by sc3 is ", K))
-  ks <- 10:(K + 10)
+  ks <- min(K, 10):(K + 10)
   names(ks) <- ks - K
   
   sc3 <- map_df(ks, function(k){
@@ -78,6 +79,7 @@ run_clusterings <- function(sce, id) {
   SC3s <- sc3
   
   # Running ZinbWave ----
+  sce <- sce_og
   vars <- matrixStats::rowVars(logcounts(sce))
   ind <- vars > sort(vars,decreasing = TRUE)[1000]
   whichGenes <- rownames(sce)[ind]
