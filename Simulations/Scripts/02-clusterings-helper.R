@@ -95,7 +95,7 @@ run_clusterings <- function(sce, id) {
   }
   
   
-  reducedDim(sce, type = "zinb-K-30") <- zinbW
+  reducedDim(sce, type = "zinb-K-30") <- reducedDim(zinbW)
   TNSE <- Rtsne(zinbW, initial_dims = 30)
   df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = clusters)
   p <- ggplot(df, aes(x = x, y = y, col = col)) +
