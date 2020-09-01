@@ -112,7 +112,8 @@ run_clusterings <- function(sce, id) {
   sce <- new_cell_data_set(assays(sce)$counts,
                            cell_metadata = pd,
                            gene_metadata = fd)
-  sce@reducedDims <- SimpleList("PCA" = zinbW)
+  # sce@reducedDims <- SimpleList("PCA" = zinbW)
+  reducedDims(sce, "Aligned") <- zinbW
   sce <- reduce_dimension(sce)
   ks <- c(2:9, seq(from = 10, to = 100, by = 5))
   names(ks) <- paste0("k_", ks)
