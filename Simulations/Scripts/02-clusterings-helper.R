@@ -131,5 +131,27 @@ run_clusterings <- function(sce, id) {
   write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
   write.csv(Seurats, here("Simulations", "Data", paste0("SC3", id, ".csv")))
   write.csv(Seurats, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
+  
+  # RSEC ----
+  sequential <- FALSE
+  subsample <- T
+  clusterFunction <- "pam"
+  sce <- sce_og
+  reduceMeth <- reducedDimNames(sce)
+  
+  print(system.time(
+    sce <- RSEC(sce, k0s = seq(10, 50, by = 5), alphas = c(0.1, 0.3),
+                reduceMethod = reduceMeth, sequential = sequential,
+                subsample = subsample, minSizes = 1, betas = c(0.8), 
+                clusterFunction = clusterFunction, ncores = NCORES, run = TRUE,
+                isCount = FALSE, dendroReduce = reduceMeth[length(reduceMeth)],
+                dendroNDims = 50, consensusProportion = 0.7, verbose = TRUE,
+                random.seed = 23578, mergeMethod = "adjP", mergeCutoff = 0.05,
+                subsampleArgs = list(resamp.num = 50, clusterFunction = "kmeans"),
+                mergeLogFCcutoff = 1, consensusMinSize = 10)
+  ))
+  
+  # Saving objects
+  saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
   return()
 }
