@@ -6,6 +6,7 @@ libs <- c("splatter", "here", "scater", "scran", "Seurat", "dplyr",
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
+rm(libs)
 
 run_clusterings <- function(sce, id) {
   # Create data ----
@@ -129,8 +130,8 @@ run_clusterings <- function(sce, id) {
   
   # Save results ----
   write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
-  write.csv(Seurats, here("Simulations", "Data", paste0("SC3", id, ".csv")))
-  write.csv(Seurats, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
+  write.csv(SC3s, here("Simulations", "Data", paste0("SC3", id, ".csv")))
+  write.csv(Monocles, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
   
   # RSEC ----
   sequential <- FALSE
@@ -154,4 +155,11 @@ run_clusterings <- function(sce, id) {
   # Saving objects
   saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
   return()
+}
+
+run_merging_methods <- function(rsec, id) {
+  # Input clustering results
+  monocle <- read.csv(here("Simulations", "Data", paste0("Monocle", id, ".csv")))
+  Seurat <- read.csv(here("Simulations", "Data", paste0("Seurat", id, ".csv")))
+  SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
 }
