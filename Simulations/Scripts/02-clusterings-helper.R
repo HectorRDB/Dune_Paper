@@ -85,29 +85,29 @@ run_clusterings <- function(sce, id) {
   whichGenes <- rownames(sce)[ind]
   sceVar <- sce[ind,]
   
-  cat("Running with K = 30 on the filtered data\n")
+  cat("Running with K =  on the filtered data\n")
   cat("Time to run zinbwave (seconds):\n")
   sceVar$Batch <- as.factor(sceVar$Batch)
   if (nlevels(sceVar$Batch) > 1) {
-    print(system.time(zinbW <- zinbwave(Y = sceVar, X = "~Batch", K = 30)))  
+    print(system.time(zinbW <- zinbwave(Y = sceVar, X = "~Batch", K = )))  
   } else {
-    print(system.time(zinbW <- zinbwave(Y = sceVar, K = 30)))
+    print(system.time(zinbW <- zinbwave(Y = sceVar, K = )))
   }
   
   
-  reducedDim(sce, type = "zinb-K-30") <- reducedDim(zinbW)
-  TNSE <- Rtsne(reducedDim(zinbW), initial_dims = 30)
+  reducedDim(sce, type = "zinb-K-") <- reducedDim(zinbW)
+  TNSE <- Rtsne(reducedDim(zinbW), initial_dims = )
   df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = clusters)
   p <- ggplot(df, aes(x = x, y = y, col = col)) +
     geom_point(size = .4, alpha = .3) +
     theme_classic() +
     labs(x = "dim1", y = "dim2")
-  ggsave(here("Simulations", "Figures", paste0(id, "_K_30.png")), p)
+  ggsave(here("Simulations", "Figures", paste0(id, "_K_.png")), p)
   
   # Running Monocle ----
   pd <- as.data.frame(sce@colData)
   fd <- data.frame(gene_short_name = rownames(assays(sce)$counts))
-  zinbW <- reducedDim(sce, type = "zinb-K-30")
+  zinbW <- reducedDim(sce, type = "zinb-K-")
   rownames(fd) <- rownames(assays(sce)$counts)
   sce <- new_cell_data_set(assays(sce)$counts,
                            cell_metadata = pd,
