@@ -150,7 +150,7 @@ run_clusterings <- function(sce, id) {
   # Saving objects
   saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
   return()
-  # K-Means
+  # K-Means ----
   sce <- sce_og
   sce <- scater::runUMAP(sce, ncomponents = 3)
   UMAP <- reducedDim(sce, "UMAP")

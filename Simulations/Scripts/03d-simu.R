@@ -20,3 +20,7 @@ sce <- create_unbalanced_data(nCells = nCells, nClus = 50, nBatches = 1,
 
 # Run clustering
 run_clusterings(sce, id = 4)
+
+# Do the consensus
+rsec <- readRDS(here("Simulations", "Data", paste0("Merger_", 4, ".rds")))
+run_merging_methods(rsec, id = 4, sce)

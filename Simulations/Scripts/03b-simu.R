@@ -19,3 +19,7 @@ sce <- create_simple_balanced_data(nCells = nCells, nClus = 50, seed = 197)
 
 # Run clustering
 run_clusterings(sce, id = 2)
+
+# Do the consensus
+rsec <- readRDS(here("Simulations", "Data", paste0("Merger_", 2, ".rds")))
+run_merging_methods(rsec, id = 2, sce)
