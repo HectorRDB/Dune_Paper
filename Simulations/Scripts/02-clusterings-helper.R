@@ -2,7 +2,7 @@
 libs <- c("splatter", "here", "scater", "scran", "Seurat", "dplyr",
           "stringr", "SingleCellExperiment", "SC3", "Rtsne", "clusterExperiment",
           "BiocParallel", "zinbwave", "matrixStats", "ggplot2", "reticulate",
-          "purrr", "mclust", "flexclust", "monocle3")
+          "purrr", "mclust", "flexclust", "monocle3", "scater")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -86,18 +86,18 @@ run_clusterings <- function(sce, id) {
   whichGenes <- rownames(sce)[ind]
   sceVar <- sce[ind,]
   
-  cat("Running with K =  on the filtered data\n")
+  cat("Running with K = 50 on the filtered data\n")
   cat("Time to run zinbwave (seconds):\n")
   sceVar$Batch <- as.factor(sceVar$Batch)
   if (nlevels(sceVar$Batch) > 1) {
-    print(system.time(zinbW <- zinbwave(Y = sceVar, X = "~Batch", K = )))  
+    print(system.time(zinbW <- zinbwave(Y = sceVar, X = "~Batch", K = 50)))  
   } else {
-    print(system.time(zinbW <- zinbwave(Y = sceVar, K = )))
+    print(system.time(zinbW <- zinbwave(Y = sceVar, K = 50)))
   }
   
   
-  reducedDim(sce, type = "zinb-K-") <- reducedDim(zinbW)
-  TNSE <- Rtsne(reducedDim(zinbW), initial_dims = )
+  reducedDim(sce, type = "zinb-K-50") <- reducedDim(zinbW)
+  TNSE <- Rtsne(reducedDim(zinbW), initial_dims = 50)
   df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = clusters)
   p <- ggplot(df, aes(x = x, y = y, col = col)) +
     geom_point(size = .4, alpha = .3) +
@@ -108,7 +108,7 @@ run_clusterings <- function(sce, id) {
   # Running Monocle ----
   pd <- as.data.frame(sce@colData)
   fd <- data.frame(gene_short_name = rownames(assays(sce)$counts))
-  zinbW <- reducedDim(sce, type = "zinb-K-")
+  zinbW <- reducedDim(sce, type = "zinb-K-50")
   rownames(fd) <- rownames(assays(sce)$counts)
   sce <- new_cell_data_set(assays(sce)$counts,
                            cell_metadata = pd,
@@ -127,11 +127,6 @@ run_clusterings <- function(sce, id) {
   
   clusterMatrix$cells <- colnames(sce)
   Monocles <- clusterMatrix
-  
-  # Save results ----
-  write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
-  write.csv(SC3s, here("Simulations", "Data", paste0("SC3", id, ".csv")))
-  write.csv(Monocles, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
   
   # RSEC ----
   sequential <- FALSE
@@ -155,11 +150,141 @@ run_clusterings <- function(sce, id) {
   # Saving objects
   saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
   return()
+  # K-Means
+  sce <- sce_og
+  sce <- scater::runUMAP(sce, ncomponents = 3)
+  UMAP <- reducedDim(sce, "UMAP")
+  ks <- seq(5, 50, 5)
+  names(ks) <- ks
+  K_MEANS <- map_dfc(ks, function(k){
+    return(kmeans(UMAP, centers = k)$cluster)
+  })
+  K_MEANS$cells <- rownames(UMAP)
+  
+  # Save results ----
+  write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
+  write.csv(SC3s, here("Simulations", "Data", paste0("SC3", id, ".csv")))
+  write.csv(Monocles, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
+  write.csv(K_MEANS, here("Simulations", "Data", paste0("KMEANS", id, ".csv")))
+  
 }
 
-run_merging_methods <- function(rsec, id) {
-  # Input clustering results
+run_merging_methods <- function(rsec, id, sce) {
+  # Input clustering results -----
   monocle <- read.csv(here("Simulations", "Data", paste0("Monocle", id, ".csv")))
   Seurat <- read.csv(here("Simulations", "Data", paste0("Seurat", id, ".csv")))
   SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
+  KMEANS <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
+  
+  # Running Dune ----
+  clusMat <- data.frame("sc3" = sc3, "Monocle" = Monocle, "Seurat" = Seurat)
+  rownames(clusMat) <- Names
+  BPPARAM <- BiocParallel::MulticoreParam(32)
+  merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE)
+  Names <- as.character(Names)
+  chars <- c("sc3", "Monocle", "Seurat")
+  levels <- seq(from = 0, to = 1, by = .05)
+  stopMatrix <- lapply(levels, function(p){
+    print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
+    mat <- intermediateMat(merger = merger, p = p)
+    suppressWarnings(rownames(mat) <- mat$cells)
+    mat <- mat[Names, ]
+    mat <- mat %>%
+      select(-cells) %>%
+      as.matrix()
+    return(mat)
+  }) %>%
+    do.call('cbind', args = .)
+  colnames(stopMatrix) <- lapply(levels, function(p){
+    i <- as.character(round(100 * p))
+    if (nchar(i) == 1) {
+      i <- paste0("0", i)
+    }
+    return(paste(chars, i, sep = "-"))
+  }) %>% unlist()
+  print("...Full matrix")
+  mat <- cbind(as.character(Names), stopMatrix)
+  colnames(mat)[1] <- "cells"
+  
+  write_csv(x = as.data.frame(mat), path = here("Simulations", "Data", paste0(id, "_Dune.csv")))
+  
+  # Running Dune NMI ----
+  clusMat <- data.frame("sc3" = sc3, "Monocle" = Monocle, "Seurat" = Seurat)
+  rownames(clusMat) <- Names
+  BPPARAM <- BiocParallel::MulticoreParam(32)
+  merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE, metric = "NMI")
+  Names <- as.character(Names)
+  chars <- c("sc3", "Monocle", "Seurat")
+  levels <- seq(from = 0, to = 1, by = .05)
+  stopMatrix <- lapply(levels, function(p){
+    print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
+    mat <- intermediateMat(merger = merger, p = p)
+    suppressWarnings(rownames(mat) <- mat$cells)
+    mat <- mat[Names, ]
+    mat <- mat %>%
+      select(-cells) %>%
+      as.matrix()
+    return(mat)
+  }) %>%
+    do.call('cbind', args = .)
+  colnames(stopMatrix) <- lapply(levels, function(p){
+    i <- as.character(round(100 * p))
+    if (nchar(i) == 1) {
+      i <- paste0("0", i)
+    }
+    return(paste(chars, i, sep = "-"))
+  }) %>% unlist()
+  print("...Full matrix")
+  mat <- cbind(as.character(Names), stopMatrix)
+  colnames(mat)[1] <- "cells"
+  
+  write_csv(x = as.data.frame(mat),
+            path = here("Simulations", "Data", paste0(id, "_Dune_NMI.csv")))
+  
+  # Do hierarchical merging with fraction of DE----
+  for (clustering in c("sc3", "Monocle", "Seurat")) {
+    Rsec <- addClusterings(Rsec, get(clustering), clusterLabels = clustering)
+  }
+  cutoffs <- seq(from = 0, to = .01, by = .01)
+  res <- list()
+  for (clustering in c("sc3", "Monocle", "Seurat")) {
+    print(clustering)
+    Rsec2 <- makeDendrogram(Rsec, whichCluster = clustering)
+    names(cutoffs) <- paste(clustering, cutoffs, sep = "_")
+    res[[clustering]] <- map_dfc(cutoffs,
+                                 function(i){
+                                   print(paste0("...", i))
+                                   Rsec3 <- mergeClusters(Rsec2,
+                                                          mergeMethod = "adjP",
+                                                          plotInfo = "adjP",
+                                                          cutoff = i,
+                                                          clusterLabel = "Clusters",
+                                                          plot = F,
+                                                          DEMethod = "limma")
+                                   return(Rsec3@clusterMatrix[,"Clusters"])
+                                 })
+  }
+  
+  res <- do.call('cbind', res) %>% as.data.frame()
+  res$cells <- colnames(Rsec)
+  write_csv(res, path = here("Simulations", "Data", paste0(id, "_hierarchical_DE.csv")))
+  
+  # Do hierarchical merging with cutting the tree ----
+  res <- list()
+  for (clustering in c("sc3", "Monocle", "Seurat")) {
+    print(clustering)
+    n <- n_distinct(get(clustering))
+    cutoffs <- 5:n
+    Rsec2 <- makeDendrogram(Rsec, whichCluster = clustering)
+    Tree <- as.hclust(convertToDendrogram(Rsec2))
+    names(cutoffs) <- paste(clustering, n - cutoffs, sep = "_")
+    res[[clustering]] <- map_dfc(cutoffs,
+                                 function(cutoff){
+                                   print(paste0("...", cutoff))
+                                   return(cutree(Tree, k = cutoff))
+                                 })
+  }
+  res <- do.call('cbind', res) %>% as.data.frame()
+  res$cells <- colnames(Rsec)
+  write_csv(res, path = here("Simulations", "Data", paste0(id, "_hierarchical_Dist.csv")))
 }
