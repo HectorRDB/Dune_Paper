@@ -133,6 +133,8 @@ run_clusterings <- function(sce, id) {
   subsample <- T
   clusterFunction <- "pam"
   sce <- sce_og
+  sce <- scater::runPCA(sce)
+  sce <- scater::runUMAP(sce)
   reduceMeth <- reducedDimNames(sce)
   
   print(system.time(
