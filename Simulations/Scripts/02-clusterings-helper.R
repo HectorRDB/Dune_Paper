@@ -161,6 +161,8 @@ run_clusterings <- function(sce, id) {
   })
   K_MEANS$cells <- rownames(UMAP)
   
+  PCAreduce
+  
   # Save results ----
   write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
   write.csv(SC3s, here("Simulations", "Data", paste0("SC3", id, ".csv")))
