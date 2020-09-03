@@ -142,8 +142,6 @@ top <- df %>% group_by(scenario) %>%
 labels <- paste0(df$Contrast, "\n", df$method,
                  "-$\\Theta_", 1:3, "$") %>%
   unique()
-labels <- lapply(lapply(labels, TeX), function(text) {parse(text = text)}) %>%
-  unlist()
 p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
               mutate(AUARIC = scale(AUARIC)) %>%

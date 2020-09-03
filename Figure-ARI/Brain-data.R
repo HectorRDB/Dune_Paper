@@ -28,7 +28,10 @@ interpolate <- function(df, ns) {
 }
 ## function to get the ARI ----
 comp_merger_with_ref <- function(clusMat, clus, ref) {
-  return(adjustedRandIndex(as.matrix(clusMat)[,clus], ref))
+  Mat <- clusMat %>%
+    arrange(cells) %>%
+    as.matrix()
+  return(adjustedRandIndex(Mat[,clus], ref))
 }
 n_clus  <- function(clusMat, clus) {
   return(n_distinct(as.matrix(clusMat)[,clus]))
@@ -47,7 +50,7 @@ comp_dune_ref <- function(dataset, comp = "", ref, metric = "") {
                        paste0(dataset, comp, metric, "_merger.rds")))
   }
   if (is.null(df$metric)) df$metric <- "ARI"
-  df$initialMat <- df$initialMat[sort(rownames(df$initialMat)), ]
+  if (is.null(df$ImpMetric)) df$ImpMetric <- df$ImpARI
   
   ARI_ref_sc3 <- data.frame(
     "n_clus" = functionTracking(df, n_clus, clus = "sc3"),
