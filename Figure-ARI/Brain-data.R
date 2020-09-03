@@ -38,13 +38,13 @@ comp_tree_with_ref <- function(x, ref) {
 }
 
 ## Load Dune ----
-comp_dune_ref <- function(dataset, comp = "", ref) {
+comp_dune_ref <- function(dataset, comp = "", ref, metric = "") {
   if (comp == "") {
     df <- readRDS(here("data", "Dune",
-                       paste0(dataset, "_mergers.rds")))
+                       paste0(dataset, metric,  "_mergers.rds")))
   } else {
     df <- readRDS(here("data", "singleTree",
-                       paste0(dataset, comp, "_merger.rds")))
+                       paste0(dataset, comp, metric, "_merger.rds")))
   }
   df$initialMat <- df$initialMat[sort(rownames(df$initialMat)), ]
   
@@ -273,6 +273,7 @@ comp_single_ref <- function(dataset, comp, ref) {
 comp_all <- function(dataset, comp, ref){
   df <- bind_rows(
     "Dune" = comp_dune_ref(dataset, comp, ref),
+    "Dune_NMI" = comp_dune_ref(dataset, comp, ref, metric = "_NMI"),
     "DE" = comp_DE_tree(dataset, comp, ref),
     "Dist" = comp_Dist_tree(dataset, comp, ref),
     "Param" = comp_single_ref(dataset, comp, ref),
