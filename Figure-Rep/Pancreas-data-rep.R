@@ -39,7 +39,7 @@ n_clus  <- function(clusMat, clus) {
 
 ## Load Dune ----
 comp_dune <- function(comp = "comp1", metric = "") {
-  df <- read.table(here("Data", "Replicability", "Dune", paste0(comp, metric),
+  df <- read.table(here("Data", "Replicability", paste0("Dune", metric), comp,
                         "consensus_cluster_replicability.txt"))
   df <- df %>% filter(!str_detect(clustering_method, "Consensus")) %>%
     mutate(nb_clusters = replicable_clusters + non_replicable_clusters)

@@ -38,9 +38,9 @@ comp_tree_with_ref <- function(x, ref) {
 }
 
 ## Load Dune ----
-comp_dune_ref <- function(dataset, comp = "", ref) {
+comp_dune_ref <- function(dataset, comp = "", ref, metric = "") {
   df <- readRDS(here("data", "Dune",
-                       paste(dataset, comp, "merger.rds", sep = "_")))
+                       paste0(dataset, "_", comp, metric, "_merger.rds")))
   df$initialMat <- df$initialMat[sort(rownames(df$initialMat)), ]
   
   ARI_ref_sc3 <- data.frame(
@@ -84,10 +84,7 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
                                       type, ".csv"))) %>%
     arrange(cells) %>%
     dplyr::select(starts_with("sc3")) %>%
-    map_df(., comp_tree_with_ref, ref = ref) %>%
-    t() %>%
-    as.data.frame() %>%
-    dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
+    map_dfr(., comp_tree_with_ref, ref = ref) %>%
     distinct() %>%
     arrange(n_clus) %>%
     group_by(n_clus) %>%
@@ -100,10 +97,7 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
                                          type, ".csv"))) %>%
     arrange(cells) %>%
     dplyr::select(starts_with("seurat")) %>%
-    map_df(., comp_tree_with_ref, ref = ref) %>%
-    t() %>%
-    as.data.frame() %>%
-    dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
+    map_dfr(., comp_tree_with_ref, ref = ref) %>%
     distinct() %>%
     arrange(n_clus) %>%
     group_by(n_clus) %>%
@@ -116,10 +110,7 @@ comp_tree_ref <- function(dataset, comp, ref, type) {
                                           type, ".csv"))) %>%
     arrange(cells) %>%
     dplyr::select(starts_with("monocle")) %>%
-    map_df(., comp_tree_with_ref, ref = ref) %>%
-    t() %>%
-    as.data.frame() %>%
-    dplyr::rename("n_clus" = V1, "ARI" = V2) %>%
+    map_dfr(., comp_tree_with_ref, ref = ref) %>%
     distinct() %>%
     arrange(n_clus) %>%
     group_by(n_clus) %>%
@@ -257,9 +248,9 @@ comp_single_ref <- function(dataset, comp, ref) {
 comp_all <- function(dataset, comp, ref){
   df <- bind_rows(
     "Dune" = comp_dune_ref(dataset, comp, ref),
+    "Dune_NMI" = comp_dune_ref(dataset, comp, ref, metric = "_NMI"),
     "DE" = comp_DE_tree(dataset, comp, ref),
     "Dist" = comp_Dist_tree(dataset, comp, ref),
-    "Param" = comp_single_ref(dataset, comp, ref),
     .id = "Merge_method"
   )
   return(df)
@@ -270,6 +261,7 @@ comp_dataset <- function(dataset){
                                   paste0(dataset, "_meta.csv"))) %>% 
     arrange(X) %>%
     `$`("cell_type1") %>%
+    as.factor() %>%
     as.numeric()
   
   df <- bind_rows(
