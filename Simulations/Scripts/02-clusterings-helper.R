@@ -32,18 +32,28 @@ run_clusterings <- function(sce, id) {
   
   # Running Seurat ----
   print("... Running Seurat")
-  sSeurat <- CreateSeuratObject(counts = assays(sce)$counts, project = 'allen40K')
+  df <- colData(sce_og) %>% as.data.frame() %>%
+    mutate(Batch = as.factor(Batch))
+  rownames(df) <- df$Cell
+  sSeurat <- CreateSeuratObject(counts = assays(sce)$counts, project = 'allen40K',
+                                meta.data = df)
   sSeurat <- NormalizeData(object = sSeurat, normalization.method = "LogNormalize")
   sSeurat <- FindVariableFeatures(object = sSeurat, mean.function = ExpMean,
                                   dispersion.function = LogVMR, do.plot = F)
-  sSeurat <- ScaleData(object = sSeurat, vars.to.regress = c("nCount_RNA", "Batch"))
+  if (nlevels(df$Batch) > 1) {
+    sSeurat <- ScaleData(object = sSeurat, vars.to.regress = c("nCount_RNA", "Batch"))
+  } else {
+    sSeurat <- ScaleData(object = sSeurat, vars.to.regress = "nCount_RNA")
+  }
+  
   sce <- as.SingleCellExperiment(sSeurat)
   sce_Seurat <- sce
   
   sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100)
-  sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 2)
-  p <- UMAPPlot(sSeurat, group.by = clusters)
-  ggsave(p, here("Simulations", "Figures", paste0("UMAP_", id, ".png")))
+  sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:100)
+  p <- UMAPPlot(sSeurat, group.by = "Group")
+  p
+  ggsave(here("Simulations", "Figures", paste0("UMAP_", id, ".png")), p)
   
   clusterMatrix <- NULL
   for (RESOLUTION in seq(from = 0.3, to = 2.5, by = .1)) {
