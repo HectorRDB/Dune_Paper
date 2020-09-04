@@ -36,11 +36,15 @@ run_clusterings <- function(sce, id) {
   sSeurat <- NormalizeData(object = sSeurat, normalization.method = "LogNormalize")
   sSeurat <- FindVariableFeatures(object = sSeurat, mean.function = ExpMean,
                                   dispersion.function = LogVMR, do.plot = F)
-  sSeurat <- ScaleData(object = sSeurat, vars.to.regress = c("nCount_RNA", "human"))
+  sSeurat <- ScaleData(object = sSeurat, vars.to.regress = c("nCount_RNA", "Batch"))
   sce <- as.SingleCellExperiment(sSeurat)
   sce_Seurat <- sce
   
   sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100)
+  sSeurat <- RunUMAP(sSeurat, verbose = FALSE)
+  p <- UMAPPlot(sSeurat, group.by = clusters)
+  ggsave(p, here("Simulations", "Figures", paste0("UMAP_", id, ".png")))
+  
   clusterMatrix <- NULL
   for (RESOLUTION in seq(from = 0.3, to = 2.5, by = .1)) {
     print(paste0("...... ", RESOLUTION))
@@ -68,7 +72,7 @@ run_clusterings <- function(sce, id) {
   K <- metadata(sce)$sc3$k_estimation
   
   print(paste0("...... The optimal number of clusters defined by sc3 is ", K))
-  ks <- min(K, 10):(K + 10)
+  ks <- seq(from = 20, to = 50, by = 5)
   names(ks) <- ks - K
   
   sc3 <- map_df(ks, function(k){
@@ -81,56 +85,6 @@ run_clusterings <- function(sce, id) {
   sc3$cells <- colnames(sce)
   SC3s <- sc3
   write.csv(SC3s, here("Simulations", "Data", paste0("SC3", id, ".csv")))
-  
-  # Running ZinbWave ----
-  sce <- sce_og
-  vars <- matrixStats::rowVars(logcounts(sce))
-  ind <- vars > sort(vars,decreasing = TRUE)[1000]
-  whichGenes <- rownames(sce)[ind]
-  sceVar <- sce[ind,]
-  
-  cat("Running with K = 50 on the filtered data\n")
-  cat("Time to run zinbwave (seconds):\n")
-  sceVar$Batch <- as.factor(sceVar$Batch)
-  if (nlevels(sceVar$Batch) > 1) {
-    print(system.time(zinbW <- zinbwave(Y = sceVar, X = "~Batch", K = 50)))  
-  } else {
-    print(system.time(zinbW <- zinbwave(Y = sceVar, K = 50)))
-  }
-  
-  
-  reducedDim(sce, type = "zinb-K-50") <- reducedDim(zinbW)
-  TNSE <- Rtsne(reducedDim(zinbW), initial_dims = 50)
-  df <- data.frame(x = TNSE$Y[, 1], y = TNSE$Y[, 2], col = clusters)
-  p <- ggplot(df, aes(x = x, y = y, col = col)) +
-    geom_point(size = .4, alpha = .3) +
-    theme_classic() +
-    labs(x = "dim1", y = "dim2")
-  ggsave(here("Simulations", "Figures", paste0(id, "_K_.png")), p)
-  
-  # Running Monocle ----
-  pd <- as.data.frame(sce@colData)
-  fd <- data.frame(gene_short_name = rownames(assays(sce)$counts))
-  zinbW <- reducedDim(sce, type = "zinb-K-50")
-  rownames(fd) <- rownames(assays(sce)$counts)
-  sce <- new_cell_data_set(assays(sce)$counts,
-                           cell_metadata = pd,
-                           gene_metadata = fd)
-  reducedDim(sce, "Aligned") <- zinbW
-  sce <- reduce_dimension(sce)
-  ks <- c(2:9, seq(from = 10, to = 100, by = 5))
-  names(ks) <- paste0("k_", ks)
-  clusterMatrix <- map_df(ks, function(k){
-    sce2 <- cluster_cells(sce,
-                          k = k,
-                          louvain_iter = 2,
-                          verbose = F)
-    return(sce2@clusters$UMAP$clusters %>% as.numeric())
-  })
-  
-  clusterMatrix$cells <- colnames(sce)
-  Monocles <- clusterMatrix
-  write.csv(Monocles, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
   
   # RSEC ----
   sequential <- FALSE
@@ -155,7 +109,7 @@ run_clusterings <- function(sce, id) {
   
   # Saving objects
   saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
-  return()
+  
   # K-Means ----
   sce <- sce_Seurat
   sce <- scater::runUMAP(sce, ncomponents = 3)
@@ -168,16 +122,16 @@ run_clusterings <- function(sce, id) {
   K_MEANS$cells <- rownames(UMAP)
   
   write.csv(K_MEANS, here("Simulations", "Data", paste0("KMEANS", id, ".csv")))
+  return()
   
 }
 
 run_merging_methods <- function(rsec, id, sce) {
-  # # Input clustering results -----
-  # monocle <- read.csv(here("Simulations", "Data", paste0("Monocle", id, ".csv")))
-  # Seurat <- read.csv(here("Simulations", "Data", paste0("Seurat", id, ".csv")))
-  # SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
-  # KMEANS <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
-  # 
+  # Input clustering results -----
+  Seurat <- read.csv(here("Simulations", "Data", paste0("Seurat", id, ".csv")))
+  SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
+  KMEANS <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
+
   # # Running Dune ----
   # clusMat <- data.frame("sc3" = sc3, "Monocle" = Monocle, "Seurat" = Seurat)
   # rownames(clusMat) <- Names
