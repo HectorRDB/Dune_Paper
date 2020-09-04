@@ -38,6 +38,7 @@ run_clusterings <- function(sce, id) {
                                   dispersion.function = LogVMR, do.plot = F)
   sSeurat <- ScaleData(object = sSeurat, vars.to.regress = c("nCount_RNA", "human"))
   sce <- as.SingleCellExperiment(sSeurat)
+  sce_Seurat <- sce
   
   sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100)
   clusterMatrix <- NULL
@@ -56,6 +57,7 @@ run_clusterings <- function(sce, id) {
   clusterMatrix <- as.data.frame(clusterMatrix)
   clusterMatrix$cells <- colnames(sce)
   Seurats <- clusterMatrix
+  write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
   
   # Running SC3 ----
   print("... Running SC3")
@@ -78,6 +80,7 @@ run_clusterings <- function(sce, id) {
   
   sc3$cells <- colnames(sce)
   SC3s <- sc3
+  write.csv(SC3s, here("Simulations", "Data", paste0("SC3", id, ".csv")))
   
   # Running ZinbWave ----
   sce <- sce_og
@@ -127,6 +130,7 @@ run_clusterings <- function(sce, id) {
   
   clusterMatrix$cells <- colnames(sce)
   Monocles <- clusterMatrix
+  write.csv(Monocles, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
   
   # RSEC ----
   sequential <- FALSE
@@ -153,7 +157,7 @@ run_clusterings <- function(sce, id) {
   saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
   return()
   # K-Means ----
-  sce <- sce_og
+  sce <- sce_Seurat
   sce <- scater::runUMAP(sce, ncomponents = 3)
   UMAP <- reducedDim(sce, "UMAP")
   ks <- seq(5, 50, 5)
@@ -163,12 +167,6 @@ run_clusterings <- function(sce, id) {
   })
   K_MEANS$cells <- rownames(UMAP)
   
-  PCAreduce
-  
-  # Save results ----
-  write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
-  write.csv(SC3s, here("Simulations", "Data", paste0("SC3", id, ".csv")))
-  write.csv(Monocles, here("Simulations", "Data", paste0("Monocle", id, ".csv")))
   write.csv(K_MEANS, here("Simulations", "Data", paste0("KMEANS", id, ".csv")))
   
 }
