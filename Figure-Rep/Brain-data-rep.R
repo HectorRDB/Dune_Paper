@@ -22,6 +22,13 @@ interpolate <- function(df, ns) {
   } else {
     df <- df %>% arrange(desc(nb_clusters))
     cutoff <- which(df$nb_clusters < ns)[1]
+    if (is.na(cutoff)) {
+      small <- df %>% filter(nb_clusters == min(nb_clusters))
+      df <- df %>% 
+        add_row(nb_clusters = ns,
+                fraction_replicable_cells = small$fraction_replicable_cells)
+      return(df)
+    }
     slope <- (df$fraction_replicable_cells[cutoff] - 
                 df$fraction_replicable_cells[cutoff - 1]) / 
       (df$nb_clusters[cutoff] - df$nb_clusters[cutoff - 1])
