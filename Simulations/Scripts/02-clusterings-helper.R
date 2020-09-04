@@ -41,7 +41,7 @@ run_clusterings <- function(sce, id) {
   sce_Seurat <- sce
   
   sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100)
-  sSeurat <- RunUMAP(sSeurat, verbose = FALSE)
+  sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 2)
   p <- UMAPPlot(sSeurat, group.by = clusters)
   ggsave(p, here("Simulations", "Figures", paste0("UMAP_", id, ".png")))
   
