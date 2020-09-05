@@ -125,7 +125,7 @@ run_clusterings <- function(sce, id) {
   
 }
 
-run_merging_methods <- function(rsec, id, sce) {
+run_merging_methods <- function(Rsec, id, sce) {
   # Input clustering results -----
   SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")),
                   stringsAsFactors = FALSE) %>%
@@ -254,4 +254,36 @@ run_merging_methods <- function(rsec, id, sce) {
   res$cells <- colnames(Rsec)
   write_csv(res, col_names = TRUE,
             path = here("Simulations", "Data", paste0("Dist_", id, ".csv")))
+}
+
+evaluate_clustering_methods <- function(id, sce) {
+  # Input clustering results -----
+  SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")),
+                  stringsAsFactors = FALSE) %>%
+    arrange(cells)
+  UMAP_KMEANS <- read.csv(here("Simulations", "Data", paste0("UMAP-KMEANS", id, ".csv")),
+                          stringsAsFactors = FALSE) %>%
+    arrange(cells)
+  TSNE_KMEANS <- read.csv(here("Simulations", "Data", paste0("TSNE-KMEANS", id, ".csv")),
+                          stringsAsFactors = FALSE) %>%
+    arrange(cells)
+  
+  ref <- data.frame(groups = sce$Group, 
+                    cells = colnames(sce)) %>%
+    arrange(cells) %>%
+    filter(cells %in% SC3$cells)
+  
+  res <- list()
+  for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
+    df <- get(clustering) %>% select(-cells)
+    res[[clustering]] <- data.frame(
+      "ARI" = lapply(df, adjustedRandIndex, y = ref$groups) %>% unlist(),
+      "n_clus" = lapply(df, n_distinct) %>% unlist())
+  }
+  
+  res <- bind_rows(res, .id = "method")
+  write_csv(res, here("Simulations", "Data", paste0("ARI_Param_", id, ".csv")))
+  
+  # ARI with ref for the methods
+  
 }
