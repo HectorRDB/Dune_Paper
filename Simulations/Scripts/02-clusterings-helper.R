@@ -178,7 +178,7 @@ run_merging_methods <- function(Rsec, sce, id) {
             col_names = TRUE)
 
   # Running Dune NMI ----
-  BPPARAM <- BiocParallel::MulticoreParam(32)
+  BPPARAM <- BiocParallel::MulticoreParam(8)
   merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE, metric = "NMI")
   Names <- as.character(Names)
   chars <- c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")
