@@ -28,11 +28,7 @@ run_clusterings <- function(sce, id) {
   sce <- computeSumFactors(sce, sizes = pmin(ncol(sce), seq(20, 120, 20)),
                            min.mean = 0.1)
   logcounts(sce) <- scater::normalizeCounts(sce)
-  sce_og <- sce
-  
-  # Running Seurat ----
-  print("... Running Seurat")
-  df <- colData(sce_og) %>% as.data.frame() %>%
+  df <- colData(sce) %>% as.data.frame() %>%
     mutate(Batch = as.factor(Batch))
   rownames(df) <- df$Cell
   sSeurat <- CreateSeuratObject(counts = assays(sce)$counts, project = 'allen40K',
@@ -45,33 +41,36 @@ run_clusterings <- function(sce, id) {
   } else {
     sSeurat <- ScaleData(object = sSeurat, vars.to.regress = "nCount_RNA")
   }
-  
-  sce <- as.SingleCellExperiment(sSeurat)
-  sce_Seurat <- sce
-  
   sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100)
   sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:100)
   p <- UMAPPlot(sSeurat, group.by = "Group")
-  p
+  sce <- as.SingleCellExperiment(sSeurat)
+  sce_Seurat <- sce
   ggsave(here("Simulations", "Figures", paste0("UMAP_", id, ".png")), p)
   
-  clusterMatrix <- NULL
-  for (RESOLUTION in seq(from = 0.3, to = 2.5, by = .1)) {
-    print(paste0("...... ", RESOLUTION))
-    for (K.PARAM in c(30, 50, 100)) {
-      print(paste0("......... ", K.PARAM))
-      sSeurat_star <- FindNeighbors(sSeurat, dims = 1:K.PARAM)
-      sSeurat_star <- FindClusters(sSeurat_star, resolution = RESOLUTION)
-      clusterMatrix <- cbind(clusterMatrix, Idents(sSeurat_star))
-      colnames(clusterMatrix)[ncol(clusterMatrix)] <- paste(RESOLUTION, K.PARAM,
-                                                            sep = ",")
-    }
-  }
+  # TSNE K-Means ----
+  print("... Running RtsneKmeans")
+  sce_Seurat <- scater::runPCA(sce_Seurat, ntop = 2000)
+  sce_Seurat <- scater::runTSNE(sce_Seurat, ntop = 2000, ncomponents = 3, perplexity = 30)
+  TSNE <- reducedDim(sce_Seurat, "TSNE")
+  ks <- seq(20, 50, 5)
+  names(ks) <- ks
+  K_MEANS <- map_dfc(ks, function(k){
+    return(kmeans(UMAP, centers = k)$cluster)
+  })
+  K_MEANS$cells <- rownames(TSNE)
+  write.csv(K_MEANS, here("Simulations", "Data", paste0("tSNE-KMEANS", id, ".csv")))
   
-  clusterMatrix <- as.data.frame(clusterMatrix)
-  clusterMatrix$cells <- colnames(sce)
-  Seurats <- clusterMatrix
-  write.csv(Seurats, here("Simulations", "Data", paste0("Seurat", id, ".csv")))
+  # UMAP K-Means ----
+  sce_Seurat <- scater::runUMAP(sce_Seurat, ntop = 2000, ncomponents = 3)
+  UMAP <- reducedDim(sce_Seurat, "UMAP")
+  ks <- seq(20, 50, 5)
+  names(ks) <- ks
+  K_MEANS <- map_dfc(ks, function(k){
+    return(kmeans(UMAP, centers = k)$cluster)
+  })
+  K_MEANS$cells <- rownames(UMAP)
+  write.csv(K_MEANS, here("Simulations", "Data", paste0("UMAP-KMEANS", id, ".csv")))
   
   # Running SC3 ----
   print("... Running SC3")
@@ -119,28 +118,15 @@ run_clusterings <- function(sce, id) {
   
   # Saving objects
   saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
-  
-  # K-Means ----
-  sce <- sce_Seurat
-  sce <- scater::runUMAP(sce, ncomponents = 3)
-  UMAP <- reducedDim(sce, "UMAP")
-  ks <- seq(5, 50, 5)
-  names(ks) <- ks
-  K_MEANS <- map_dfc(ks, function(k){
-    return(kmeans(UMAP, centers = k)$cluster)
-  })
-  K_MEANS$cells <- rownames(UMAP)
-  
-  write.csv(K_MEANS, here("Simulations", "Data", paste0("KMEANS", id, ".csv")))
   return()
   
 }
 
 run_merging_methods <- function(rsec, id, sce) {
   # Input clustering results -----
-  Seurat <- read.csv(here("Simulations", "Data", paste0("Seurat", id, ".csv")))
   SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
-  KMEANS <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")))
+  UMAP_KMEANS <- read.csv(here("Simulations", "Data", paste0("UMAP-KMEANS", id, ".csv")))
+  TSNE_KMEANS <- read.csv(here("Simulations", "Data", paste0("TSNE-KMEANS", id, ".csv")))
 
   # # Running Dune ----
   # clusMat <- data.frame("sc3" = sc3, "Monocle" = Monocle, "Seurat" = Seurat)
