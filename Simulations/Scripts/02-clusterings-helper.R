@@ -59,8 +59,8 @@ run_clusterings <- function(sce, id) {
     return(kmeans(TSNE, centers = k)$cluster)
   })
   K_MEANS$cells <- rownames(TSNE)
-  write.csv(K_MEANS, here("Simulations", "Data", paste0("tSNE-KMEANS", id, ".csv")),
-            col.names = TRUE, row.names = FALSE)
+  write.csv(x = K_MEANS, row.names = FALSE,
+            file = here("Simulations", "Data", paste0("tSNE-KMEANS", id, ".csv")))
   
   # UMAP K-Means ----
   sce_Seurat <- scater::runUMAP(sce_Seurat, ntop = 2000, ncomponents = 3)
@@ -71,8 +71,33 @@ run_clusterings <- function(sce, id) {
     return(kmeans(UMAP, centers = k)$cluster)
   })
   K_MEANS$cells <- rownames(UMAP)
-  write.csv(K_MEANS, here("Simulations", "Data", paste0("UMAP-KMEANS", id, ".csv")),
-            col.names = TRUE, row.names = FALSE)
+  write.csv(x = K_MEANS, row.names = FALSE,
+            file = here("Simulations", "Data", paste0("UMAP-KMEANS", id, ".csv")))
+  
+  # RSEC ----
+  sequential <- FALSE
+  subsample <- T
+  clusterFunction <- "pam"
+  # sce <- sce_og
+  # sce <- scater::runPCA(sce)
+  # sce <- scater::runUMAP(sce)
+  reduceMeth <- reducedDimNames(sce)
+  
+  print(system.time(
+    sce <- RSEC(sce, k0s = seq(10, 50, by = 5), alphas = c(0.1, 0.3),
+                reduceMethod = reduceMeth, sequential = sequential,
+                subsample = subsample, minSizes = 1, betas = c(0.8), 
+                clusterFunction = clusterFunction, ncores = NCORES, run = TRUE,
+                isCount = FALSE, dendroReduce = reduceMeth[length(reduceMeth)],
+                dendroNDims = 50, consensusProportion = 0.7, verbose = TRUE,
+                random.seed = 23578, mergeMethod = "adjP", mergeCutoff = 0.05,
+                subsampleArgs = list(resamp.num = 50, clusterFunction = "kmeans"),
+                mergeLogFCcutoff = 1, consensusMinSize = 10
+                )
+  ))
+  
+  # Saving objects
+  saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
   
   # Running SC3 ----
   print("... Running SC3")
@@ -95,32 +120,9 @@ run_clusterings <- function(sce, id) {
   
   sc3$cells <- colnames(sce)
   SC3s <- sc3
-  write.csv(SC3s, here("Simulations", "Data", paste0("SC3", id, ".csv")),
-            col.names = TRUE, row.names = FALSE)
+  write.csv(x = SC3s, row.names = FALSE,
+            file = here("Simulations", "Data", paste0("SC3", id, ".csv")))
   
-  # RSEC ----
-  sequential <- FALSE
-  subsample <- T
-  clusterFunction <- "pam"
-  sce <- sce_og
-  sce <- scater::runPCA(sce)
-  sce <- scater::runUMAP(sce)
-  reduceMeth <- reducedDimNames(sce)
-  
-  print(system.time(
-    sce <- RSEC(sce, k0s = seq(10, 50, by = 5), alphas = c(0.1, 0.3),
-                reduceMethod = reduceMeth, sequential = sequential,
-                subsample = subsample, minSizes = 1, betas = c(0.8), 
-                clusterFunction = clusterFunction, ncores = NCORES, run = TRUE,
-                isCount = FALSE, dendroReduce = reduceMeth[length(reduceMeth)],
-                dendroNDims = 50, consensusProportion = 0.7, verbose = TRUE,
-                random.seed = 23578, mergeMethod = "adjP", mergeCutoff = 0.05,
-                subsampleArgs = list(resamp.num = 50, clusterFunction = "kmeans"),
-                mergeLogFCcutoff = 1, consensusMinSize = 10)
-  ))
-  
-  # Saving objects
-  saveRDS(sce, here("Simulations", "Data", paste0("Merger_", id, ".rds")))
   return()
   
 }
