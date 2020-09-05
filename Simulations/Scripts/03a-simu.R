@@ -22,4 +22,7 @@ run_clusterings(sce, id = 1)
 
 # Do the consensus
 rsec <- readRDS(here("Simulations", "Data", paste0("Merger_", 1, ".rds")))
-run_merging_methods(rsec, id = 1, sce)
+run_merging_methods(rsec, sce, 1)
+
+# Do the measures
+evaluate_clustering_methods(sce, 1)

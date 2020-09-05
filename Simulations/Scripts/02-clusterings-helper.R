@@ -2,7 +2,7 @@
 libs <- c("splatter", "here", "scater", "scran", "Seurat", "dplyr",
           "stringr", "SingleCellExperiment", "SC3", "Rtsne", "clusterExperiment",
           "BiocParallel", "zinbwave", "matrixStats", "ggplot2", "reticulate",
-          "purrr", "mclust", "flexclust", "monocle3", "scater", "readr")
+          "purrr", "mclust", "flexclust", "monocle3", "scater", "readr", "aricode")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -125,7 +125,7 @@ run_clusterings <- function(sce, id) {
   
 }
 
-run_merging_methods <- function(Rsec, id, sce) {
+run_merging_methods <- function(Rsec, sce, id) {
   # Input clustering results -----
   SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")),
                   stringsAsFactors = FALSE) %>%
@@ -256,7 +256,7 @@ run_merging_methods <- function(Rsec, id, sce) {
             path = here("Simulations", "Data", paste0("Dist_", id, ".csv")))
 }
 
-evaluate_clustering_methods <- function(id, sce) {
+evaluate_clustering_methods <- function(sce, id) {
   # Input clustering results -----
   SC3 <- read.csv(here("Simulations", "Data", paste0("SC3", id, ".csv")),
                   stringsAsFactors = FALSE) %>%
@@ -273,17 +273,59 @@ evaluate_clustering_methods <- function(id, sce) {
     arrange(cells) %>%
     filter(cells %in% SC3$cells)
   
-  res <- list()
+  # ARI with ref for the methods ----
+  params <- list()
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     df <- get(clustering) %>% select(-cells)
-    res[[clustering]] <- data.frame(
-      "ARI" = lapply(df, adjustedRandIndex, y = ref$groups) %>% unlist(),
+    params[[clustering]] <- data.frame(
+      "Value" = lapply(df, adjustedRandIndex, y = ref$groups) %>% unlist(),
       "n_clus" = lapply(df, n_distinct) %>% unlist())
   }
+  params <- bind_rows(params, .id = "clustering") %>%
+    mutate(method = "param")
+  ARI <- list()
+  for (method in c("Dune", "Dune_NMI", "DE", "Dist")) {
+    df <- read.csv(here("Simulations", "Data", paste0(method, "_", id, ".csv")),
+                    stringsAsFactors = FALSE) %>%
+      arrange(cells)
+    ARI[[clustering]] <- data.frame(
+      "Value" = lapply(df, adjustedRandIndex, y = ref$groups) %>% unlist(),
+      "n_clus" = lapply(df, n_distinct) %>% unlist(),
+      "clustering" = word(colnames(df) %>% select(-cells), 1),
+      "level" = word(colnames(df) %>% select(-cells), 2)
+    )
+  }
+  ARI <- bind_rows(ARI, .id = "method")
+  ARI <- bind_rows(ARI, param)
   
-  res <- bind_rows(res, .id = "method")
-  write_csv(res, here("Simulations", "Data", paste0("ARI_Param_", id, ".csv")))
+  # NMI with ref for the methods ----
+  params <- list()
+  for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
+    df <- get(clustering) %>% select(-cells)
+    params[[clustering]] <- data.frame(
+      "Value" = lapply(df, NMI, c2 = ref$groups, variant = "sum") %>% unlist(),
+      "n_clus" = lapply(df, n_distinct) %>% unlist())
+  }
+  params <- bind_rows(params, .id = "clustering") %>%
+    mutate(method = "param")
+  NMI_ <- list()
+  for (method in c("Dune", "Dune_NMI", "DE", "Dist")) {
+    df <- read.csv(here("Simulations", "Data", paste0(method, "_", id, ".csv")),
+                   stringsAsFactors = FALSE) %>%
+      arrange(cells)
+    NMI_[[clustering]] <- data.frame(
+      "Value" = lapply(df, NMI, c2 = ref$groups, variant = "sum") %>% unlist(),
+      "n_clus" = lapply(df, n_distinct) %>% unlist(),
+      "clustering" = word(colnames(df) %>% select(-cells), 1),
+      "level" = word(colnames(df) %>% select(-cells), 2)
+    )
+  }
+  NMI_ <- bind_rows(NMI_, .id = "method")
+  NMI_ <- bind_rows(NMI_, param)
   
-  # ARI with ref for the methods
-  
+  res <- bind_rows("ARI" = ARI, "NMI" = NMI_, .id = "Metric")
+  # Save results ----
+  write_csv(res, col_names = TRUE, 
+            path = here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv"))
+            )
 }
