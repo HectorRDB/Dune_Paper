@@ -56,7 +56,7 @@ run_clusterings <- function(sce, id) {
   ks <- seq(20, 50, 5)
   names(ks) <- ks
   K_MEANS <- map_dfc(ks, function(k){
-    return(kmeans(UMAP, centers = k)$cluster)
+    return(kmeans(TSNE, centers = k)$cluster)
   })
   K_MEANS$cells <- rownames(TSNE)
   write.csv(K_MEANS, here("Simulations", "Data", paste0("tSNE-KMEANS", id, ".csv")))
