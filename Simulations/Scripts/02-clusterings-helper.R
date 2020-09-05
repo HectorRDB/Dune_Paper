@@ -2,7 +2,8 @@
 libs <- c("splatter", "here", "scater", "scran", "Seurat", "dplyr",
           "stringr", "SingleCellExperiment", "SC3", "Rtsne", "clusterExperiment",
           "BiocParallel", "zinbwave", "matrixStats", "ggplot2", "reticulate",
-          "purrr", "mclust", "flexclust", "monocle3", "scater", "readr", "aricode")
+          "purrr", "mclust", "flexclust", "monocle3", "scater", "readr", "aricode",
+          "Dune")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -141,11 +142,11 @@ run_merging_methods <- function(Rsec, sce, id) {
 
   # Running Dune ----
   Names <- SC3$cells
-  clusMat <- data.frame("SC3" = SC3$`40`,
-                        "UMAP_KMEANS" = UMAP_KMEANS$`40`,
-                        "TSNE_KMEANS" = TSNE_KMEANS$`40`)
+  clusMat <- data.frame("SC3" = SC3$X39,
+                        "UMAP_KMEANS" = UMAP_KMEANS$X40,
+                        "TSNE_KMEANS" = TSNE_KMEANS$X40)
   rownames(clusMat) <- Names
-  BPPARAM <- BiocParallel::MulticoreParam(32)
+  BPPARAM <- BiocParallel::MulticoreParam(8)
   merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE)
   Names <- as.character(Names)
   chars <- c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")
