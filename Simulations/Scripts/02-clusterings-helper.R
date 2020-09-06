@@ -211,13 +211,15 @@ run_merging_methods <- function(Rsec, sce, id) {
 
   # Do hierarchical merging with fraction of DE----
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
-    Rsec <- addClusterings(Rsec, get(clustering), clusterLabels = clustering)
+    Rsec <- addClusterings(Rsec, clusMat[,clustering], clusterLabels = clustering)
   }
   cutoffs <- seq(from = 0, to = .01, by = .01)
   res <- list()
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     print(clustering)
-    Rsec2 <- makeDendrogram(Rsec, whichCluster = clustering)
+    Rsec2 <- Rsec
+    counts(Rsec2) <- as.matrix(counts(Rsec2))
+    Rsec2 <- makeDendrogram(Rsec2, whichCluster = clustering)
     names(cutoffs) <- paste(clustering, cutoffs, sep = "_")
     res[[clustering]] <- map_dfc(cutoffs,
                                  function(i){
@@ -244,7 +246,9 @@ run_merging_methods <- function(Rsec, sce, id) {
     print(clustering)
     n <- n_distinct(get(clustering))
     cutoffs <- 5:n
-    Rsec2 <- makeDendrogram(Rsec, whichCluster = clustering)
+    Rsec2 <- Rsec
+    counts(Rsec2) <- as.matrix(counts(Rsec2))
+    Rsec2 <- makeDendrogram(Rse2, whichCluster = clustering)
     Tree <- as.hclust(convertToDendrogram(Rsec2))
     names(cutoffs) <- paste(clustering, n - cutoffs, sep = "_")
     res[[clustering]] <- map_dfc(cutoffs,
