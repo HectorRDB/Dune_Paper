@@ -213,7 +213,7 @@ run_merging_methods <- function(Rsec, sce, id) {
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     Rsec <- addClusterings(Rsec, clusMat[,clustering], clusterLabels = clustering)
   }
-  cutoffs <- seq(from = 0, to = .01, by = .01)
+  cutoffs <- seq(from = 0, to = .5, by = .01)
   res <- list()
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     print(clustering)
@@ -248,7 +248,7 @@ run_merging_methods <- function(Rsec, sce, id) {
     cutoffs <- 5:n
     Rsec2 <- Rsec
     counts(Rsec2) <- as.matrix(counts(Rsec2))
-    Rsec2 <- makeDendrogram(Rse2, whichCluster = clustering)
+    Rsec2 <- makeDendrogram(Rsce2, whichCluster = clustering)
     Tree <- as.hclust(convertToDendrogram(Rsec2))
     names(cutoffs) <- paste(clustering, n - cutoffs, sep = "_")
     res[[clustering]] <- map_dfc(cutoffs,
