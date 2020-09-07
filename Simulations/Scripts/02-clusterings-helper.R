@@ -305,7 +305,7 @@ evaluate_clustering_methods <- function(sce, id) {
     )
   }
   ARI <- bind_rows(ARI, .id = "method")
-  ARI <- bind_rows(ARI, param)
+  ARI <- bind_rows(ARI, params)
   
   # NMI with ref for the methods ----
   params <- list()
@@ -331,7 +331,7 @@ evaluate_clustering_methods <- function(sce, id) {
     )
   }
   NMI_ <- bind_rows(NMI_, .id = "method")
-  NMI_ <- bind_rows(NMI_, param)
+  NMI_ <- bind_rows(NMI_, params)
   
   res <- bind_rows("ARI" = ARI, "NMI" = NMI_, .id = "Metric")
   # Save results ----
