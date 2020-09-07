@@ -210,9 +210,9 @@ run_merging_methods <- function(Rsec, sce, id) {
   #           col_names = TRUE)
   # 
   # # Do hierarchical merging with fraction of DE----
-  # for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
-  #   Rsec <- addClusterings(Rsec, clusMat[,clustering], clusterLabels = clustering)
-  # }
+  for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
+    Rsec <- addClusterings(Rsec, clusMat[,clustering], clusterLabels = clustering)
+  }
   # cutoffs <- seq(from = 0, to = .5, by = .01)
   # res <- list()
   # for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
