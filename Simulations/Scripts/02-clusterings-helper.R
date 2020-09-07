@@ -148,97 +148,97 @@ run_merging_methods <- function(Rsec, sce, id) {
   rownames(clusMat) <- Names
   BPPARAM <- BiocParallel::MulticoreParam(8)
   merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE)
-  Names <- as.character(Names)
-  chars <- c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")
-  levels <- seq(from = 0, to = 1, by = .05)
-  stopMatrix <- lapply(levels, function(p){
-    print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
-    mat <- intermediateMat(merger = merger, p = p)
-    suppressWarnings(rownames(mat) <- mat$cells)
-    mat <- mat[Names, ]
-    mat <- mat %>%
-      select(-cells) %>%
-      as.matrix()
-    return(mat)
-  }) %>%
-    do.call('cbind', args = .)
-  colnames(stopMatrix) <- lapply(levels, function(p){
-    i <- as.character(round(100 * p))
-    if (nchar(i) == 1) {
-      i <- paste0("0", i)
-    }
-    return(paste(chars, i, sep = "-"))
-  }) %>% unlist()
-  print("...Full matrix")
-  mat <- cbind(as.character(Names), stopMatrix)
-  colnames(mat)[1] <- "cells"
-
-  write_csv(x = as.data.frame(mat),
-            path = here("Simulations", "Data", paste0("Dune_", id, ".csv")), 
-            col_names = TRUE)
-
-  # Running Dune NMI ----
-  BPPARAM <- BiocParallel::MulticoreParam(8)
-  merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE, metric = "NMI")
-  Names <- as.character(Names)
-  chars <- c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")
-  levels <- seq(from = 0, to = 1, by = .05)
-  stopMatrix <- lapply(levels, function(p){
-    print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
-    mat <- intermediateMat(merger = merger, p = p)
-    suppressWarnings(rownames(mat) <- mat$cells)
-    mat <- mat[Names, ]
-    mat <- mat %>%
-      select(-cells) %>%
-      as.matrix()
-    return(mat)
-  }) %>%
-    do.call('cbind', args = .)
-  colnames(stopMatrix) <- lapply(levels, function(p){
-    i <- as.character(round(100 * p))
-    if (nchar(i) == 1) {
-      i <- paste0("0", i)
-    }
-    return(paste(chars, i, sep = "-"))
-  }) %>% unlist()
-  print("...Full matrix")
-  mat <- cbind(as.character(Names), stopMatrix)
-  colnames(mat)[1] <- "cells"
-
-  write_csv(x = as.data.frame(mat),
-            path = here("Simulations", "Data", paste0("Dune_NMI_", id, ".csv")), 
-            col_names = TRUE)
-
-  # Do hierarchical merging with fraction of DE----
-  for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
-    Rsec <- addClusterings(Rsec, clusMat[,clustering], clusterLabels = clustering)
-  }
-  cutoffs <- seq(from = 0, to = .5, by = .01)
-  res <- list()
-  for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
-    print(clustering)
-    Rsec2 <- Rsec
-    counts(Rsec2) <- as.matrix(counts(Rsec2))
-    Rsec2 <- makeDendrogram(Rsec2, whichCluster = clustering)
-    names(cutoffs) <- paste(clustering, cutoffs, sep = "_")
-    res[[clustering]] <- map_dfc(cutoffs,
-                                 function(i){
-                                   print(paste0("...", i))
-                                   Rsec3 <- mergeClusters(Rsec2,
-                                                          mergeMethod = "adjP",
-                                                          plotInfo = "adjP",
-                                                          cutoff = i,
-                                                          clusterLabel = "Clusters",
-                                                          plot = F,
-                                                          DEMethod = "limma")
-                                   return(Rsec3@clusterMatrix[,"Clusters"])
-                                 })
-  }
-
-  res <- do.call('cbind', res) %>% as.data.frame()
-  res$cells <- colnames(Rsec)
-  write_csv(res, col_names = TRUE,
-            path = here("Simulations", "Data", paste0("DE_", id, ".csv")))
+  # Names <- as.character(Names)
+  # chars <- c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")
+  # levels <- seq(from = 0, to = 1, by = .05)
+  # stopMatrix <- lapply(levels, function(p){
+  #   print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
+  #   mat <- intermediateMat(merger = merger, p = p)
+  #   suppressWarnings(rownames(mat) <- mat$cells)
+  #   mat <- mat[Names, ]
+  #   mat <- mat %>%
+  #     select(-cells) %>%
+  #     as.matrix()
+  #   return(mat)
+  # }) %>%
+  #   do.call('cbind', args = .)
+  # colnames(stopMatrix) <- lapply(levels, function(p){
+  #   i <- as.character(round(100 * p))
+  #   if (nchar(i) == 1) {
+  #     i <- paste0("0", i)
+  #   }
+  #   return(paste(chars, i, sep = "-"))
+  # }) %>% unlist()
+  # print("...Full matrix")
+  # mat <- cbind(as.character(Names), stopMatrix)
+  # colnames(mat)[1] <- "cells"
+  # 
+  # write_csv(x = as.data.frame(mat),
+  #           path = here("Simulations", "Data", paste0("Dune_", id, ".csv")), 
+  #           col_names = TRUE)
+  # 
+  # # Running Dune NMI ----
+  # BPPARAM <- BiocParallel::MulticoreParam(8)
+  # merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE, metric = "NMI")
+  # Names <- as.character(Names)
+  # chars <- c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")
+  # levels <- seq(from = 0, to = 1, by = .05)
+  # stopMatrix <- lapply(levels, function(p){
+  #   print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
+  #   mat <- intermediateMat(merger = merger, p = p)
+  #   suppressWarnings(rownames(mat) <- mat$cells)
+  #   mat <- mat[Names, ]
+  #   mat <- mat %>%
+  #     select(-cells) %>%
+  #     as.matrix()
+  #   return(mat)
+  # }) %>%
+  #   do.call('cbind', args = .)
+  # colnames(stopMatrix) <- lapply(levels, function(p){
+  #   i <- as.character(round(100 * p))
+  #   if (nchar(i) == 1) {
+  #     i <- paste0("0", i)
+  #   }
+  #   return(paste(chars, i, sep = "-"))
+  # }) %>% unlist()
+  # print("...Full matrix")
+  # mat <- cbind(as.character(Names), stopMatrix)
+  # colnames(mat)[1] <- "cells"
+  # 
+  # write_csv(x = as.data.frame(mat),
+  #           path = here("Simulations", "Data", paste0("Dune_NMI_", id, ".csv")), 
+  #           col_names = TRUE)
+  # 
+  # # Do hierarchical merging with fraction of DE----
+  # for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
+  #   Rsec <- addClusterings(Rsec, clusMat[,clustering], clusterLabels = clustering)
+  # }
+  # cutoffs <- seq(from = 0, to = .5, by = .01)
+  # res <- list()
+  # for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
+  #   print(clustering)
+  #   Rsec2 <- Rsec
+  #   counts(Rsec2) <- as.matrix(counts(Rsec2))
+  #   Rsec2 <- makeDendrogram(Rsec2, whichCluster = clustering)
+  #   names(cutoffs) <- paste(clustering, cutoffs, sep = "_")
+  #   res[[clustering]] <- map_dfc(cutoffs,
+  #                                function(i){
+  #                                  print(paste0("...", i))
+  #                                  Rsec3 <- mergeClusters(Rsec2,
+  #                                                         mergeMethod = "adjP",
+  #                                                         plotInfo = "adjP",
+  #                                                         cutoff = i,
+  #                                                         clusterLabel = "Clusters",
+  #                                                         plot = F,
+  #                                                         DEMethod = "limma")
+  #                                  return(Rsec3@clusterMatrix[,"Clusters"])
+  #                                })
+  # }
+  # 
+  # res <- do.call('cbind', res) %>% as.data.frame()
+  # res$cells <- colnames(Rsec)
+  # write_csv(res, col_names = TRUE,
+  #           path = here("Simulations", "Data", paste0("DE_", id, ".csv")))
 
   # Do hierarchical merging with cutting the tree ----
   res <- list()
@@ -248,7 +248,7 @@ run_merging_methods <- function(Rsec, sce, id) {
     cutoffs <- 5:n
     Rsec2 <- Rsec
     counts(Rsec2) <- as.matrix(counts(Rsec2))
-    Rsec2 <- makeDendrogram(Rsce2, whichCluster = clustering)
+    Rsec2 <- makeDendrogram(Rsec2, whichCluster = clustering)
     Tree <- as.hclust(convertToDendrogram(Rsec2))
     names(cutoffs) <- paste(clustering, n - cutoffs, sep = "_")
     res[[clustering]] <- map_dfc(cutoffs,
