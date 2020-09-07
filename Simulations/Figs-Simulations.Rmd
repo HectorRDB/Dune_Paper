@@ -29,6 +29,9 @@ rm(libs)
 # Results for all 40
 
 ```{r}
-df <- lapply(1:4, )
+res <- lapply(1:4, function(id){
+  df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
+  
+})
 
 ```
