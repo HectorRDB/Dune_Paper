@@ -296,8 +296,9 @@ evaluate_clustering_methods <- function(sce, id) {
                     stringsAsFactors = FALSE) %>%
       arrange(cells)
     ARI[[clustering]] <- data.frame(
-      "Value" = lapply(df, adjustedRandIndex, y = ref$groups) %>% unlist(),
-      "n_clus" = lapply(df, n_distinct) %>% unlist(),
+      "Value" = lapply(df %>% dplyr::select(-cells), 
+                       adjustedRandIndex, y = ref$groups) %>% unlist(),
+      "n_clus" = lapply(df %>% dplyr::select(-cells), n_distinct) %>% unlist(),
       "clustering" = word(colnames(df %>% dplyr::select(-cells)), 1, sep = "\\."),
       "level" = word(colnames(df %>% dplyr::select(-cells)), 2, sep = "\\.") %>%
         as.numeric()
@@ -322,8 +323,8 @@ evaluate_clustering_methods <- function(sce, id) {
                    stringsAsFactors = FALSE) %>%
       arrange(cells)
     NMI_[[clustering]] <- data.frame(
-      "Value" = lapply(df, NMI, c2 = ref$groups, variant = "sum") %>% unlist(),
-      "n_clus" = lapply(df, n_distinct) %>% unlist(),
+      "Value" = lapply(df %>% dplyr::select(-cells), NMI, c2 = ref$groups, variant = "sum") %>% unlist(),
+      "n_clus" = lapply(df %>% dplyr::select(-cells), n_distinct) %>% unlist(),
       "clustering" = word(colnames(df %>% dplyr::select(-cells)), 1, sep = "\\."),
       "level" = word(colnames(df %>% dplyr::select(-cells)), 2, sep = "\\.") %>%
         as.numeric()
