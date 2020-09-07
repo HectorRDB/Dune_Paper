@@ -1,0 +1,34 @@
+---
+author: "Hector Roux de Bézieux"
+date: '`r format(Sys.time(), "%d %B , %Y")`'
+title: 'Results on simulation data'
+output:
+  html_document:
+    toc: true
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: true
+    code_download: TRUE
+---
+
+```{r load packages, include=F}
+library(knitr)
+opts_chunk$set(
+  fig.pos = "!h", out.extra = "", warning = F, message = F,
+  fig.align = "center", echo = F
+)
+libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
+          "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "purrr",
+          "DailyHRB")
+suppressMessages(
+  suppressWarnings(sapply(libs, require, character.only = TRUE))
+)
+rm(libs)
+```
+
+# Results for all 40
+
+```{r}
+df <- lapply(1:4, )
+
+```
