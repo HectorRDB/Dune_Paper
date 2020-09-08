@@ -210,6 +210,7 @@ run_merging_methods <- function(Rsec, sce, id) {
             col_names = TRUE)
 
   # Do hierarchical merging with fraction of DE----
+  Rsec <- Rsec[, Names]
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     Rsec <- addClusterings(Rsec, clusMat[,clustering], clusterLabels = clustering)
   }
@@ -295,14 +296,17 @@ evaluate_clustering_methods <- function(sce, id) {
     df <- read.csv(here("Simulations", "Data", paste0(method, "_", id, ".csv")),
                     stringsAsFactors = FALSE) %>%
       arrange(cells)
-    ARI[[clustering]] <- data.frame(
+      
+    ARI[[method]] <- data.frame(
       "Value" = lapply(df %>% dplyr::select(-cells), 
                        adjustedRandIndex, y = ref$groups) %>% unlist(),
+      "Name" = colnames(df %>% dplyr::select(-cells)),
       "n_clus" = lapply(df %>% dplyr::select(-cells), n_distinct) %>% unlist(),
-      "clustering" = word(colnames(df %>% dplyr::select(-cells)), 1, sep = "\\."),
-      "level" = word(colnames(df %>% dplyr::select(-cells)), 2, sep = "\\.") %>%
-        as.numeric()
-    )
+      "clustering" = word(colnames(df %>% dplyr::select(-cells)), 1, sep = "\\.")
+      ) %>%
+      mutate(level = str_remove_all(Name, clustering),
+             level = str_remove(level, "^\\."),
+             level = str_remove(level, "^\\_") %>% as.numeric())
   }
   ARI <- bind_rows(ARI, .id = "method")
   ARI <- bind_rows(ARI, params)
@@ -322,13 +326,15 @@ evaluate_clustering_methods <- function(sce, id) {
     df <- read.csv(here("Simulations", "Data", paste0(method, "_", id, ".csv")),
                    stringsAsFactors = FALSE) %>%
       arrange(cells)
-    NMI_[[clustering]] <- data.frame(
+    NMI_[[method]] <- data.frame(
       "Value" = lapply(df %>% dplyr::select(-cells), NMI, c2 = ref$groups, variant = "sum") %>% unlist(),
+      "Name" = colnames(df %>% dplyr::select(-cells)),
       "n_clus" = lapply(df %>% dplyr::select(-cells), n_distinct) %>% unlist(),
-      "clustering" = word(colnames(df %>% dplyr::select(-cells)), 1, sep = "\\."),
-      "level" = word(colnames(df %>% dplyr::select(-cells)), 2, sep = "\\.") %>%
-        as.numeric()
-    )
+      "clustering" = word(colnames(df %>% dplyr::select(-cells)), 1, sep = "\\.")
+    ) %>%
+      mutate(level = str_remove_all(Name, clustering),
+             level = str_remove(level, "^\\."),
+             level = str_remove(level, "^\\_") %>% as.numeric())
   }
   NMI_ <- bind_rows(NMI_, .id = "method")
   NMI_ <- bind_rows(NMI_, params)
