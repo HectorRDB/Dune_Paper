@@ -31,7 +31,15 @@ rm(libs)
 ```{r}
 res <- lapply(1:4, function(id){
   df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
-  
+  return(df)
 })
 
+min_ns <- lapply(res, function(df){
+  df %>% filter(method %in% c("Dune", "Dune_NMI")) %>%
+    group_by(method, clustering) %>%
+    filter(n_clus == min(n_clus)) %>%
+    select(method, n_clus, clustering) %>%
+    distinct() %>%
+    return()
+})
 ```
