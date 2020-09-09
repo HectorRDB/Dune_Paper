@@ -37,7 +37,7 @@ res <- bind_rows(res, .id = "Dataset")
 ggplot(res, aes(x = n_clus, y = Value, col = clustering)) +
   geom_path() +
   theme_bw() +
-  facet_grid(method ~Dataset, scales = "free_x")
+  facet_grid(method ~Dataset, scales = "free")
 ```
 
 # Results for all 40
@@ -59,24 +59,16 @@ min_ns <- lapply(res, function(df){
 }) %>% 
   bind_rows(.id = "Dataset") %>%
   mutate(method = if_else(str_detect(method, "NMI"), "NMI", "ARI"))
-p1 <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = method)) +
+p <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = clustering)) +
   geom_jitter(width = .1, height = 0) +
   theme_bw() +
+  facet_wrap( ~ method, ncol = 1) +
   scale_color_viridis_d() +
-  labs(col = "Merging metric", y = "Number of clusters") +
+  labs(col = "Clustering", y = "Number of clusters") +
   geom_hline(yintercept = 30, col = "darkred") +
-  annotate("text", y = 31.5, x = 4, label = "True number\nof clusters",
+  annotate("text", y = 33, x = 4, label = "True number\nof clusters",
            col = "darkred")
-p2 <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = clustering)) +
-  geom_jitter(width = .1, height = 0) +
-  theme_bw() +
-  scale_color_viridis_d() +
-  labs(col = "Merging metric", y = "Number of clusters") +
-  geom_hline(yintercept = 30, col = "darkred") +
-  annotate("text", y = 31.5, x = 4, label = "True number\nof clusters",
-           col = "darkred")
-
-p1 / p2
+p
 ```
 
 ## Comparison with the truth
@@ -86,8 +78,11 @@ res <- bind_rows(res, .id = "Dataset") %>%
   filter(method != "param") %>%
   # group_by(Metric, Dataset, ) %>%
   filter(n_clus >= 20)
-ggplot(res, aes(x = n_clus, y = Value, col = method)) +
-  facet_wrap(~ Metric + Dataset + clustering, scales = "free_y") +
+ggplot(res %>%
+  filter(Metric != "SL") %>%
+  mutate(scenario = paste(Metric, str_remove(clustering, "_KMEANS"), sep = "_")),
+  aes(x = n_clus, y = Value, col = method)) +
+  facet_grid(Dataset ~ scenario, scales = "free") +
   geom_path() +
   theme_bw()
   
