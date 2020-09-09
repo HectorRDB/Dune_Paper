@@ -19,7 +19,7 @@ opts_chunk$set(
 )
 libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
           "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "purrr",
-          "DailyHRB")
+          "DailyHRB", "patchwork")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -27,6 +27,7 @@ rm(libs)
 ```
 
 # Results for all 40
+## Finding where Dune stops
 
 ```{r}
 res <- lapply(1:4, function(id){
@@ -41,5 +42,39 @@ min_ns <- lapply(res, function(df){
     select(method, n_clus, clustering) %>%
     distinct() %>%
     return()
-})
+}) %>% 
+  bind_rows(.id = "Dataset") %>%
+  mutate(method = if_else(str_detect(method, "NMI"), "NMI", "ARI"))
+p1 <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = method)) +
+  geom_jitter(width = .1, height = 0) +
+  theme_bw() +
+  scale_color_viridis_d() +
+  labs(col = "Merging metric", y = "Number of clusters") +
+  geom_hline(yintercept = 30, col = "darkred") +
+  annotate("text", y = 31.5, x = 4, label = "True number\nof clusters",
+           col = "darkred")
+p2 <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = clustering)) +
+  geom_jitter(width = .1, height = 0) +
+  theme_bw() +
+  scale_color_viridis_d() +
+  labs(col = "Merging metric", y = "Number of clusters") +
+  geom_hline(yintercept = 30, col = "darkred") +
+  annotate("text", y = 31.5, x = 4, label = "True number\nof clusters",
+           col = "darkred")
+
+p1 / p2
+```
+
+## Comparison with the truth
+
+```{r}
+res <- bind_rows(res, .id = "Dataset") %>%
+  filter(method != "param") %>%
+  # group_by(Metric, Dataset, ) %>%
+  filter(n_clus >= 20)
+ggplot(res, aes(x = n_clus, y = Value, col = method)) +
+  facet_wrap(~ Metric + Dataset + clustering, scales = "free_y") +
+  geom_path() +
+  theme_bw()
+  
 ```
