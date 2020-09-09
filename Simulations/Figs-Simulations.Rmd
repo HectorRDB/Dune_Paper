@@ -26,6 +26,21 @@ suppressMessages(
 rm(libs)
 ```
 
+# Average silhouette width
+
+```{r}
+res <- lapply(1:4, function(id){
+  df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
+  return(df%>% filter(Metric == "SL"))
+})
+res <- bind_rows(res, .id = "Dataset")
+ggplot(res %>% filter(method == "param"), 
+       aes(x = n_clus, y = Value, col = clustering)) +
+  geom_path() +
+  theme_bw() +
+  facet_wrap(~Dataset)
+```
+
 # Results for all 40
 ## Finding where Dune stops
 

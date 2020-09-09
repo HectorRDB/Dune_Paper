@@ -371,6 +371,7 @@ evaluate_clustering_methods <- function(sce, id) {
   sce <- as.SingleCellExperiment(sSeurat)
   sce <- scater::runPCA(sce)
   sce <- scater::runUMAP(sce)
+  sce <- sce[SC3$cells, ]
   UMAP <- reducedDim(sce, "UMAP")
   dist_mat <- dist(UMAP)
   params <- list()
