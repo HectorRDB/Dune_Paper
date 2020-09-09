@@ -368,11 +368,10 @@ evaluate_clustering_methods <- function(sce, id) {
   } else {
     sSeurat <- ScaleData(object = sSeurat, vars.to.regress = "nCount_RNA")
   }
-  sce <- as.SingleCellExperiment(sSeurat)
-  sce <- scater::runPCA(sce)
-  sce <- scater::runUMAP(sce)
-  sce <- sce[, SC3$cells]
-  UMAP <- reducedDim(sce, "UMAP")
+  sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100)
+  sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:100)
+  sSeurat <- sSeurat[, SC3$cells]
+  UMAP <- Embeddings(sSeurat, reduction = "umap")
   dist_mat <- dist(UMAP)
   params <- list()
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
