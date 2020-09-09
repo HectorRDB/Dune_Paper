@@ -371,7 +371,7 @@ evaluate_clustering_methods <- function(sce, id) {
   sce <- as.SingleCellExperiment(sSeurat)
   sce <- scater::runPCA(sce)
   sce <- scater::runUMAP(sce)
-  sce <- sce[SC3$cells, ]
+  sce <- sce[, SC3$cells]
   UMAP <- reducedDim(sce, "UMAP")
   dist_mat <- dist(UMAP)
   params <- list()
@@ -394,7 +394,7 @@ evaluate_clustering_methods <- function(sce, id) {
       arrange(cells)
     SL[[method]] <- data.frame(
       "Value" = lapply(df %>% select(-cells), function(i) {
-        if(n_distinct(i)) return(0)
+        if(n_distinct(i) == 1) return(0)
         silhouette(i, dist = dist_mat)[,3] %>% 
           mean() %>%
           return()
