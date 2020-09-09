@@ -377,7 +377,11 @@ evaluate_clustering_methods <- function(sce, id) {
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     df <- get(clustering) %>% dplyr::select(-cells)
     params[[clustering]] <- data.frame(
-      "Value" = lapply(df, silhouette, dist = dist_mat) %>% unlist(),
+      "Value" = lapply(df, function(i) {
+        silhouette(i, dist = dist_mat)[,3] %>% 
+          mean() %>%
+          return()
+      }) %>% unlist(),
       "n_clus" = lapply(df, n_distinct) %>% unlist())
   }
   params <- bind_rows(params, .id = "clustering") %>%
@@ -388,7 +392,12 @@ evaluate_clustering_methods <- function(sce, id) {
                    stringsAsFactors = FALSE) %>%
       arrange(cells)
     SL[[method]] <- data.frame(
-      "Value" = lapply(df %>% dplyr::select(-cells), silhouette, dist = dist_mat) %>% unlist(),
+      "Value" = lapply(df %>% select(-cells), function(i) {
+        if(n_distinct(i)) return(0)
+        silhouette(i, dist = dist_mat)[,3] %>% 
+          mean() %>%
+          return()
+      }) %>% unlist(),
       "Name" = colnames(df %>% dplyr::select(-cells)),
       "n_clus" = lapply(df %>% dplyr::select(-cells), n_distinct) %>% unlist(),
       "clustering" = word(colnames(df %>% dplyr::select(-cells)), 1, sep = "\\."),
