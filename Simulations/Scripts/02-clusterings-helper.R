@@ -341,11 +341,43 @@ evaluate_clustering_methods <- function(sce, id) {
   NMI_ <- bind_rows(NMI_, params)
   
   # Silhouettes ----
+  clusters <- sce$Group
+  keep_features <- rowSums(counts(sce) > 0) > 0
+  sce <- sce[keep_features, ]
+  df <- perCellQCMetrics(sce)
+  df$libsize.drop <- isOutlier(df$total, nmads = 3,
+                               type = "lower", log = TRUE)
+  df$feature.drop <- isOutlier(df$detected, nmads = 3,
+                               type = "lower", log = TRUE)
+  df <- as.data.frame(df)
+  sce <- sce[, !(df$libsize.drop | df$feature.drop)]
+  clusters <- clusters[!(df$libsize.drop | df$feature.drop)]
+  sce <- computeSumFactors(sce, sizes = pmin(ncol(sce), seq(20, 120, 20)),
+                           min.mean = 0.1)
+  logcounts(sce) <- scater::normalizeCounts(sce)
+  df <- colData(sce) %>% as.data.frame() %>%
+    mutate(Batch = as.factor(Batch))
+  rownames(df) <- df$Cell
+  sSeurat <- CreateSeuratObject(counts = assays(sce)$counts, project = 'allen40K',
+                                meta.data = df)
+  sSeurat <- NormalizeData(object = sSeurat, normalization.method = "LogNormalize")
+  sSeurat <- FindVariableFeatures(object = sSeurat, mean.function = ExpMean,
+                                  dispersion.function = LogVMR, do.plot = F)
+  if (nlevels(df$Batch) > 1) {
+    sSeurat <- ScaleData(object = sSeurat, vars.to.regress = c("nCount_RNA", "Batch"))
+  } else {
+    sSeurat <- ScaleData(object = sSeurat, vars.to.regress = "nCount_RNA")
+  }
+  sce <- as.SingleCellExperiment(sSeurat)
+  sce <- scater::runPCA(sce)
+  sce <- scater::runUMAP(sce)
+  UMAP <- reducedDim(sce, "UMAP")
+  dist_mat <- dist(UMAP)
   params <- list()
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     df <- get(clustering) %>% dplyr::select(-cells)
     params[[clustering]] <- data.frame(
-      "Value" = lapply(df, silhouette) %>% unlist(),
+      "Value" = lapply(df, silhouette, dist = dist_mat) %>% unlist(),
       "n_clus" = lapply(df, n_distinct) %>% unlist())
   }
   params <- bind_rows(params, .id = "clustering") %>%
@@ -356,7 +388,7 @@ evaluate_clustering_methods <- function(sce, id) {
                    stringsAsFactors = FALSE) %>%
       arrange(cells)
     SL[[method]] <- data.frame(
-      "Value" = lapply(df %>% dplyr::select(-cells), silhouette) %>% unlist(),
+      "Value" = lapply(df %>% dplyr::select(-cells), silhouette, dist = dist_mat) %>% unlist(),
       "Name" = colnames(df %>% dplyr::select(-cells)),
       "n_clus" = lapply(df %>% dplyr::select(-cells), n_distinct) %>% unlist(),
       "clustering" = word(colnames(df %>% dplyr::select(-cells)), 1, sep = "\\."),
