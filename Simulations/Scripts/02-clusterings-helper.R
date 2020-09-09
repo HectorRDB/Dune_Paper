@@ -370,8 +370,8 @@ evaluate_clustering_methods <- function(sce, id) {
   }
   sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100)
   sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:100)
-  sSeurat <- sSeurat[, SC3$cells]
   UMAP <- Embeddings(sSeurat, reduction = "umap")
+  UMAP <- UMAP[SC3$cells, ]
   dist_mat <- dist(UMAP)
   params <- list()
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
