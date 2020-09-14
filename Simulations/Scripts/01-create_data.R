@@ -11,6 +11,7 @@ create_simple_balanced_data <- function(nCells, nClus, DE =.1, seed = 19070) {
                        method = "groups",
                        verbose = FALSE,
                        nGenes = 10^4,
+                       batchCells = nCells,
                        de.prob = DE,
                        seed = as.integer(seed))
   return(sce)
@@ -27,6 +28,7 @@ create_unbalanced_data <- function(nCells, nClus, DE, seed = 19070) {
                        verbose = FALSE,
                        nGenes = 10^4,
                        de.prob = deProb,
+                       batchCells = nCells,
                        seed = as.integer(seed))
   return(sce)
 }
