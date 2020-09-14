@@ -13,9 +13,10 @@ BiocParallel::register(MulticoreParam(NCORES))
 # Load data ----
 source(here("Simulations", "Scripts", "01-create_data.R"))
 source(here("Simulations", "Scripts", "02-clusterings-helper.R"))
-set.seed(118617)
+set.seed(19038)
 nCells <- 5000
-sce <- create_hard_balanced_data(nCells = nCells, nClus = 30, seed = 77865)
+sce <- create_simple_balanced_data(nCells = nCells, nClus = 30, 
+                                   DE =.05, seed = runif(1, 0, 100))
 
 # Run clustering
 run_clusterings(sce, id = 3)

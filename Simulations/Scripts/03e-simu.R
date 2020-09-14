@@ -16,14 +16,14 @@ source(here("Simulations", "Scripts", "02-clusterings-helper.R"))
 set.seed(118617)
 nCells <- 5000
 sce <- create_hard_balanced_data(nCells = nCells, nClus = 30, 
-                                 DE =.1, seed = runif(1, 0, 100))
+                                 DE =.05, seed = runif(1, 0, 100))
 
 # Run clustering
-run_clusterings(sce, id = 4)
+run_clusterings(sce, id = 5)
 
 # Do the consensus
-rsec <- readRDS(here("Simulations", "Data", paste0("Merger_", 4, ".rds")))
-run_merging_methods(rsec, sce, 4)
+rsec <- readRDS(here("Simulations", "Data", paste0("Merger_", 5, ".rds")))
+run_merging_methods(rsec, sce, 5)
 
 # Do the measures
-evaluate_clustering_methods(sce, 4)
+evaluate_clustering_methods(sce, 5)

@@ -6,7 +6,7 @@ suppressMessages(
 rm(libs)
 
 # Create data functions ----
-.create_balanced_data <- function(nCells, nClus, nBatches, DE, seed = 19070) {
+create_simple_balanced_data <- function(nCells, nClus, DE =.1, seed = 19070) {
   sce <- splatSimulate(group.prob = rep(1, nClus) / nClus,
                        method = "groups",
                        verbose = FALSE,
@@ -17,29 +17,16 @@ rm(libs)
   return(sce)
 }
 
-create_simple_balanced_data <- function(nCells, nClus, seed = 19070) {
-  return(.create_balanced_data(nCells = nCells, nClus = nClus, nBatches = 1,
-                               DE = .1, seed = seed))
-}
-
-
-create_hard_balanced_data <- function(nCells, nClus, seed = 19070) {
-  return(.create_balanced_data(nCells = nCells, nClus = nClus, nBatches = 4,
-                               DE = .1, seed = seed))
-}
-
 # Balanced data functions ----
-create_unbalanced_data <- function(nCells, nClus, nBatches, DE, seed = 19070) {
+create_unbalanced_data <- function(nCells, nClus, DE, seed = 19070) {
   set.seed(seed)
   groupProb <- table(sample(seq_len(nClus), nCells, replace = TRUE)) / nCells
   groupProb <- as.vector(groupProb)
-  deProb <- rnorm(nClus, DE, sd = .1)
-  deProb[deProb <= 0] <- DE
+  deProb <- runif(nClus, .75 * DE, 1.25 * DE)
   sce <- splatSimulate(group.prob = groupProb,
                        method = "groups",
                        verbose = FALSE,
                        nGenes = 10^4,
-                       batchCells = rep(nCells / nBatches, nBatches),
                        de.prob = deProb,
                        seed = seed)
   return(sce)
