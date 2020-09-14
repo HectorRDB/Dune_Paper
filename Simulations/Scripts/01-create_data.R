@@ -11,7 +11,6 @@ create_simple_balanced_data <- function(nCells, nClus, DE =.1, seed = 19070) {
                        method = "groups",
                        verbose = FALSE,
                        nGenes = 10^4,
-                       batchCells = rep(nCells / nBatches, nBatches),
                        de.prob = DE,
                        seed = seed)
   return(sce)

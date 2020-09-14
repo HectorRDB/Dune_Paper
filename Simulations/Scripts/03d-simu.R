@@ -15,8 +15,8 @@ source(here("Simulations", "Scripts", "01-create_data.R"))
 source(here("Simulations", "Scripts", "02-clusterings-helper.R"))
 set.seed(118617)
 nCells <- 5000
-sce <- create_hard_balanced_data(nCells = nCells, nClus = 30, 
-                                 DE =.1, seed = runif(1, 0, 100))
+sce <- create_unbalanced_data(nCells = nCells, nClus = 30, 
+                              DE =.1, seed = runif(1, 0, 100))
 
 # Run clustering
 run_clusterings(sce, id = 4)
