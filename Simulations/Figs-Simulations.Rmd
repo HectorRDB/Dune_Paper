@@ -29,7 +29,7 @@ rm(libs)
 # Average silhouette width
 
 ```{r}
-res <- lapply(1:4, function(id){
+res <- lapply(1:5, function(id){
   df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
   return(df%>% filter(Metric == "SL"))
 })
@@ -44,7 +44,7 @@ ggplot(res, aes(x = n_clus, y = Value, col = clustering)) +
 ## Finding where Dune stops
 
 ```{r}
-res <- lapply(1:4, function(id){
+res <- lapply(1:5, function(id){
   df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
   return(df)
 })
