@@ -208,7 +208,7 @@ run_merging_methods <- function(Rsec, sce, id) {
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     Rsec <- addClusterings(Rsec, clusMat[,clustering], clusterLabels = clustering)
   }
-  cutoffs <- seq(from = 0, to = .15, by = .005)
+  cutoffs <- seq(from = 0, to = .3, by = .005)
   res <- list()
   for (clustering in c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")) {
     print(clustering)
