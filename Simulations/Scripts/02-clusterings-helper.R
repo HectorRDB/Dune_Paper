@@ -350,7 +350,7 @@ evaluate_clustering_methods <- function(sce, id) {
   sce <- computeSumFactors(sce, sizes = pmin(ncol(sce), seq(20, 120, 20)),
                            min.mean = 0.1)
   logcounts(sce) <- scater::normalizeCounts(sce)
-  df <- colData(sce)
+  df <- colData(sce) %>% as.data.frame()
   rownames(df) <- df$Cell
   sSeurat <- CreateSeuratObject(counts = assays(sce)$counts, project = 'allen40K',
                                 meta.data = df)
