@@ -75,15 +75,112 @@ p
 
 ```{r}
 res <- bind_rows(res, .id = "Dataset") %>%
-  filter(method != "param") %>%
-  # group_by(Metric, Dataset, ) %>%
-  filter(n_clus >= 20)
+  filter(method != "param")
 ggplot(res %>%
   filter(Metric != "SL") %>%
+  filter(n_clus >= 20) %>%
   mutate(scenario = paste(Metric, str_remove(clustering, "_KMEANS"), sep = "_")),
   aes(x = n_clus, y = Value, col = method)) +
   facet_grid(Dataset ~ scenario, scales = "free") +
   geom_path() +
   theme_bw()
-  
+```
+
+## Figure with paper
+
+### A
+
+```{r}
+df <- res %>%
+  filter(Metric == "ARI",
+         Dataset == 2,
+         method != "Dune",
+         clustering == "TSNE_KMEANS",
+         n_clus >= 10) %>%
+  mutate(method = str_remove(method, "_NMI")) %>%
+  arrange(n_clus) %>%
+  select(n_clus, Value, method) %>%
+  distinct()
+p1 <- ggplot(df, aes(x = n_clus, y = Value, col = method)) +
+  geom_line(size = 2, alpha = .9,
+            arrow = arrow(length = unit(0.30,"cm"), ends = "first", 
+                          type = "closed"),
+            show.legend = FALSE) +
+  geom_line(size = 0, alpha = 0) +
+  theme_classic() +
+  labs(x = "Number of clusters", y ="ARI with ground truth",
+       col = "Method\nof merging") +
+  scale_color_brewer(palette = "Dark2") +
+  guides(color = guide_legend(
+    reverse = TRUE,
+    title.position = "left",
+    override.aes = list(size = 2, alpha = 1))
+  ) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme(legend.title.align = 0.5,
+        legend.title = element_text(size = 17),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12)) +
+  annotate("text", x = 39, y = df$Value[df$n_clus == 40][1] + .08,
+           label = "Start", fontface = "bold", size = 4)
+p1 
+```
+
+### B
+
+```{r}
+p2 <- ggplot(res %>%
+  filter(Metric != "SL") %>%
+  filter(n_clus >= 20,
+         method != "Dune",
+         Dataset != 6,
+         Metric == "ARI") %>%
+  mutate(clustering = str_remove(clustering, "_KMEANS"),
+         method = str_remove(method, "_NMI"),
+         Dataset = paste("Dataset ", Dataset)),
+  aes(x = n_clus, y = Value, col = method)) +
+  facet_grid(clustering ~ Dataset, scales = "free") +
+  theme_classic() +
+  geom_line(size = 1, alpha = .9) +
+  theme_classic() +
+  labs(x = "Number of clusters", y ="ARI with ground truth",
+       col = "Method\nof merging") +
+  scale_color_brewer(palette = "Dark2") +
+  guides(color = FALSE)
+p2
+```
+
+### C
+
+```{r}
+p3 <- ggplot(res %>%
+  filter(Metric != "SL") %>%
+  filter(n_clus >= 20,
+         method != "Dune",
+         Dataset != 6,
+         Metric == "NMI") %>%
+  mutate(clustering = str_remove(clustering, "_KMEANS"),
+         method = str_remove(method, "_NMI"),
+         Dataset = paste("Dataset ", Dataset)),
+  aes(x = n_clus, y = Value, col = method)) +
+  facet_grid(clustering ~ Dataset, scales = "free") +
+  theme_classic() +
+  geom_line(size = 1, alpha = .9) +
+  theme_classic() +
+  labs(x = "Number of clusters", y ="NMI with ground truth",
+       col = "Method\nof merging") +
+  scale_color_brewer(palette = "Dark2") +
+  guides(color = FALSE)
+p3
+```
+### All
+
+```{r}
+first_row <- plot_grid(NULL, p1, NULL, nrow =  1, labels = c("", "a)", ""),
+                       label_size = 18, scale = .9, rel_widths = c(.1, .8, .1))
+second_row <- plot_grid(p2, p3, nrow =  1, labels = c("b)", "c)"),
+                           label_size = 18, scale = .9)
+p <- plot_grid(first_row, second_row, nrow = 2)
+p
 ```
