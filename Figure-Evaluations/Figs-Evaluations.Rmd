@@ -105,7 +105,7 @@ p2 <- ggplot(
 p2
 ```
 
-# Panel a
+# Panel c
 
 ```{r}
 df <- bind_rows(
@@ -153,6 +153,7 @@ p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
   NULL
 p3
 ```
+# Panel d
 
 ```{r}
 df <- bind_rows(
@@ -202,6 +203,7 @@ p4 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
   NULL
 p4
 ```
+# All
 
 ```{r}
 first_row <- plot_grid(p1, p2, nrow = 1, labels = c("a)", "b)"))
