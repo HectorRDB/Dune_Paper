@@ -26,7 +26,7 @@ suppressMessages(
 rm(libs)
 ```
 
-# b
+# Panel a
 
 ```{r}
 df <- read.table(here("Figure-ARI", "data", "sc3-comp1.txt"), header = TRUE,
@@ -55,6 +55,8 @@ p1 <- ggplot(df, aes(x = n_clus, y = ARI)) +
         legend.text = element_text(size = 10))
 p1
 ```
+# Panel b
+
 ```{r}
 read_single_method <- function(Method,
                                result_dir = here("Brain", "data",
@@ -102,6 +104,8 @@ p2 <- ggplot(
 
 p2
 ```
+
+# Panel a
 
 ```{r}
 df <- bind_rows(
