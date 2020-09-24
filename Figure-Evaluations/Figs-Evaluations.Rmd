@@ -1,0 +1,213 @@
+---
+author: "Hector Roux de Bézieux"
+date: '`r format(Sys.time(), "%d %B , %Y")`'
+title: 'Panel on Dune specificities'
+output:
+  html_document:
+    toc: true
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: true
+    code_download: TRUE
+---
+
+```{r load packages, include=F}
+library(knitr)
+opts_chunk$set(
+  fig.pos = "!h", out.extra = "", warning = F, message = F,
+  fig.align = "center", echo = F
+)
+libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
+          "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "purrr",
+          "DailyHRB")
+suppressMessages(
+  suppressWarnings(sapply(libs, require, character.only = TRUE))
+)
+rm(libs)
+```
+
+# b
+
+```{r}
+df <- read.table(here("Figure-ARI", "data", "sc3-comp1.txt"), header = TRUE,
+                 stringsAsFactors = FALSE) %>% 
+  filter(mergeMethod != "Params") %>%
+  filter(mergeMethod == "Dune")
+p1 <- ggplot(df, aes(x = n_clus, y = ARI)) +
+  geom_ribbon(aes(ymax = ARI), ymin = min(df$ARI) - 5,
+              fill = "gray", alpha = .5) +
+  geom_line(size = 2, col = "#7570B3") +
+  my_theme() +
+  geom_segment(x = min(df$n_clus), xend = max(df$n_clus), y = 0, yend = 0) +
+  geom_segment(x = min(df$n_clus), xend = min(df$n_clus), y = 0,
+               yend = df$ARI[1]) +
+  geom_segment(x = max(df$n_clus), xend = max(df$n_clus), y = 0,
+               yend = df$ARI[nrow(df)]) +
+  annotate("text", x = (min(df$n_clus) + max(df$n_clus)) / 2,
+           y = .66 * min(df$ARI) + .33 * max(df$ARI),
+           label = "Area Under the Curve\n(AUC)",
+           size = 5) +
+  labs(x = "Number of clusters", y = "ARI with gold standard") +
+  scale_x_continuous(breaks = c(20, 25, 30)) +
+  scale_y_continuous(limits = c(min(df$ARI), max(df$ARI))) +
+  theme(axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 10))
+p1
+```
+```{r}
+read_single_method <- function(Method,
+                               result_dir = here("Brain", "data",
+                                                 "Replicability", 
+                                                 "SingleMethod", "smart")) {
+  df <- read.table(file.path(result_dir, "consensus_cluster_replicability.txt"))
+  df <- df %>% filter(clustering_name == Method)
+}
+
+Seurat <- read_single_method(Method = "Seurat") %>% 
+  mutate(level = str_extract(clustering_method, ",.*$") %>%
+           str_remove(., "^,") %>%
+           factor(., levels = c("30", "50", "100")),
+         clustering_method = 
+           str_extract(clustering_method, "^.*,") %>%
+           str_remove(., "Seurat\\.") %>%
+           str_remove(., ",$") %>%
+           str_replace(., "_", "."))
+
+SC3 <- read_single_method("SC3") %>%
+         mutate(level = as.numeric(as.character(level)))
+
+Monocle <- read_single_method(Method = "Monocle") %>% 
+  mutate(level = str_remove(level, "^k_") %>% as.numeric()) %>%
+  filter(level >= 10)
+p2 <- ggplot(
+  bind_rows(SC3 %>% select(-level),
+            Monocle %>% select(-level),
+            Seurat %>% select(-level)) %>%
+    mutate(n_clus = (replicable_clusters + non_replicable_clusters) / 2) %>%
+    filter(n_clus > 10),
+  aes(x = n_clus, y = fraction_replicable_cells, col = clustering_name)) +
+  geom_point(size = 3, alpha = .7) +
+  my_theme() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Resolution", y = "Replicability", col = "Partitions") +
+  scale_color_brewer(palette = "Set1") +
+  guides(col = guide_legend(override.aes = list(alpha = 1))) +
+  theme(legend.position = c(.7, .8),
+        legend.title.align = 0.5,
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 13),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 10))
+
+p2
+```
+
+```{r}
+df <- bind_rows(
+  "Brain-AIBS" = read.table(here("Figure-Rep", "data", "Brain.txt"), header = TRUE,
+                       stringsAsFactors = FALSE),
+  "Pancreas" = read.table(here("Figure-Rep", "data", "Pancreas.txt"),
+                          header = TRUE, stringsAsFactors = FALSE),
+  .id = "Contrast"
+  ) %>%
+  filter(Merge_method != "Dune") %>%
+  mutate(Merge_method = str_remove(Merge_method, "_NMI"),
+         scenario = paste0(Contrast, "\n", method, "_", comp))
+df <- df %>% arrange(scenario)
+top <- df %>% group_by(scenario) %>%
+  arrange(dplyr::desc(AUARIC)) %>%
+  dplyr::slice(1) %>%
+  ungroup() %>%
+  select(Merge_method) %>%
+  table()
+labels <- paste0(df$Contrast, "\n", df$method,
+                 "-$\\Theta_", 1:3, "$") %>%
+  unique()
+p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+              group_by(scenario) %>%
+              mutate(AUARIC = scale(AUARIC)) %>%
+               ungroup() %>%
+               arrange(scenario),
+            aes(x = scenario, y = Merge_method, fill = AUARIC)) +
+  geom_tile() +
+  scale_fill_viridis_c(begin = 1, end = 0) +
+  my_theme() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.line = element_blank()) +
+  labs(x = "", y = "", fill = "Scaled\nAUC",
+       title = paste0("Replicability", 
+                      # "\n", "3 clustering methods × 3",
+                      # "Theta × 2 pairs of datasets =\n18 comparisons",
+                      "")) +
+  theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 6),
+        legend.title = element_text(size = 10, hjust = .5),
+        # legend.position = "bottom",
+        title = element_text(size = 12)) +
+  # scale_x_discrete(labels = labels) +
+  NULL
+p3
+```
+
+```{r}
+df <- bind_rows(
+  "Brain" = read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
+                       stringsAsFactors = FALSE),
+  "Pancreas" = read.table(here("Figure-ARI", "data", "Pancreas.txt"),
+                          header = TRUE, stringsAsFactors = FALSE)) %>%
+  filter(Merge_method != "Dune") %>%
+  mutate(Merge_method = str_remove(Merge_method, "_NMI"),
+         dataset = 
+           case_when(dataset == "SMARTer_cells_MOp" ~ "AIBS scRNA-Smart",
+                     dataset == "SMARTer_nuclei_MOp" ~ "AIBS snRNA-Smart",
+                     TRUE ~ dataset)) %>%
+  mutate(scenario = paste0(dataset, "\n", method, "_", comp))
+  
+df <- df %>% arrange(scenario)
+rank <- df %>%
+  group_by(scenario) %>%
+  filter(Merge_method != "Param") %>%
+  mutate(rk = rank(dplyr::desc(AUARIC))) %>%
+  ungroup() %>%
+  select(Merge_method, rk) %>%
+  table
+  
+labels <- paste0(str_replace_all(df$dataset, "_", "-"), "\n", df$method,
+                 "-$\\Theta_", 1:3, "$") %>%
+  unique()
+p4 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+              group_by(scenario) %>%
+              filter(Merge_method != "Param") %>%
+              mutate(AUARIC = scale(AUARIC)),
+            aes(x = scenario, y = Merge_method, fill = AUARIC)) +
+  geom_tile() +
+  scale_fill_viridis_c(begin = 1, end = 0) +
+  # scale_fill_gradientn(colors = brewer.pal(9, "Spectral")[9:1]) +
+  guides(fill = FALSE) +
+  my_theme() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.line = element_blank()) +
+  labs(x = "", y = "", fill = "Scaled\nAUARIC",
+       title = paste0("ARI with gold standard")) +
+  # n", "3 clustering methods × 3", "Theta × 4 datasets =\n36 comparisons
+  theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 6),
+        title = element_text(size = 12)) +
+  # scale_x_discrete(labels = labels) +
+  NULL
+p4
+```
+
+```{r}
+first_row <- plot_grid(p1, p2, nrow = 1, labels = c("a)", "b)"))
+second_row <- plot_grid(plot_grid(p3, NULL, nrow = 2, rel_heights = c(1.2, .1)),
+                        p4, nrow = 1, labels = c("c)", "d)"),
+                        rel_widths = c(.8, 1))
+p <- plot_grid(first_row, second_row, nrow = 2)
+p
+save_plot(plot = p,  filename = here("Figure-Evaluations", "panel.png"),
+          base_width = 12, base_height = 9,
+          bg = "transparent")
+
+```
