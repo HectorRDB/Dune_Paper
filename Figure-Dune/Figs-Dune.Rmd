@@ -25,7 +25,7 @@ suppressMessages(
 )
 rm(libs)
 mergers <- readRDS(here("Brain", "data", "Dune",
-                        "SMARTer_cells_MOp_mergers.rds"))
+                        "SMARTer_nuclei_MOp_NMI_mergers.rds"))
 tSNE <- read.csv(here("Brain", "data", "tSNE", "SMARTer_cells_MOp_tnse.csv")) %>%
   select(-X)
 ```
@@ -110,10 +110,10 @@ ggsave(plot = p, filename = here("Figure-Dune", "figures", "2d.png"),
        bg = "transparent", width = 9, height = 7)
 ```
 
-# Improvement in ARI
+# Improvement in NMI
 
-```{r ARI imp no allen cell}
-p1 <- plotARIs(mergers$initialMat) +
+```{r NMI imp no allen cell}
+p1 <- plotNMIs(mergers$initialMat) +
   labs(x = "", y = "") +
   theme(plot.title = element_text(hjust = 0.5),
         rect = element_blank()) +
@@ -124,9 +124,9 @@ p1 <- plotARIs(mergers$initialMat) +
 p1
 p12 <- p1
 ggsave(plot = p1, filename = here("Figure-Dune", "figures", 
-                                  "ARI_Matrix_Before.png"),
+                                  "NMI_Matrix_Before.png"),
        bg = "transparent", width = 7, height = 7)
-p2 <- plotARIs(mergers$currentMat) +
+p2 <- plotNMIs(mergers$currentMat) +
   labs(x = "", y = "") +
   theme(plot.title = element_text(hjust = 0.5),
         rect = element_blank()) +
@@ -137,7 +137,7 @@ p2 <- plotARIs(mergers$currentMat) +
 p2
 p22 <- p2
 ggsave(plot = p2, filename = here("Figure-Dune", "figures", 
-                                  "ARI_Matrix_After.png"),
+                                  "NMI_Matrix_After.png"),
        bg = "transparent", width = 7, height = 7)
 ```
 
@@ -178,45 +178,39 @@ ggsave(plot = p3, filename = here("Figure-Dune", "figures",
 rm(p1, p2, p3)
 ```
 
-# Trend of ARI improvements and number of clusters
+# Trend of NMI improvements and number of clusters
 
-```{r ARI trend}
-ARI <- ARIImp(mergers)
-df <- data.frame(step = 0:length(mergers$ImpARI),
-                 ARI = ARI)
-p13 <- ggplot(df, aes(x = step, y = ARI)) +
+```{r NMI trend}
+NMI <- NMIImp(mergers)
+df <- data.frame(step = 0:length(mergers$ImpMetric),
+                 NMI = NMI)
+p13 <- ggplot(df, aes(x = step, y = NMI)) +
   geom_path(size = 2) +
-  scale_x_continuous(breaks = c(0, length(mergers$ImpARI)),
+  scale_x_continuous(breaks = c(0, length(mergers$ImpMetric)),
                        labels = c("Initial", "Final"))  +
   theme_classic() +
   theme(rect = element_blank()) +
-  labs(x = "Merging steps", y = "mean ARI between partitions")
+  labs(x = "Merging steps", y = "mean NMI between partitions")
 ggsave(plot = p13, width = 6, height = 6,
-       filename = here("Figure-Dune", "figures", "ARI-imp.png"),
+       filename = here("Figure-Dune", "figures", "NMI-imp.png"),
        bg = "transparent")
 p13
 ```
 
 ```{r}
 baseMat <- mergers$initialMat
-n_clus <- lapply(1:nrow(mergers$merges), function(m){
-  diff <- rep(0, ncol(baseMat))
-  diff[mergers$merges[m, 1]] <- -1
-  matrix(diff, nrow = 1)
-  }) %>%
-    do.call('rbind', args = .)
-n_clus <- rbind(apply(baseMat, 2, n_distinct) %>% matrix(data = ., nrow = 1),
-                n_clus)
-n_clus <- apply(n_clus, 2, cumsum)
-colnames(n_clus) <- paste0("Partition ", 1:3)
-df <- data.frame(step = 0:length(mergers$ImpARI),
+f <- function(clusMat, i) dplyr::n_distinct(clusMat[, i])
+n_clus <- data.frame("Partition 1" = functionTracking(mergers, f, i = 2),
+                     "Partition 2" = functionTracking(mergers, f, i = 3),
+                     "Partition 3" = functionTracking(mergers, f, i = 4))
+df <- data.frame(step = 0:length(mergers$ImpMetric),
                  n_clus) %>%
   pivot_longer(-step, values_to = "n_clus", names_to = "Partition") %>%
   mutate(Partition = str_replace_all(Partition, "\\.", " "))
 p23 <- ggplot(df,
             aes(x = step, y = n_clus, col = Partition, group = Partition)) +
   geom_path(size = 2, alpha = .7) +
-  scale_x_continuous(breaks = c(0, length(mergers$ImpARI)),
+  scale_x_continuous(breaks = c(0, length(mergers$ImpMetric)),
                        labels = c("Initial", "Final"))  +
   theme_classic() +
   theme(rect = element_blank()) +
