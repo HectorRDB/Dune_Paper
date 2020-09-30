@@ -107,7 +107,7 @@ p1 <- ggplot(df, aes(x = n_clus, y = Value, col = method)) +
                           type = "closed"),
             show.legend = FALSE) +
   geom_line(size = 0, alpha = 0) +
-  theme_classic() +
+  my_theme() +
   labs(x = "Number of clusters", y ="ARI with ground truth",
        col = "Method\nof merging") +
   scale_color_brewer(palette = "Dark2") +
@@ -138,12 +138,13 @@ p2 <- ggplot(res %>%
          Metric == "ARI") %>%
   mutate(clustering = str_remove(clustering, "_KMEANS"),
          method = str_remove(method, "_NMI"),
-         Dataset = paste("Dataset ", Dataset)),
+         Dataset = paste("Dataset\n", Dataset)),
   aes(x = n_clus, y = Value, col = method)) +
   facet_grid(clustering ~ Dataset, scales = "free") +
-  theme_classic() +
   geom_line(size = 1, alpha = .9) +
-  theme_classic() +
+  my_theme() +
+  scale_x_continuous(breaks = c(20, 30, 40)) +
+  theme(strip.background = element_rect(fill = "transparent")) +
   labs(x = "Number of clusters", y ="ARI with ground truth",
        col = "Method\nof merging") +
   scale_color_brewer(palette = "Dark2") +
@@ -162,14 +163,15 @@ p3 <- ggplot(res %>%
          Metric == "NMI") %>%
   mutate(clustering = str_remove(clustering, "_KMEANS"),
          method = str_remove(method, "_NMI"),
-         Dataset = paste("Dataset ", Dataset)),
+         Dataset = paste("Dataset\n", Dataset)),
   aes(x = n_clus, y = Value, col = method)) +
   facet_grid(clustering ~ Dataset, scales = "free") +
-  theme_classic() +
+  my_theme() +
+  theme(strip.background = element_rect(fill = "transparent")) +
   geom_line(size = 1, alpha = .9) +
-  theme_classic() +
   labs(x = "Number of clusters", y ="NMI with ground truth",
        col = "Method\nof merging") +
+  scale_x_continuous(breaks = c(20, 30, 40)) +
   scale_color_brewer(palette = "Dark2") +
   guides(color = FALSE)
 p3
@@ -183,6 +185,18 @@ second_row <- plot_grid(p2, p3, nrow =  1, labels = c("b)", "c)"),
                            label_size = 18, scale = .9)
 p <- plot_grid(first_row, second_row, nrow = 2)
 p
-save_plot(filename = here("Simulations", "Figures", "Simu.png"),
+save_plot(filename = here("Simulations", "Figures", "Simu_1.png"),
+          plot = p, base_height = 6, base_width = 10, bg = "transparent")
+```
+
+```{r}
+legend <- get_legend(p1 + theme(legend.position = "bottom") +
+                       labs(col = "Method of merging"))
+first_row <- plot_grid(p1 + guides(col = FALSE), p2, nrow =  1, labels = c("a)", "b)"),
+               label_size = 18, scale = .9)
+second_row <- plot_grid(NULL, legend, NULL, rel_widths = c(.4, .2, .4), nrow = 1)
+p <- plot_grid(first_row, second_row, nrow = 2, rel_heights = c(.8, .1))
+p
+save_plot(filename = here("Simulations", "Figures", "Simu_2.png"),
           plot = p, base_height = 6, base_width = 10, bg = "transparent")
 ```
