@@ -70,27 +70,16 @@ p <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = clustering)) +
            col = "darkred")
 p
 ```
-
-## Comparison with the truth
+# Figure with paper
+## Panel a
 
 ```{r}
+res <- lapply(1:6, function(id){
+  df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
+  return(df)
+})
 res <- bind_rows(res, .id = "Dataset") %>%
   filter(method != "param")
-ggplot(res %>%
-  filter(Metric != "SL") %>%
-  filter(n_clus >= 20) %>%
-  mutate(scenario = paste(Metric, str_remove(clustering, "_KMEANS"), sep = "_")),
-  aes(x = n_clus, y = Value, col = method)) +
-  facet_grid(Dataset ~ scenario, scales = "free") +
-  geom_path() +
-  theme_bw()
-```
-
-## Figure with paper
-
-### A
-
-```{r}
 df <- res %>%
   filter(Metric == "ARI",
          Dataset == 2,
@@ -126,8 +115,7 @@ p1 <- ggplot(df, aes(x = n_clus, y = Value, col = method)) +
            label = "Start", fontface = "bold", size = 4)
 p1 
 ```
-
-### B
+## Panel b
 
 ```{r}
 p2 <- ggplot(res %>%
@@ -152,42 +140,7 @@ p2 <- ggplot(res %>%
 p2
 ```
 
-### C
-
-```{r}
-p3 <- ggplot(res %>%
-  filter(Metric != "SL") %>%
-  filter(n_clus >= 20,
-         method != "Dune",
-         Dataset != 6,
-         Metric == "NMI") %>%
-  mutate(clustering = str_remove(clustering, "_KMEANS"),
-         method = str_remove(method, "_NMI"),
-         Dataset = paste("Dataset\n", Dataset)),
-  aes(x = n_clus, y = Value, col = method)) +
-  facet_grid(clustering ~ Dataset, scales = "free") +
-  my_theme() +
-  theme(strip.background = element_rect(fill = "transparent")) +
-  geom_line(size = 1, alpha = .9) +
-  labs(x = "Number of clusters", y ="NMI with ground truth",
-       col = "Method\nof merging") +
-  scale_x_continuous(breaks = c(20, 30, 40)) +
-  scale_color_brewer(palette = "Dark2") +
-  guides(color = FALSE)
-p3
-```
-### All
-
-```{r}
-first_row <- plot_grid(NULL, p1, NULL, nrow =  1, labels = c("", "a)", ""),
-                       label_size = 18, scale = .9, rel_widths = c(.1, .8, .1))
-second_row <- plot_grid(p2, p3, nrow =  1, labels = c("b)", "c)"),
-                           label_size = 18, scale = .9)
-p <- plot_grid(first_row, second_row, nrow = 2)
-p
-save_plot(filename = here("Simulations", "Figures", "Simu_1.png"),
-          plot = p, base_height = 6, base_width = 10, bg = "transparent")
-```
+## Together
 
 ```{r}
 legend <- get_legend(p1 + theme(legend.position = "bottom") +
@@ -197,6 +150,72 @@ first_row <- plot_grid(p1 + guides(col = FALSE), p2, nrow =  1, labels = c("a)",
 second_row <- plot_grid(NULL, legend, NULL, rel_widths = c(.4, .2, .4), nrow = 1)
 p <- plot_grid(first_row, second_row, nrow = 2, rel_heights = c(.8, .1))
 p
-save_plot(filename = here("Simulations", "Figures", "Simu_2.png"),
+save_plot(filename = here("Simulations", "Figures", "panel.png"),
           plot = p, base_height = 6, base_width = 10, bg = "transparent")
+```
+
+# Supp figure
+
+We add Dune with ARI and NMI with ground truth.
+
+```{r}
+p1 <- ggplot(res %>%
+  dplyr::filter(Metric != "SL") %>%
+  dplyr::filter(n_clus >= 20,
+         Dataset != 6,
+         Metric == "ARI") %>%
+  mutate(clustering = str_remove(clustering, "_KMEANS"),
+         method = case_when(method == "Dune" ~ "Dune_ARI",
+                            method == "Dune_NMI" ~"Dune",
+                            TRUE ~ method),
+         Dataset = paste("Dataset\n", Dataset)),
+  aes(x = n_clus, y = Value, col = method)) +
+  facet_grid(clustering ~ Dataset, scales = "free") +
+  geom_line(size = 1, alpha = .9) +
+  my_theme() +
+  scale_x_continuous(breaks = c(20, 30, 40)) +
+  theme(strip.background = element_rect(fill = "transparent")) +
+  labs(x = "Number of clusters", y ="ARI with ground truth",
+       col = "Method\nof merging") +
+  scale_color_brewer(palette = "Dark2") +
+  NULL
+p1
+```
+
+```{r}
+p2 <- ggplot(res %>%
+  dplyr::filter(Metric != "SL") %>%
+  dplyr::filter(n_clus >= 20,
+         Dataset != 6,
+         Metric == "NMI") %>%
+  mutate(clustering = str_remove(clustering, "_KMEANS"),
+         method = case_when(method == "Dune" ~ "Dune_ARI",
+                            method == "Dune_NMI" ~"Dune",
+                            TRUE ~ method),
+         Dataset = paste("Dataset\n", Dataset)),
+  aes(x = n_clus, y = Value, col = method)) +
+  facet_grid(clustering ~ Dataset, scales = "free") +
+  geom_line(size = 1, alpha = .9) +
+  my_theme() +
+  scale_x_continuous(breaks = c(20, 30, 40)) +
+  theme(strip.background = element_rect(fill = "transparent")) +
+  labs(x = "Number of clusters", y ="NMI with ground truth",
+       col = "Method\nof merging") +
+  scale_color_brewer(palette = "Dark2") +
+  guides(color = FALSE) +
+  NULL
+p2
+```
+
+```{r}
+legend <- get_legend(p1 + theme(legend.position = "bottom") +
+                       labs(col = "Method of merging"))
+# first_row <- plot_grid(, p2, nrow =  1, labels = c("a)", "b)"),
+#                label_size = 18, scale = .9)
+second_row <- plot_grid(NULL, legend, NULL, rel_widths = c(.4, .2, .4), nrow = 1)
+p <- plot_grid(p1 + guides(col = FALSE), second_row, p2,
+               nrow = 3, rel_heights = c(.8, .1, .8))
+p
+save_plot(filename = here("Simulations", "Figures", "Supp.png"),
+          plot = p, base_height = 12, base_width = 10, bg = "transparent")
 ```
