@@ -214,7 +214,8 @@ legend <- get_legend(p1 + theme(legend.position = "bottom") +
 #                label_size = 18, scale = .9)
 second_row <- plot_grid(NULL, legend, NULL, rel_widths = c(.4, .2, .4), nrow = 1)
 p <- plot_grid(p1 + guides(col = FALSE), second_row, p2,
-               nrow = 3, rel_heights = c(.8, .1, .8))
+               nrow = 3, rel_heights = c(.8, .1, .8),
+               labels = c("a)", "", "b)"))
 p
 save_plot(filename = here("Simulations", "Figures", "Supp.png"),
           plot = p, base_height = 12, base_width = 10, bg = "transparent")

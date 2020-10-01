@@ -217,3 +217,108 @@ save_plot(plot = p,  filename = here("Figure-Evaluations", "panel.png"),
           bg = "transparent")
 
 ```
+
+# Supp 
+## Panel a
+
+```{r}
+df <- bind_rows(
+  "Brain-AIBS" = read.table(here("Figure-Rep", "data", "Brain.txt"), header = TRUE,
+                       stringsAsFactors = FALSE),
+  "Pancreas" = read.table(here("Figure-Rep", "data", "Pancreas.txt"),
+                          header = TRUE, stringsAsFactors = FALSE),
+  .id = "Contrast"
+  ) %>%
+  mutate(Merge_method = case_when(Merge_method == "Dune" ~ "Dune_ARI",
+                                  Merge_method == "Dune_NMI" ~"Dune",
+                                  TRUE ~ Merge_method),
+         Merge_method = factor(Merge_method, levels = 
+                                 c("Dist", "DE", "Dune_ARI", "Dune")),
+         scenario = paste0(Contrast, "\n", method, "_", comp))
+df <- df %>% arrange(scenario)
+top <- df %>% group_by(scenario) %>%
+  arrange(dplyr::desc(AUARIC)) %>%
+  dplyr::slice(1) %>%
+  ungroup() %>%
+  select(Merge_method) %>%
+  table()
+p1 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+              group_by(scenario) %>%
+              mutate(AUARIC = scale(AUARIC)) %>%
+               ungroup() %>%
+               arrange(scenario),
+            aes(x = scenario, y = Merge_method, fill = AUARIC)) +
+  geom_tile() +
+  scale_fill_viridis_c(begin = 1, end = 0) +
+  my_theme() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.line = element_blank()) +
+  labs(x = "", y = "", fill = "Scaled\nAUC",
+       title = "Replicability") +
+  theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 6),
+        legend.title = element_text(size = 10, hjust = .5),
+        title = element_text(size = 12)) +
+  NULL
+p1
+```
+
+## Panel b
+
+```{r}
+df <- bind_rows(
+  "Brain" = read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE,
+                       stringsAsFactors = FALSE),
+  "Pancreas" = read.table(here("Figure-ARI", "data", "Pancreas.txt"),
+                          header = TRUE, stringsAsFactors = FALSE)) %>%
+  mutate(Merge_method = case_when(Merge_method == "Dune" ~ "Dune_ARI",
+                                  Merge_method == "Dune_NMI" ~"Dune",
+                                  TRUE ~ Merge_method),
+         Merge_method = factor(Merge_method, levels = 
+                                 c("Dist", "DE", "Dune_ARI", "Dune")),
+         dataset = 
+           case_when(dataset == "SMARTer_cells_MOp" ~ "AIBS scRNA-Smart",
+                     dataset == "SMARTer_nuclei_MOp" ~ "AIBS snRNA-Smart",
+                     TRUE ~ dataset)) %>%
+  mutate(scenario = paste0(dataset, "\n", method, "_", comp))
+  
+df <- df %>% arrange(scenario)
+rank <- df %>%
+  group_by(scenario) %>%
+  filter(Merge_method != "Param") %>%
+  mutate(rk = rank(dplyr::desc(AUARIC))) %>%
+  ungroup() %>%
+  select(Merge_method, rk) %>%
+  table
+
+p2 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
+              group_by(scenario) %>%
+              filter(Merge_method != "Param") %>%
+              mutate(AUARIC = scale(AUARIC)),
+            aes(x = scenario, y = Merge_method, fill = AUARIC)) +
+  geom_tile() +
+  scale_fill_viridis_c(begin = 1, end = 0) +
+  guides(fill = FALSE) +
+  my_theme() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.line = element_blank()) +
+  labs(x = "", y = "", fill = "Scaled\nAUARIC",
+       title = "ARI with gold standard") + 
+  theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size = 6),
+        title = element_text(size = 12)) +
+  NULL
+p2
+```
+
+## All together
+
+```{r}
+p <- plot_grid(plot_grid(p1, NULL, nrow = 2, rel_heights = c(1.2, .1)),
+               p2, nrow = 1, labels = c("a)", "b)"),
+               rel_widths = c(.8, 1))
+p
+save_plot(plot = p,  filename = here("Figure-Evaluations", "Supp.png"),
+          base_width = 12, base_height = 6,
+          bg = "transparent")
+```
