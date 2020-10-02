@@ -124,7 +124,7 @@ p2 <- ggplot(res %>%
          method != "Dune",
          Dataset != 6,
          Metric == "ARI") %>%
-  mutate(clustering = str_remove(clustering, "_KMEANS"),
+  mutate(clustering = str_replace(clustering, "_", "+"),
          method = str_remove(method, "_NMI"),
          Dataset = paste("Dataset\n", Dataset)),
   aes(x = n_clus, y = Value, col = method)) +
@@ -164,7 +164,7 @@ p1 <- ggplot(res %>%
   dplyr::filter(n_clus >= 20,
          Dataset != 6,
          Metric == "ARI") %>%
-  mutate(clustering = str_remove(clustering, "_KMEANS"),
+  mutate(clustering = str_replace(clustering, "_", "+"),
          method = case_when(method == "Dune" ~ "Dune_ARI",
                             method == "Dune_NMI" ~"Dune",
                             TRUE ~ method),
@@ -188,7 +188,7 @@ p2 <- ggplot(res %>%
   dplyr::filter(n_clus >= 20,
          Dataset != 6,
          Metric == "NMI") %>%
-  mutate(clustering = str_remove(clustering, "_KMEANS"),
+  mutate(clustering = str_replace(clustering, "_" , "+"),
          method = case_when(method == "Dune" ~ "Dune_ARI",
                             method == "Dune_NMI" ~"Dune",
                             TRUE ~ method),
