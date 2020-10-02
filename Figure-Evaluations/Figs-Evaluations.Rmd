@@ -136,20 +136,17 @@ p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
   geom_tile() +
   scale_fill_viridis_c(begin = 1, end = 0) +
+  scale_y_discrete(position = "right") +
   my_theme() +
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
   labs(x = "", y = "", fill = "Scaled\nAUC",
-       title = paste0("Replicability", 
-                      # "\n", "3 clustering methods × 3",
-                      # "Theta × 2 pairs of datasets =\n18 comparisons",
-                      "")) +
+       title = "Replicability") +
   theme(axis.text.y = element_text(size = 15),
         axis.text.x = element_text(size = 6),
         legend.title = element_text(size = 10, hjust = .5),
-        # legend.position = "bottom",
+        legend.position = "left",
         title = element_text(size = 12)) +
-  # scale_x_discrete(labels = labels) +
   NULL
 p3
 ```
@@ -188,18 +185,15 @@ p4 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
   geom_tile() +
   scale_fill_viridis_c(begin = 1, end = 0) +
-  # scale_fill_gradientn(colors = brewer.pal(9, "Spectral")[9:1]) +
   guides(fill = FALSE) +
   my_theme() +
   theme(axis.text.x = element_text(angle = 90),
         axis.line = element_blank()) +
   labs(x = "", y = "", fill = "Scaled\nAUARIC",
        title = paste0("ARI with gold standard")) +
-  # n", "3 clustering methods × 3", "Theta × 4 datasets =\n36 comparisons
   theme(axis.text.y = element_text(size = 15),
         axis.text.x = element_text(size = 6),
         title = element_text(size = 12)) +
-  # scale_x_discrete(labels = labels) +
   NULL
 p4
 ```
@@ -207,9 +201,10 @@ p4
 
 ```{r}
 first_row <- plot_grid(p1, p2, nrow = 1, labels = c("a)", "b)"))
-second_row <- plot_grid(plot_grid(p3, NULL, nrow = 2, rel_heights = c(1.2, .1)),
-                        p4, nrow = 1, labels = c("c)", "d)"),
-                        rel_widths = c(.8, 1))
+second_row <- plot_grid(p4, plot_grid(p3, NULL, nrow = 2, 
+                                      rel_heights = c(1.5, .05)),
+                        nrow = 1, labels = c("c)", "d)"),
+                        rel_widths = c(1, .8))
 p <- plot_grid(first_row, second_row, nrow = 2)
 p
 save_plot(plot = p,  filename = here("Figure-Evaluations", "panel.png"),
