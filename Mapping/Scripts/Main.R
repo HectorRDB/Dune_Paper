@@ -1,0 +1,59 @@
+suppressWarnings(library(optparse))
+
+# Arguments for R Script ----
+option_list <- list(
+  make_option(c("-o", "--output"),
+              action = "store", default = NA, type = "character",
+              help = "Where to store the object after running"
+  ),
+  make_option(c("-l", "--location"),
+              action = "store", default = NA, type = "character",
+              help = "The location of the data"
+  ),
+  make_option(c("-n1", "--name1"),
+              action = "store", default = NA, type = "character",
+              help = "The name of the first dataset"
+  ),
+  make_option(c("-n2", "--name2"),
+              action = "store", default = NA, type = "character",
+          help = "The name of the second dataset"
+  ),
+  make_option(c("-m", "--merge"),
+              action = "store", default = NA, type = "character",
+              help = "The location of the merged files "
+  ),
+  make_option(c("-m2", "--merge2"),
+              action = "store", default = NA, type = "character",
+              help = "The second location of the merged files, optional"
+  )
+)
+
+opt <- parse_args(OptionParser(option_list = option_list))
+
+# Packages ----
+library(SingleCellExperiment)
+library(scater)
+library(stringr)
+library(dplyr)
+library(SingleR)
+library(Seurat)
+library(ggplot2)
+library(here)
+library(tidyr)
+library(purrr)
+
+# Load data ----
+sce1 <- readRDS(file = paste0(opt$l, opt$n1, "_filt.rds"))
+sce2 <- readRDS(file = paste0(opt$l, opt$n2, "_filt.rds"))
+
+comps <- list.files(opt$m) %>%
+  str_subset("NMI_Dune.csv")  %>%
+  str_remove("_NMI_Dune.csv") %>%
+  unlist() %>%
+  word(-1, sep = "_") %>%
+  unlist() %>%
+  unique()
+
+# Make predictions
+probas <- all_comps(sce1, sce2, opt$n1, opt$n2, opt$m, comps)
+write.csv(probas, file = opt$o, colnames = TRUE, row.names = FALSE)
