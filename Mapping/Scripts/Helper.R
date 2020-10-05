@@ -24,7 +24,7 @@ map_seurat_proba <- function(ref, target, labels) {
   dtlist <- lapply(dtlist, function(sce){
     sce <- NormalizeData(sce)
     sce <- FindVariableFeatures(sce, selection.method = 'vst', nfeatures = 2000)
-    if ("human" %in% colnames(colData(sce))) {
+    if ("human" %in% sce@meta.data) {
       sce <- ScaleData(object = sce, vars.to.regress = c("nCount_RNA", "human"))  
     } else {
       sce <- ScaleData(object = sce, vars.to.regress = "nCount_RNA")
@@ -47,14 +47,14 @@ map_seurat_proba <- function(ref, target, labels) {
 map_singleR_proba <- function(ref, target, labels) {
   preds <- SingleR(test = logNormCounts(target), ref = logNormCounts(ref),
                    labels = labels)
-  return(preds)
+  return(preds$tuning.scores$first)
 }
 
 # Together
 start_finish_clustering <- function(ref, target, merger, clustering) {
   print(paste0(".... ", clustering))
-  labels <- data.frame(init = merger[, paste0(clustering, "-00")],
-                       final = merger[, paste0(clustering, "-100")])
+  labels <- data.frame(init = merger[, paste0(clustering, ".00")],
+                       final = merger[, paste0(clustering, ".100")])
   print("...... SingleR")
   proba_singleR <- map_dfc(labels, map_singleR_proba, ref = ref, target = target)
   imp_singleR <- mean(proba_singleR$final - proba_singleR$init)

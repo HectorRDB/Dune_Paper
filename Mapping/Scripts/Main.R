@@ -47,8 +47,8 @@ sce1 <- readRDS(file = paste0(opt$l, opt$n1, "_filt.rds"))
 sce2 <- readRDS(file = paste0(opt$l, opt$n2, "_filt.rds"))
 
 comps <- list.files(opt$m) %>%
-  str_subset("NMI_Dune.csv")  %>%
-  str_remove("_NMI_Dune.csv") %>%
+  str_subset("Dune_NMI.csv")  %>%
+  str_remove("_Dune_NMI.csv") %>%
   unlist() %>%
   word(-1, sep = "_") %>%
   unlist() %>%
