@@ -66,6 +66,7 @@ start_finish_clustering <- function(ref, target, merger, clustering) {
 
 start_finish <- function(ref, target, merger) {
   clusterings <- c("sc3", "Seurat", "Monocle")
+  rownames(merger) <- merger$cells
   merger <- merger[colnames(ref), ]
   df <- lapply(clusterings, start_finish_clustering,
                ref = ref, target = target, merger = merger)
