@@ -10,11 +10,11 @@ option_list <- list(
               action = "store", default = NA, type = "character",
               help = "The location of the data"
   ),
-  make_option(c("-n1", "--name1"),
+  make_option(c("-f", "--first_name"),
               action = "store", default = NA, type = "character",
               help = "The name of the first dataset"
   ),
-  make_option(c("-n2", "--name2"),
+  make_option(c("-s", "--second_name"),
               action = "store", default = NA, type = "character",
           help = "The name of the second dataset"
   ),
@@ -43,8 +43,8 @@ library(tidyr)
 library(purrr)
 
 # Load data ----
-sce1 <- readRDS(file = paste0(opt$l, opt$n1, "_filt.rds"))
-sce2 <- readRDS(file = paste0(opt$l, opt$n2, "_filt.rds"))
+sce1 <- readRDS(file = paste0(opt$l, opt$f, "_filt.rds"))
+sce2 <- readRDS(file = paste0(opt$l, opt$s, "_filt.rds"))
 
 comps <- list.files(opt$m) %>%
   str_subset("Dune_NMI.csv")  %>%
@@ -55,5 +55,5 @@ comps <- list.files(opt$m) %>%
   unique()
 
 # Make predictions
-probas <- all_comps(sce1, sce2, opt$n1, opt$n2, opt$m, comps)
+probas <- all_comps(sce1, sce2, opt$f, opt$s, opt$m, comps)
 write.csv(probas, file = opt$o, colnames = TRUE, row.names = FALSE)
