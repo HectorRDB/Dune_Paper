@@ -25,7 +25,6 @@ option_list <- list(
 )
 
 opt <- parse_args(OptionParser(option_list = option_list))
-
 # Packages ----
 library(SingleCellExperiment)
 library(scater)
@@ -37,7 +36,7 @@ library(ggplot2)
 library(here)
 library(tidyr)
 library(purrr)
-
+source(here("Mapping", "Scripts", "Helper.R"))
 # Load data ----
 sce1 <- readRDS(file = paste0(opt$l, opt$f, "_filt.rds"))
 sce2 <- readRDS(file = paste0(opt$l, opt$s, "_filt.rds"))
