@@ -6,5 +6,5 @@
 #SBATCH --nodes=1
 loc="/scratch/users/singlecell/Pancreas/ProcessedData/"
 out="/accounts/projects/epurdom/singlecell/Dune_Paper/Mapping/Scripts/Pancreas.csv"
-Rscript --verbose Main.R -l $loc -n1 "baron" -n2 "segerstolpe"\
+Rscript --verbose Main.R -l $loc --name1 "baron" --name2 "segerstolpe"\
      -m "~/Pancreas/Data/Dune/" -o $out > pancreas.out 2>&1
