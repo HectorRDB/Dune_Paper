@@ -21,10 +21,6 @@ option_list <- list(
   make_option(c("-m", "--merge"),
               action = "store", default = NA, type = "character",
               help = "The location of the merged files "
-  ),
-  make_option(c("-m2", "--merge2"),
-              action = "store", default = NA, type = "character",
-              help = "The second location of the merged files, optional"
   )
 )
 
