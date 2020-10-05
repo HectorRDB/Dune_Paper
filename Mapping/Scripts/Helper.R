@@ -37,9 +37,9 @@ map_seurat_proba <- function(ref, target, labels) {
                                      dims = 1:30,
                                      project.query = FALSE)
   prediction <- TransferData(anchorset = sim.anchors,
-                             refdata = labels,
+                             refdata = as.character(labels),
                              dims = 1:30)
-  return(prediction)
+  return(prediction$prediction.score.max)
 }
 
 
