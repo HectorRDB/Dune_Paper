@@ -368,7 +368,7 @@ evaluate_clustering_methods <- function(sce, id) {
     df <- get(clustering) %>% dplyr::select(-cells)
     params[[clustering]] <- data.frame(
       "Value" = lapply(df, function(i) {
-        silhouette(i, dist = dist_mat)[,3] %>% 
+        cluster::silhouette(i, dist = dist_mat)[,3] %>% 
           mean() %>%
           return()
       }) %>% unlist(),
