@@ -51,4 +51,4 @@ comps <- list.files(opt$m) %>%
 
 # Make predictions
 probas <- all_comps(sce1, sce2, opt$f, opt$s, opt$m, comps)
-write.csv(probas, file = opt$o, colnames = TRUE, row.names = FALSE)
+write.csv(probas, file = opt$o, col.names = TRUE, row.names = FALSE)
