@@ -21,7 +21,12 @@ option_list <- list(
   make_option(c("-m", "--merge"),
               action = "store", default = NA, type = "character",
               help = "The location of the merged files "
+  ),
+  make_option(c("-n", "--number_two_merge"),
+              action = "store", default = NA, type = "character",
+              help = "The location of the second merged files "
   )
+  
 )
 
 opt <- parse_args(OptionParser(option_list = option_list))
@@ -41,14 +46,29 @@ source(here("Mapping", "Scripts", "Helper.R"))
 sce1 <- readRDS(file = paste0(opt$l, opt$f, "_filt.rds"))
 sce2 <- readRDS(file = paste0(opt$l, opt$s, "_filt.rds"))
 
-comps <- list.files(opt$m) %>%
+if (is.na(opt$n)) {
+  comps <- list.files(opt$m) %>%
   str_subset("Dune_NMI.csv")  %>%
   str_remove("_Dune_NMI.csv") %>%
   unlist() %>%
   word(-1, sep = "_") %>%
   unlist() %>%
-  unique()
+  unique() %>%
+  paste0("_Dune_NMI.csv")
+  m_locs <- rep(opt$m, length(comps))
+} else {
+  comps <- list.files(opt$m) %>%
+  str_subset("NMI_Dune.csv")  %>%
+  str_remove("_NMI_Dune.csv") %>%
+  unlist() %>%
+  word(-1, sep = "_") %>%
+  unlist() %>%
+  unique() %>%
+  paste0("_NMI_Dune.csv")
+  comps <- c(comps, "_NMI.csv")
+  m_locs <- c(rep(opt$m, length(comps) -1 ), opt$n)
+}
 
 # Make predictions
-probas <- all_comps(sce1, sce2, opt$f, opt$s, opt$m, comps)
+probas <- all_comps(sce1, sce2, opt$f, opt$s, m_locs, comps)
 write.csv(probas, file = opt$o, col.names = TRUE, row.names = FALSE)

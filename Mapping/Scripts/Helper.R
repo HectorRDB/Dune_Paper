@@ -73,10 +73,10 @@ start_finish <- function(ref, target, merger) {
   df <- bind_rows(df, .id = "clustering")
 }
 
-switch_refs <- function(comp, sce1, sce2, f, s, m_loc) {
-  df1 <- read.csv(file = paste0(m_loc, opt$f, "_", comp, "_Dune_NMI.csv"))
-  df2 <- read.csv(file = paste0(m_loc, opt$s, "_", comp, "_Dune_NMI.csv"))
-  print(comp)
+switch_refs <- function(i, comps, sce1, sce2, f, s, m_locs) {
+  df1 <- read.csv(file = paste0(m_locs[i], f, "_", comps[i]))
+  df2 <- read.csv(file = paste0(m_locs[i], s, "_", comps[i]))
+  print(names(comps[i]))
   print(paste0(".. ", f))
   N1 <- start_finish(ref = sce1, target = sce2, merger = df1)
   print(paste0(".. ", s))
@@ -87,9 +87,10 @@ switch_refs <- function(comp, sce1, sce2, f, s, m_loc) {
   return(df)
 }
 
-all_comps <- function(sce1, sce2, f, s, m_loc, comps) {
-  names(comps) <- comps
-  df <- lapply(comps, switch_refs, 
-               sce1 = sce1, sce2 = sce2, f = f, s = s, m_loc = m_loc)
+all_comps <- function(sce1, sce2, f, s, m_locs, comps) {
+  names(comps) <- word(comps, 1, sep = "_")
+  df <- lapply(1:3, switch_refs, comps = comps, sce1 = sce1, 
+               sce2 = sce2, f = f, s = s, m_locs = m_locs)
+  names(df) <- names(comps)
   df <- bind_rows(df, .id = "comps")
 }
