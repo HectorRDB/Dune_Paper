@@ -30,14 +30,14 @@ rm(libs)
 
 ```{r}
 df <- bind_rows("Pancreas" = read.csv(here("Mapping", "Data", "Pancreas.csv")),
-                "Brain" = read.csv(here("Mapping", "Data", "Pancreas.csv")),
+                "Brain" = read.csv(here("Mapping", "Data", "Brain.csv")),
                 .id = "pair") %>%
   pivot_longer(c("Seurat", "singleR"), names_to = "mapping", values_to = "proba")
 ```
 
 ```{r}
 ggplot(df, aes(x = proba, fill = mapping)) +
-  geom_histogram(alpha = .5, position = "dodge") +
+  geom_histogram(position = "dodge", bins = 50) +
   facet_wrap(~pair) +
   my_theme() +
   scale_fill_brewer(type = "qual")
@@ -45,7 +45,8 @@ ggplot(df, aes(x = proba, fill = mapping)) +
 
 ```{r}
 df %>%
-  group_by(pair, mapping) %>%
-  summarise(imp = mean(proba > 0))
-df %>% 
+  filter(mapping == "Seurat") %>%
+  group_by(pair) %>%
+  summarise(imp = mean(proba > 0),
+            mean_imp = mean(proba))
 ```
