@@ -113,7 +113,11 @@ rep_comp <- function(dataset, comp) {
   if (str_detect(dataset, "SMART")) {
     where <- paste0("/accounts/projects/epurdom/singlecell/allen/allen40K/",
                     "Pipeline_Brain/data/Replicability/Dune_Smart/")
-    if (comp == "") comp <- "Normal"
+    if (comp == "") {
+      comp <- "Normal"
+    } else {
+      comp <- str_remove(comp, "^_") %>% str_to_title()
+    }
     df <- read.table(
       paste0(where, comp, "_NMI/consensus_cluster_replicability.txt"),
       header = TRUE)
@@ -154,13 +158,13 @@ run_pancreas_comps <- function(dataset) {
   )
 }
 
-df <- bind_rows(
-  "baron" = run_pancreas_comps(dataset = "baron"),
-  "segerstolpe" = run_pancreas_comps(dataset = "segerstolpe"),
-  .id = "dataset"
-)
+# df <- bind_rows(
+#   "baron" = run_pancreas_comps(dataset = "baron"),
+#   "segerstolpe" = run_pancreas_comps(dataset = "segerstolpe"),
+#   .id = "dataset"
+# )
 
-write.table(df, here("BestMethod", "Data", "Pancreas.txt"), row.names = FALSE)
+# write.table(df, here("BestMethod", "Data", "Pancreas.txt"), row.names = FALSE)
 # Run Brain ----
 run_brain_comps <- function(dataset) {
   loc <- "/scratch/users/singlecell/MiniAtlas/data/rds/"

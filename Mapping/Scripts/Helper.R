@@ -32,10 +32,12 @@ map_seurat_proba <- function(dtlist, labels) {
   sim.anchors <- FindTransferAnchors(reference = dtlist$ref,
                                      query = dtlist$target,
                                      dims = 1:30,
-                                     project.query = FALSE)
+                                     project.query = FALSE,
+                                     verbose = FALSE)
   prediction <- TransferData(anchorset = sim.anchors,
                              refdata = as.character(labels),
-                             dims = 1:30)
+                             dims = 1:30,
+                             verbose = FALSE)
   return(prediction$prediction.score.max)
 }
 
@@ -90,6 +92,6 @@ all_comps <- function(sce1, sce2, f, s, m_locs, comps) {
   names(comps) <- word(comps, 1, sep = "_")
   df <- lapply(1:3, switch_refs, comps = comps, sce1 = sce1, 
                sce2 = sce2, f = f, s = s, m_locs = m_locs)
-  colnames(df) <- names(comps)
+  names(df) <- names(comps)
   df <- bind_rows(df, .id = "comps")
 }
