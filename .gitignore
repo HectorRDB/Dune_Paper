@@ -5,3 +5,5 @@
 data/*
 *.xlsx
 *.pptx
+*.out
+*/.out
