@@ -152,26 +152,26 @@ run_pancreas_comps <- function(dataset) {
   loc <- "/scratch/users/singlecell/Pancreas/ProcessedData/"
   df <- bind_rows(
     "comp1" = run_all(loc, dataset, comp = "comp1"),
-    "comp1" = run_all(loc, dataset, comp = "comp2"),
-    "comp1" = run_all(loc, dataset, comp = "comp3"),
+    "comp2" = run_all(loc, dataset, comp = "comp2"),
+    "comp3" = run_all(loc, dataset, comp = "comp3"),
     .id = "comp"
   )
 }
 
-# df <- bind_rows(
-#   "baron" = run_pancreas_comps(dataset = "baron"),
-#   "segerstolpe" = run_pancreas_comps(dataset = "segerstolpe"),
-#   .id = "dataset"
-# )
+df <- bind_rows(
+  "baron" = run_pancreas_comps(dataset = "baron"),
+  "segerstolpe" = run_pancreas_comps(dataset = "segerstolpe"),
+  .id = "dataset"
+)
 
-# write.table(df, here("BestMethod", "Data", "Pancreas.txt"), row.names = FALSE)
+write.table(df, here("BestMethod", "Data", "Pancreas.txt"), row.names = FALSE)
 # Run Brain ----
 run_brain_comps <- function(dataset) {
   loc <- "/scratch/users/singlecell/MiniAtlas/data/rds/"
   df <- bind_rows(
     "comp1" = run_all(loc, dataset, comp = ""),
-    "comp1" = run_all(loc, dataset, comp = "_large2"),
-    "comp1" = run_all(loc, dataset, comp = "_large3"),
+    "comp2" = run_all(loc, dataset, comp = "_large2"),
+    "comp3" = run_all(loc, dataset, comp = "_large3"),
     .id = "comp"
   )
 }

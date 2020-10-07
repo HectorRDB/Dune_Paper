@@ -70,7 +70,7 @@ for (Eval in c("ARI", "NMI")) {
       labs(x = Eval, y = Crit) +
       facet_wrap(~Dataset, scales = "free") +
       DailyHRB::my_theme()
-    plots[[i]] <- p
+    plots[[i]] <- p + guides(col = FALSE)
     i <- i + 1
   }
 }
@@ -79,24 +79,36 @@ plot_grid(plotlist = plots, nrow = 2)
 ## Brain
 
 ```{r}
-Crit <- read.table(here("BestMethod", "Data", "Brain.txt"), header = TRUE)
-Crit$comp <- rep(rep(paste0("comp", 1:3), each = 3), 2)
-```
-```{r}
-ARI <- read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE)  %>%
-  filter(Merge_method == "Dune_NMI") %>%
-  mutate(comp = str_replace(comp, "x", "comp"),
-         method = if_else(method == "SC3", "sc3", method)) %>%
-  select(-Merge_method) %>%
-  rename("clustering" = "method",
-         "Eval" = "AUARIC")
+df <- read.table(here("BestMethod", "Data", "Brain.txt"), header = TRUE) %>%
+  pivot_wider(names_from = "Metric", values_from = "Value") %>%
+  pivot_longer(c("MeanNMI", "SL"), values_to = "Crit", names_to = "Crit_Type") %>%
+  pivot_longer(c("ARI", "Rep"), values_to = "Eval", names_to = "Eval_Type") 
+  
 ```
 
+
 ```{r}
-df <- full_join(Crit, ARI)
-ggplot(df, aes(x = Eval, y = Value, col = clustering)) +
+ggplot(df, aes(x = Eval, y = Crit, col = comp)) +
   geom_point() +
   labs(x = "Eval", y = "Crit") +
-  facet_grid(Metric + comp~dataset, scales = "free") +
+  facet_grid(Crit_Type + Eval_Type ~dataset, scales = "free") +
+  theme_bw()
+```
+
+## Pancreas
+
+```{r}
+df <- read.table(here("BestMethod", "Data", "Pancreas.txt"), header = TRUE) %>%
+  pivot_wider(names_from = "Metric", values_from = "Value") %>%  
+  pivot_longer(c("MeanNMI", "SL"), values_to = "Crit", names_to = "Crit_Type") %>%
+  pivot_longer(c("ARI", "Rep"), values_to = "Eval", names_to = "Eval_Type") 
+```
+
+
+```{r}
+ggplot(df, aes(x = Eval, y = Crit, col = comp)) +
+  geom_point() +
+  labs(x = "Eval", y = "Crit") +
+  facet_grid(Crit_Type + Eval_Type ~dataset, scales = "free") +
   theme_bw()
 ```
