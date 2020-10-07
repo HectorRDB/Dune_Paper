@@ -109,6 +109,28 @@ ARI_ref <- function(dataset, comp = "") {
   return(data.frame(clustering = clusterings, Value = ARI))
 }
 
+rep_comp <- function(dataset, comp) {
+  if (str_detect(dataset, "SMART")) {
+    where <- paste0("/accounts/projects/epurdom/singlecell/allen/allen40K/",
+                    "Pipeline_Brain/data/Replicability/Dune_Smart/")
+    if (comp == "") comp <- "Normal"
+    df <- read.table(
+      paste0(where, comp, "_NMI/consensus_cluster_replicability.txt"),
+      header = TRUE)
+  } else {
+    where <- "/accounts/projects/epurdom/singlecell/Pancreas/Data/Replicability/Dune_NMI/"
+    df <- read.table(
+      paste0(where, comp, "/consensus_cluster_replicability.txt"),
+      header = TRUE)
+  }
+  df <- df  %>%
+    filter(level == 100) %>%
+    select(clustering_name, fraction_replicable_cells) %>%
+    rename(clustering = clustering_name,
+           Value = fraction_replicable_cells)
+  return(df)
+}
+
 run_all <- function(loc, dataset, comp = "") {
   print(paste0("...", comp))
   df <- bind_rows(
