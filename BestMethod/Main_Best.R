@@ -1,5 +1,5 @@
 # Packages to load ----
-libs <- c("here", "tidyverse", "Seurat", "Dune", "SingleCellExperiment", "parallel")
+libs <- c("here", "tidyverse", "Seurat", "Dune", "SingleCellExperiment", "parallel", "mclust")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -66,14 +66,14 @@ load_gold_standard <- function(dataset) {
                          header = T)
     allen_clusters <- full_join(allen_clusters, clusters) %>%
       select(cells, subclass_label) %>%
-      rename(ref = subclass_label)
+      dplyr::rename(ref = subclass_label)
     return(allen_clusters)
   } else {
     gold_clusters <- read.csv(
       paste0("/accounts/projects/epurdom/singlecell/Pancreas/Data/", 
              str_to_title(dataset), "/", dataset, "_meta.csv")) %>% 
       select(X, cell_type1) %>%
-      rename(cells = X, ref = cell_type1)
+      dplyr::rename(cells = X, ref = cell_type1)
     return(gold_clusters)
   }
 }
@@ -126,8 +126,8 @@ rep_comp <- function(dataset, comp) {
   df <- df  %>%
     filter(level == 100) %>%
     select(clustering_name, fraction_replicable_cells) %>%
-    rename(clustering = clustering_name,
-           Value = fraction_replicable_cells)
+    dplyr::rename(clustering = clustering_name,
+                  Value = fraction_replicable_cells)
   return(df)
 }
 
@@ -137,6 +137,7 @@ run_all <- function(loc, dataset, comp = "") {
     "MeanNMI" = meanMethod_comp(dataset, comp),
     "SL" = sihouette_comp(loc, dataset, comp),
     "ARI" = ARI_ref(dataset, comp),
+    "Rep" = rep_comp(dataset, comp),
     .id = "Metric"
   )
   return(df)
