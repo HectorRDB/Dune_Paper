@@ -27,7 +27,7 @@ Prep <- function(ref, target) {
 }
 
 # Seurat ----
-map_seurat_proba <- function(dtlistlabels) {
+map_seurat_proba <- function(dtlist, labels) {
   ## Mapping
   sim.anchors <- FindTransferAnchors(reference = dtlist$ref,
                                      query = dtlist$target,
@@ -41,8 +41,9 @@ map_seurat_proba <- function(dtlistlabels) {
 
 
 # SingleR----
-map_singleR_proba <- function(ref, target, labels) {
-  preds <- SingleR(test = logNormCounts(target), ref = logNormCounts(ref),
+map_singleR_proba <- function(dtlist, labels) {
+  preds <- SingleR(test = dtlist$target@assays$RNA@scale.data,
+                   ref = dtlist$ref@assays$RNA@scale.data,
                    labels = labels)
   return(preds$tuning.scores$first)
 }
@@ -54,10 +55,10 @@ start_finish_clustering <- function(ref, target, merger, clustering) {
                        final = merger[, paste0(clustering, ".100")])
   dtlist <- Prep(ref, target)
   print("...... SingleR")
-  proba_singleR <- map_dfc(labels, map_singleR_proba, ref = ref, target = target)
+  proba_singleR <- map_dfc(labels, map_singleR_proba, dtlist = dtlist)
   imp_singleR <- mean(proba_singleR$final - proba_singleR$init)
   print("...... Seurat")
-  proba_seurat <- map_dfc(labels, map_seurat_proba, ref = ref, target = target)
+  proba_seurat <- map_dfc(labels, map_seurat_proba, dtlist = dtlist)
   imp_seurat <- mean(proba_seurat$final - proba_seurat$init)
   return(data.frame('singleR' = imp_singleR, "Seurat" = imp_seurat))
 }
