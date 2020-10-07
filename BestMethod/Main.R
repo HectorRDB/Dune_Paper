@@ -99,8 +99,8 @@ run_pancreas_comps <- function(dataset) {
 }
 
 df <- bind_rows(
-  "baron" = run_brain_comps(dataset = "baron"),
-  "segerstolpe" = run_brain_comps(dataset = "segerstolpe"),
+  "baron" = run_pancreas_comps(dataset = "baron"),
+  "segerstolpe" = run_pancreas_comps(dataset = "segerstolpe"),
   .id = "dataset"
 )
 
