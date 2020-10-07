@@ -1,5 +1,5 @@
 # Packages to load ----
-libs <- c("here", "tidyverse", "Seurat", "Dune")
+libs <- c("here", "tidyverse", "Seurat", "Dune", "SingleCellExperiment", "parallel")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
