@@ -91,6 +91,6 @@ all_comps <- function(sce1, sce2, f, s, m_locs, comps) {
   names(comps) <- word(comps, 1, sep = "_")
   df <- lapply(1:3, switch_refs, comps = comps, sce1 = sce1, 
                sce2 = sce2, f = f, s = s, m_locs = m_locs)
-  names(df) <- names(comps)
+  colnames(df) <- names(comps)
   df <- bind_rows(df, .id = "comps")
 }

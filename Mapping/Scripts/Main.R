@@ -65,7 +65,7 @@ if (is.na(opt$n)) {
   unlist() %>%
   unique() %>%
   paste0("_NMI_Dune.csv")
-  comps <- c(comps, "_NMI.csv")
+  comps <- c(comps, "NMI.csv")
   m_locs <- c(rep(opt$m, length(comps) -1 ), opt$n)
 }
 
