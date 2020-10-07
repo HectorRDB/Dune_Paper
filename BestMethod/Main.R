@@ -1,12 +1,17 @@
 # Packages to load ----
-libs <- c("here", "tidyverse", "Seurat")
+libs <- c("here", "tidyverse", "Seurat", "Dune")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
 rm(libs)
 
 # Helper ----
-compute_silhouette <- function(sce, label) {
+compute_silhouette <- function(ref, label) {
+  sce <- CreateSeuratObject(counts = counts(ref),
+                            min.cells = 0,
+                            min.features = 0,
+                            project = "sl")
+  sce <- AddMetaData(sce, as.data.frame(colData(ref)))
   sce <- NormalizeData(sce, verbose = FALSE)
   sce <- FindVariableFeatures(sce, selection.method = 'vst', nfeatures = 2000,
                               verbose = FALSE)
@@ -22,7 +27,7 @@ compute_silhouette <- function(sce, label) {
   sce <- RunUMAP(sce, verbose = FALSE, dims = 1:100)
   UMAP <- Embeddings(sce, reduction = "umap")
   dist_mat <- dist(UMAP)
-  SL <- cluster::silhouette(i, dist = dist_mat)[,3] %>%  mean()
+  SL <- cluster::silhouette(label, dist = dist_mat)[,3] %>%  mean()
   return(SL)
 }
 
@@ -30,45 +35,42 @@ compute_silhouette <- function(sce, label) {
 # Functions ----
 meanMethod_comp <- function(dataset, comp = "") {
   if (str_detect(dataset, "SMART")) {
+    where <- "/accounts/projects/epurdom/singlecell/allen/allen40K/Pipeline_Brain/data/"
     if (comp == "") {
-      df <- readRDS(here("Brain", "data", "Dune",
-                         paste0(dataset, "_NMI_mergers.rds")))
+      df <- readRDS(paste0(where, "Dune/", dataset, "_NMI_mergers.rds"))
     } else {
-      df <- readRDS(here("Brain", "data", "singleTree",
-                         paste0(dataset, comp, "_NMI_merger.rds")))
+      df <- readRDS(paste0(where, "singleTree/", dataset, comp, "_NMI_merger.rds"))
     }
   } else {
-    df <- readRDS(here("Pancreas", "data", "Dune",
-                       paste0(dataset, "_", comp, "_NMI_merger.rds")))
+    df <- readRDS(
+      paste0("/accounts/projects/epurdom/singlecell/Pancreas/Data/Dune/",
+             dataset, "_", comp, "_NMI_merger.rds"))
   }
   NMI <- NMIs(as.matrix(df$currentMat)) %>% colMeans()
-  clusterings <- colnames(df$initialMat)
-  names(clusterings) <- clusterings
-  SLs <- lapply(clustering, silhouette, dataset = dataset, comp = comp)
   return(data.frame(clustering = names(NMI),
                     Value = NMI))
 }
 
 sihouette_comp <- function(loc, dataset, comp = "") {
   if (str_detect(dataset, "SMART")) {
+    where <- "/accounts/projects/epurdom/singlecell/allen/allen40K/Pipeline_Brain/data/"
     if (comp == "") {
-      df <- readRDS(here("Brain", "data", "Dune",
-                         paste0(dataset, "_NMI_mergers.rds")))
+      df <- readRDS(paste0(where, "Dune/", dataset, "_NMI_mergers.rds"))
     } else {
-      df <- readRDS(here("Brain", "data", "singleTree",
-                         paste0(dataset, comp, "_NMI_merger.rds")))
+      df <- readRDS(paste0(where, "singleTree/", dataset, comp, "_NMI_merger.rds"))
     }
     sce <- readRDS(file = paste0(loc, dataset, "_filt.rds"))
     sce <- sce[, rownames(df$initialMat)]
   } else {
-    df <- readRDS(here("Pancreas", "data", "Dune",
-                       paste0(dataset, "_", comp, "_NMI_merger.rds")))
+    df <- readRDS(
+      paste0("/accounts/projects/epurdom/singlecell/Pancreas/Data/Dune/",
+             dataset, "_", comp, "_NMI_merger.rds"))
     sce <- readRDS(file = paste0(loc, dataset, "_filt.rds"))
     sce <- sce[, rownames(df$initialMat)]
   }
   clusterings <- colnames(df$initialMat)
   names(clusterings) <- clusterings
-  SLs <- lapply(clustering, function(clus) {
+  SLs <- lapply(clusterings, function(clus) {
    return(compute_silhouette(sce, df$currentMat[, clus])) 
   }) %>% unlist()
   return(data.frame(clustering = clusterings,
@@ -97,8 +99,8 @@ run_pancreas_comps <- function(dataset) {
 }
 
 df <- bind_rows(
-  "Baron" = run_brain_comps(dataset = "Baron"),
-  "Segerstolpe" = run_brain_comps(dataset = "Segerstolpe"),
+  "baron" = run_brain_comps(dataset = "baron"),
+  "segerstolpe" = run_brain_comps(dataset = "segerstolpe"),
   .id = "dataset"
 )
 
