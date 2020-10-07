@@ -30,6 +30,7 @@ compute_silhouette <- function(ref, label) {
   SL <- cluster::silhouette(label, dist = dist_mat)[,3] %>%  mean()
   return(SL)
 }
+
 load_Dune <- function(dataset, comp) {
   if (str_detect(dataset, "SMART")) {
     where <- "/accounts/projects/epurdom/singlecell/allen/allen40K/Pipeline_Brain/data/"
