@@ -41,36 +41,25 @@ map_seurat_proba <- function(dtlist, labels) {
   return(prediction$prediction.score.max)
 }
 
-
-# SingleR----
-map_singleR_proba <- function(dtlist, labels) {
-  preds <- SingleR(test = dtlist$target@assays$RNA@scale.data,
-                   ref = dtlist$ref@assays$RNA@scale.data,
-                   labels = labels)
-  return(preds$tuning.scores$first)
-}
-
 # Together
-start_finish_clustering <- function(ref, target, merger, clustering) {
+start_finish_clustering <- function(dtlist, merger, clustering) {
   print(paste0(".... ", clustering))
   labels <- data.frame(init = merger[, paste0(clustering, ".00")],
                        final = merger[, paste0(clustering, ".100")])
-  dtlist <- Prep(ref, target)
-  print("...... SingleR")
-  proba_singleR <- map_dfc(labels, map_singleR_proba, dtlist = dtlist)
-  imp_singleR <- mean(proba_singleR$final - proba_singleR$init)
-  print("...... Seurat")
   proba_seurat <- map_dfc(labels, map_seurat_proba, dtlist = dtlist)
-  imp_seurat <- mean(proba_seurat$final - proba_seurat$init)
-  return(data.frame('singleR' = imp_singleR, "Seurat" = imp_seurat))
+  imp <- mean(proba_seurat$final - proba_seurat$init)
+  imp_prop <- mean((proba_seurat$final - proba_seurat$init) / proba_seurat$init)
+  return(data.frame('imp' = imp, "imp_prop" = imp_prop))
 }
 
 start_finish <- function(ref, target, merger) {
+  print(".... Preping the data")
+  dtlist <- Prep(ref, target)
   clusterings <- c("sc3", "Seurat", "Monocle")
   rownames(merger) <- merger$cells
   merger <- merger[colnames(ref), ]
-  df <- lapply(clusterings, start_finish_clustering,
-               ref = ref, target = target, merger = merger)
+  df <- lapply(clusterings, start_finish_clustering, 
+               dtlist = dtlist, merger = merger)
   df <- bind_rows(df, .id = "clustering")
 }
 
