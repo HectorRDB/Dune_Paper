@@ -92,8 +92,8 @@ run_pancreas_comps <- function(dataset) {
   loc <- "/scratch/users/singlecell/Pancreas/ProcessedData/"
   df <- bind_rows(
     "comp1" = run_both(loc, dataset, comp = "comp1"),
-    "comp1" = run_both(loc, dataset, comp = "comp2"),
-    "comp1" = run_both(loc, dataset, comp = "comp3"),
+    "comp2" = run_both(loc, dataset, comp = "comp2"),
+    "comp3" = run_both(loc, dataset, comp = "comp3"),
     .id = "comp"
   )
 }
@@ -110,8 +110,8 @@ run_brain_comps <- function(dataset) {
   loc <- "/scratch/users/singlecell/MiniAtlas/data/rds/"
   df <- bind_rows(
     "comp1" = run_both(loc, dataset, comp = ""),
-    "comp1" = run_both(loc, dataset, comp = "_large2"),
-    "comp1" = run_both(loc, dataset, comp = "_large3"),
+    "comp2" = run_both(loc, dataset, comp = "_large2"),
+    "comp3" = run_both(loc, dataset, comp = "_large3"),
     .id = "comp"
   )
 }
