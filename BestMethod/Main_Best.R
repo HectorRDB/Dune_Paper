@@ -30,10 +30,7 @@ compute_silhouette <- function(ref, label) {
   SL <- cluster::silhouette(label, dist = dist_mat)[,3] %>%  mean()
   return(SL)
 }
-
-
-# Functions ----
-meanMethod_comp <- function(dataset, comp = "") {
+load_Dune <- function(dataset, comp) {
   if (str_detect(dataset, "SMART")) {
     where <- "/accounts/projects/epurdom/singlecell/allen/allen40K/Pipeline_Brain/data/"
     if (comp == "") {
@@ -46,42 +43,77 @@ meanMethod_comp <- function(dataset, comp = "") {
       paste0("/accounts/projects/epurdom/singlecell/Pancreas/Data/Dune/",
              dataset, "_", comp, "_NMI_merger.rds"))
   }
+  return(df)
+}
+
+load_sce <- function(dataset, loc, comp) {
+  if (str_detect(dataset, "SMART")) {
+    where <- "/accounts/projects/epurdom/singlecell/allen/allen40K/Pipeline_Brain/data/"
+    sce <- readRDS(file = paste0(loc, dataset, "_filt.rds"))
+  } else {
+    sce <- readRDS(file = paste0(loc, dataset, "_filt.rds"))
+  }
+  return(sce)
+}
+
+load_gold_standard <- function(dataset) {
+  if (str_detect(dataset, "SMART")) {
+    where <- "/accounts/projects/epurdom/singlecell/allen/allen40K/Pipeline_Brain/data/"
+    allen_clusters <- read.csv(paste0(where, "Smart-Seq/", dataset, "_cluster.membership.csv"),
+                               col.names = c("cells", "cluster_id"))
+    clusters <- read.csv(paste0(where, "Smart-Seq/", dataset, "_cluster.annotation.csv"),
+                         header = T)
+    allen_clusters <- full_join(allen_clusters, clusters) %>%
+      select(cells, subclass_label) %>%
+      rename(ref = subclass_label)
+    return(allen_clusters)
+  } else {
+    gold_clusters <- read.csv(
+      paste0("/accounts/projects/epurdom/singlecell/Pancreas/Data/", 
+             str_to_title(dataset), "/", dataset, "_meta.csv")) %>% 
+      select(X, cell_type1) %>%
+      rename(cells = X, ref = cell_type1)
+    return(gold_clusters)
+  }
+}
+
+# Functions ----
+meanMethod_comp <- function(dataset, comp = "") {
+  df <- load_Dune(dataset, comp)
   NMI <- NMIs(as.matrix(df$currentMat)) %>% colMeans()
   return(data.frame(clustering = names(NMI),
                     Value = NMI))
 }
 
 sihouette_comp <- function(loc, dataset, comp = "") {
-  if (str_detect(dataset, "SMART")) {
-    where <- "/accounts/projects/epurdom/singlecell/allen/allen40K/Pipeline_Brain/data/"
-    if (comp == "") {
-      df <- readRDS(paste0(where, "Dune/", dataset, "_NMI_mergers.rds"))
-    } else {
-      df <- readRDS(paste0(where, "singleTree/", dataset, comp, "_NMI_merger.rds"))
-    }
-    sce <- readRDS(file = paste0(loc, dataset, "_filt.rds"))
-    sce <- sce[, rownames(df$initialMat)]
-  } else {
-    df <- readRDS(
-      paste0("/accounts/projects/epurdom/singlecell/Pancreas/Data/Dune/",
-             dataset, "_", comp, "_NMI_merger.rds"))
-    sce <- readRDS(file = paste0(loc, dataset, "_filt.rds"))
-    sce <- sce[, rownames(df$initialMat)]
-  }
+  df <- load_Dune(dataset, comp)
+  sce <- load_sce(dataset, loc, comp)
+  sce <- sce[, rownames(df$initialMat)]
   clusterings <- colnames(df$initialMat)
   names(clusterings) <- clusterings
   SLs <- lapply(clusterings, function(clus) {
    return(compute_silhouette(sce, df$currentMat[, clus])) 
   }) %>% unlist()
-  return(data.frame(clustering = clusterings,
-                    Value = SLs))
+  return(data.frame(clustering = clusterings, Value = SLs))
 }
 
-run_both <- function(loc, dataset, comp = "") {
+ARI_ref <- function(dataset, comp = "") {
+  df <- load_Dune(dataset, comp)
+  ref <- load_gold_standard(dataset)
+  rownames(ref) <- ref$cells
+  ref <- ref[rownames(df$currentMat), ]
+  clusterings <- colnames(df$initialMat)
+  ARI <- lapply(df$currentMat, adjustedRandIndex, y = ref$ref) %>%
+    unlist()
+  return(data.frame(clustering = clusterings, Value = ARI))
+}
+
+run_all <- function(loc, dataset, comp = "") {
   print(paste0("...", comp))
   df <- bind_rows(
     "MeanNMI" = meanMethod_comp(dataset, comp),
     "SL" = sihouette_comp(loc, dataset, comp),
+    "ARI" = ARI_ref(dataset, comp),
     .id = "Metric"
   )
   return(df)
@@ -91,9 +123,9 @@ run_pancreas_comps <- function(dataset) {
   print(dataset)
   loc <- "/scratch/users/singlecell/Pancreas/ProcessedData/"
   df <- bind_rows(
-    "comp1" = run_both(loc, dataset, comp = "comp1"),
-    "comp1" = run_both(loc, dataset, comp = "comp2"),
-    "comp1" = run_both(loc, dataset, comp = "comp3"),
+    "comp1" = run_all(loc, dataset, comp = "comp1"),
+    "comp1" = run_all(loc, dataset, comp = "comp2"),
+    "comp1" = run_all(loc, dataset, comp = "comp3"),
     .id = "comp"
   )
 }
@@ -109,9 +141,9 @@ write.table(df, here("BestMethod", "Data", "Pancreas.txt"), row.names = FALSE)
 run_brain_comps <- function(dataset) {
   loc <- "/scratch/users/singlecell/MiniAtlas/data/rds/"
   df <- bind_rows(
-    "comp1" = run_both(loc, dataset, comp = ""),
-    "comp1" = run_both(loc, dataset, comp = "_large2"),
-    "comp1" = run_both(loc, dataset, comp = "_large3"),
+    "comp1" = run_all(loc, dataset, comp = ""),
+    "comp1" = run_all(loc, dataset, comp = "_large2"),
+    "comp1" = run_all(loc, dataset, comp = "_large3"),
     .id = "comp"
   )
 }

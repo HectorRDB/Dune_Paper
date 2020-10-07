@@ -27,6 +27,7 @@ rm(libs)
 ```
 
 # Finding the best out of all threes
+## Simulations
 
 ```{r best agreement}
 mean_method <- lapply(1:5, function(id) {
@@ -55,6 +56,8 @@ res <- bind_rows(mean_method, res)
 ```
 
 ```{r}
+plots <- list()
+i <- 1
 for (Eval in c("ARI", "NMI")) {
   for (Crit in c("SL", "MeanNMI")) {
     df <- res %>%
@@ -67,7 +70,33 @@ for (Eval in c("ARI", "NMI")) {
       labs(x = Eval, y = Crit) +
       facet_wrap(~Dataset, scales = "free") +
       DailyHRB::my_theme()
-    print(p)
+    plots[[i]] <- p
+    i <- i + 1
   }
 }
+plot_grid(plotlist = plots, nrow = 2)
+```
+## Brain
+
+```{r}
+Crit <- read.table(here("BestMethod", "Data", "Brain.txt"), header = TRUE)
+Crit$comp <- rep(rep(paste0("comp", 1:3), each = 3), 2)
+```
+```{r}
+ARI <- read.table(here("Figure-ARI", "data", "Brain.txt"), header = TRUE)  %>%
+  filter(Merge_method == "Dune_NMI") %>%
+  mutate(comp = str_replace(comp, "x", "comp"),
+         method = if_else(method == "SC3", "sc3", method)) %>%
+  select(-Merge_method) %>%
+  rename("clustering" = "method",
+         "Eval" = "AUARIC")
+```
+
+```{r}
+df <- full_join(Crit, ARI)
+ggplot(df, aes(x = Eval, y = Value, col = clustering)) +
+  geom_point() +
+  labs(x = "Eval", y = "Crit") +
+  facet_grid(Metric + comp~dataset, scales = "free") +
+  theme_bw()
 ```
