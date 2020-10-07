@@ -1,16 +1,5 @@
 # Plotting ----
-plot_UMAP <- function(df, type) {
-  p <- ggplot(bind_cols(df, data.frame("type" = type)),
-              aes(x = V1, y = V2, col = type)) +
-    geom_point(size = .5, alpha = .5) +
-    theme_bw() +
-    labs(x = "UMAP_1", y = "UMAP_2")
-  return(p)
-}
-
-# Seurat ----
-map_seurat_proba <- function(ref, target, labels) {
-  ## Normalize ----
+Prep <- function(ref, target) {
   dtlist <- list()
   dtlist$ref <- CreateSeuratObject(counts = counts(ref),
                                    min.cells = 0,
@@ -22,15 +11,23 @@ map_seurat_proba <- function(ref, target, labels) {
                                       project = "mapping")
   dtlist$ref <- AddMetaData(dtlist$ref, as.data.frame(colData(ref)))
   dtlist <- lapply(dtlist, function(sce){
-    sce <- NormalizeData(sce)
-    sce <- FindVariableFeatures(sce, selection.method = 'vst', nfeatures = 2000)
+    sce <- NormalizeData(sce, verbose = FALSE)
+    sce <- FindVariableFeatures(sce, selection.method = 'vst', nfeatures = 2000,
+                                verbose = FALSE)
     if ("human" %in% sce@meta.data) {
-      sce <- ScaleData(object = sce, vars.to.regress = c("nCount_RNA", "human"))  
+      sce <- ScaleData(object = sce, vars.to.regress = c("nCount_RNA", "human"),
+                       verbose = FALSE)  
     } else {
-      sce <- ScaleData(object = sce, vars.to.regress = "nCount_RNA")
+      sce <- ScaleData(object = sce, vars.to.regress = "nCount_RNA",
+                       verbose = FALSE)
     }
     return(sce)
   })
+  return(dtlist)
+}
+
+# Seurat ----
+map_seurat_proba <- function(dtlistlabels) {
   ## Mapping
   sim.anchors <- FindTransferAnchors(reference = dtlist$ref,
                                      query = dtlist$target,
@@ -55,6 +52,7 @@ start_finish_clustering <- function(ref, target, merger, clustering) {
   print(paste0(".... ", clustering))
   labels <- data.frame(init = merger[, paste0(clustering, ".00")],
                        final = merger[, paste0(clustering, ".100")])
+  dtlist <- Prep(ref, target)
   print("...... SingleR")
   proba_singleR <- map_dfc(labels, map_singleR_proba, ref = ref, target = target)
   imp_singleR <- mean(proba_singleR$final - proba_singleR$init)

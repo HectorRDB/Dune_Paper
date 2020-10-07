@@ -29,5 +29,23 @@ rm(libs)
 # Getting the mapping results
 
 ```{r}
+df <- bind_rows("Pancreas" = read.csv(here("Mapping", "Data", "Pancreas.csv")),
+                "Brain" = read.csv(here("Mapping", "Data", "Pancreas.csv")),
+                .id = "pair") %>%
+  pivot_longer(c("Seurat", "singleR"), names_to = "mapping", values_to = "proba")
+```
 
+```{r}
+ggplot(df, aes(x = proba, fill = mapping)) +
+  geom_histogram(alpha = .5, position = "dodge") +
+  facet_wrap(~pair) +
+  my_theme() +
+  scale_fill_brewer(type = "qual")
+```
+
+```{r}
+df %>%
+  group_by(pair, mapping) %>%
+  summarise(imp = mean(proba > 0))
+df %>% 
 ```
