@@ -104,7 +104,7 @@ df <- bind_rows(
   .id = "dataset"
 )
 
-write.table(df, here("BestMethod-ARI", "Data", "Pancreas.txt"), row.names = FALSE)
+write.table(df, here("BestMethod", "Data", "Pancreas.txt"), row.names = FALSE)
 # Run Brain ----
 run_brain_comps <- function(dataset) {
   loc <- "/scratch/users/singlecell/MiniAtlas/data/rds/"
@@ -122,4 +122,4 @@ df <- bind_rows(
   .id = "dataset"
 )
 
-write.table(df, here("BestMethod-ARI", "Data", "Brain.txt"), row.names = FALSE)
+write.table(df, here("BestMethod", "Data", "Brain.txt"), row.names = FALSE)
