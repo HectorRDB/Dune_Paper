@@ -9,7 +9,8 @@ suppressMessages(
 )
 rm(libs)
 
-run_clusterings <- function(sce, id) {
+run_clusterings <- function(sce) {
+  print(paste0(".. ", ncol(sce)))
   NCORES <- 32
   # Create data ----
   # We follow the workflow from Duo et al 2018
@@ -34,21 +35,22 @@ run_clusterings <- function(sce, id) {
   rownames(df) <- df$Cell
   sSeurat <- CreateSeuratObject(counts = assays(sce)$counts, project = 'allen40K',
                                 meta.data = df)
-  sSeurat <- NormalizeData(object = sSeurat, normalization.method = "LogNormalize")
+  sSeurat <- NormalizeData(object = sSeurat, normalization.method = "LogNormalize",
+                           verbose = FALSE)
   sSeurat <- FindVariableFeatures(object = sSeurat, mean.function = ExpMean,
-                                  dispersion.function = LogVMR, do.plot = F)
-  sSeurat <- ScaleData(object = sSeurat, vars.to.regress = "nCount_RNA")
-  sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100)
-  sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:100)
-  p <- UMAPPlot(sSeurat, group.by = "Group")
+                                  dispersion.function = LogVMR, do.plot = F,
+                                  verbose = FALSE)
+  sSeurat <- ScaleData(object = sSeurat, vars.to.regress = "nCount_RNA",
+                       verbose = FALSE)
+  sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100, verbose = FALSE)
+  sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:100, verbose = FALSE)
   sce <- as.SingleCellExperiment(sSeurat)
-  sce_Seurat <- sce
 
   # TSNE K-Means ----
   print("... Running RtsneKmeans")
-  sce_Seurat <- scater::runPCA(sce_Seurat, ntop = 2000)
-  sce_Seurat <- scater::runTSNE(sce_Seurat, ntop = 2000, ncomponents = 3, perplexity = 30)
-  TSNE <- reducedDim(sce_Seurat, "TSNE")
+  sce <- scater::runPCA(sce, ntop = 2000)
+  sce <- scater::runTSNE(sce, ntop = 2000, ncomponents = 3, perplexity = 30)
+  TSNE <- reducedDim(sce, "TSNE")
   ks <- seq(20, 50, 5)
   names(ks) <- ks
   tSNE_KMEANS <- map_dfc(ks, function(k){
@@ -57,8 +59,8 @@ run_clusterings <- function(sce, id) {
   tSNE_KMEANS$cells <- rownames(TSNE)
   
   # UMAP K-Means ----
-  sce_Seurat <- scater::runUMAP(sce_Seurat, ntop = 2000, ncomponents = 3)
-  UMAP <- reducedDim(sce_Seurat, "UMAP")
+  sce <- scater::runUMAP(sce, ntop = 2000, ncomponents = 3)
+  UMAP <- reducedDim(sce, "UMAP")
   ks <- seq(20, 50, 5)
   names(ks) <- ks
   UMAP_KMEANS <- map_dfc(ks, function(k){
@@ -91,6 +93,7 @@ run_clusterings <- function(sce, id) {
 }
 
 run_Dune <- function(clusMat) {
+  print(paste0(".. ", nrow(clusMat)))
   Names <- clusMat$cells
   # Running Dune NMI ----
   BPPARAM <- BiocParallel::MulticoreParam(32)
@@ -123,6 +126,7 @@ run_Dune <- function(clusMat) {
 }
 
 evaluate_clustering_methods <- function(sce, merger) {
+  print(paste0(".. ", ncol(sce)))
   ref <- data.frame(groups = sce$Group,
                     cells = colnames(sce)) %>%
     arrange(cells) %>%
