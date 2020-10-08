@@ -97,11 +97,11 @@ run_Dune <- function(clusMat) {
   clusMat <- clusMat %>% select(-cells) %>% map_dfc(as.numeric) %>%
     as.matrix()
   rownames(clusMat) <- Names
-  colnames(clusMat) <- c("sc3", "UMAP_KMEANS", "tSNE_KMEANS")
+  # colnames(clusMat) <- c("sc3", "UMAP_KMEANS", "tSNE_KMEANS")
   merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE,
                   metric = "NMI")
   Names <- as.character(Names)
-  chars <- c("sc3", "UMAP_KMEANS", "tSNE_KMEANS")
+  chars <- colnames(clusMat)
   levels <- seq(from = 0, to = 1, by = .05)
   stopMatrix <- lapply(levels, function(p){
     print(paste0("...Intermediary consensus at ", round(100 * p), "%"))

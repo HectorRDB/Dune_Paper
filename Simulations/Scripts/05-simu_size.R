@@ -20,9 +20,9 @@ sces <- lapply(nCells, function(nCell) {
 })
 
 print("Running clustering methods")
-clusterings <- purrr::map(sces, run_clusterings)
+# clusterings <- purrr::map(sces, run_clusterings)
 # saveRDS(clusterings, here("Simulations", "Data", "clusterings.rds"))
-# clusterings  <- readRDS(here("Simulations", "Data", "clusterings.rds"))
+clusterings  <- readRDS(here("Simulations", "Data", "clusterings.rds"))
 
 # 3 methods, different sizes ----
 # Do the consensus
@@ -67,10 +67,10 @@ write.csv(x = ARIs, file = here("Simulations", "Data", "Param.csv"))
 # Changing the number of methods ----
 # Do the consensus
 print("Running Dune")
-df <- bind_cols(clusterings[[6]]$sc3[, c("35", "45")],
-                clusterings[[6]]$UMAP_KMEANS[, c("35", "45")],
-                clusterings[[6]]$tSNE_KMEANS[, c("35", "45")])
-colnames(df) <- paste0(rep(c("sc3_", "UMAP_KMEANS_", "tSNE_KMEANS_"), each = 3),
+df <- cbind(clusterings[[6]]$sc3[, c("35", "45")],
+            clusterings[[6]]$UMAP_KMEANS[, c("35", "45")],
+            clusterings[[6]]$tSNE_KMEANS[, c("35", "45")])
+colnames(df) <- paste0(rep(c("sc3_", "UMAP_KMEANS_", "tSNE_KMEANS_"), each = 2),
                        c("35", "45"))
 Dunes <- list()
 clusMat <- data.frame(cells = clusterings[[6]]$sc3$cells,
