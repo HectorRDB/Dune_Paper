@@ -124,7 +124,7 @@ p2 <- ggplot(res %>%
          method != "Dune",
          Dataset != 6,
          Metric == "ARI") %>%
-  mutate(clustering = str_replace(clustering, "_", "+"),
+  mutate(clustering = str_replace(clustering, "_", "\n"),
          method = str_remove(method, "_NMI"),
          Dataset = paste("Dataset\n", Dataset)),
   aes(x = n_clus, y = Value, col = method)) +
@@ -151,7 +151,7 @@ second_row <- plot_grid(NULL, legend, NULL, rel_widths = c(.4, .2, .4), nrow = 1
 p <- plot_grid(first_row, second_row, nrow = 2, rel_heights = c(.8, .1))
 p
 save_plot(filename = here("Simulations", "Figures", "panel.png"),
-          plot = p, base_height = 6, base_width = 10, bg = "transparent")
+          plot = p, base_height = 4, base_width = 10, bg = "transparent")
 ```
 
 # Supp figure

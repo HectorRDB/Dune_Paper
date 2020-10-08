@@ -51,7 +51,7 @@ run_clusterings <- function(sce) {
   sce <- scater::runPCA(sce, ntop = 2000)
   sce <- scater::runTSNE(sce, ntop = 2000, ncomponents = 3, perplexity = 30)
   TSNE <- reducedDim(sce, "TSNE")
-  ks <- seq(20, 50, 5)
+  ks <- seq(30, 50, 5)
   names(ks) <- ks
   tSNE_KMEANS <- map_dfc(ks, function(k){
     return(kmeans(TSNE, centers = k)$cluster)
@@ -61,7 +61,7 @@ run_clusterings <- function(sce) {
   # UMAP K-Means ----
   sce <- scater::runUMAP(sce, ntop = 2000, ncomponents = 3)
   UMAP <- reducedDim(sce, "UMAP")
-  ks <- seq(20, 50, 5)
+  ks <- seq(30, 50, 5)
   names(ks) <- ks
   UMAP_KMEANS <- map_dfc(ks, function(k){
     return(kmeans(UMAP, centers = k)$cluster)
@@ -73,21 +73,16 @@ run_clusterings <- function(sce) {
   rowData(sce)$feature_symbol <- rownames(sce)
   counts(sce) <- as.matrix(counts(sce))
   logcounts(sce) <- as.matrix(logcounts(sce))
-  sce <- sc3_estimate_k(sce)
-  K <- metadata(sce)$sc3$k_estimation
-
-  print(paste0("...... The optimal number of clusters defined by sc3 is ", K))
-  ks <- seq(from = 20, to = 50, by = 5)
+  
+  ks <- seq(from = 30, to = 50, by = 5)
   names(ks) <- ks
-
-  sc3 <- map_df(ks, function(k){
-    SC3 <- sc3(sce, ks = k, svm_max = ncol(sce) + 1, biology = FALSE,
-               gene_filter = F, n_cores = NCORES, rand_seed = 786907)
-    SC3 <- colData(SC3)[, paste0("sc3_", k, "_clusters")] %>% as.numeric()
-    return(SC3)
-  })
+  
+  SC3 <- suppressMessages(suppressPackageStartupMessages(suppressWarnings(
+    sc3(sce, ks = ks, svm_max = ncol(sce) + 1, biology = FALSE,
+        gene_filter = F, n_cores = NCORES, rand_seed = 786907)
+  )))
+  sc3 <- colData(SC3)[, paste0("sc3_", ks, "_clusters")]
   sc3$cells <- colnames(sce)
-  SC3s <- sc3
   return(list("sc3" = sc3, "UMAP_KMEANS" = UMAP_KMEANS, "tSNE_KMEANS" = tSNE_KMEANS))
   
 }
