@@ -1,0 +1,69 @@
+---
+author: "Hector Roux de Bézieux"
+date: '`r format(Sys.time(), "%d %B , %Y")`'
+title: 'Results on simulation data'
+output:
+  html_document:
+    toc: true
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: true
+    code_download: TRUE
+---
+
+```{r load packages, include=F}
+library(knitr)
+opts_chunk$set(
+  fig.pos = "!h", out.extra = "", warning = F, message = F,
+  fig.align = "center", echo = F
+)
+libs <- c("here", "dplyr", "ggplot2", "tidyr", "stringr", "readr", "cowplot",
+          "mclust", "RColorBrewer", "purrr", "Dune", "pracma", "purrr",
+          "DailyHRB", "patchwork")
+suppressMessages(
+  suppressWarnings(sapply(libs, require, character.only = TRUE))
+)
+rm(libs)
+```
+
+# Size Analysis
+
+```{r}
+df <- read.csv(here("Simulations", "Data", "Sizes.csv")) %>%
+  select(-X, -Name) %>% 
+  mutate(nCells = factor(nCells, levels = c(100, 200, 500, 1000, 2000, 5000)))
+ggplot(df, aes(y = Value, x = level, col = nCells)) +
+    geom_line() +
+  facet_wrap(~clustering) +
+  # scale_x_log10() +
+  theme_bw() +
+  labs(col = "Number of cells", y ="ARI with ground truth", x = "Level of merging")
+```
+
+# Parameter Change Analysis
+
+```{r}
+df <- read.csv(here("Simulations", "Data", "Param.csv")) %>%
+  select(-X, -Name) %>% 
+  mutate(Param = factor(Param, levels = as.character(seq(30, 50, 5))))
+ggplot(df, aes(y = Value, x = level, col = Param)) +
+    geom_line() +
+  facet_wrap(~clustering) +
+  # scale_x_log10() +
+  theme_bw() +
+  labs(col = "Parameter value", y ="ARI with ground truth", x = "Level of merging")
+```
+
+# Number of methods Analysis
+
+```{r}
+df <- read.csv(here("Simulations", "Data", "Param.csv")) %>%
+  select(-X, -Name) %>% 
+  mutate(ns = factor(ns))
+ggplot(df, aes(y = Value, x = level, col = ns)) +
+    geom_line() +
+  facet_wrap(~clustering) +
+  # scale_x_log10() +
+  theme_bw() +
+  labs(col = "Number of methods used as input", y ="ARI with ground truth", x = "Level of merging")
+```
