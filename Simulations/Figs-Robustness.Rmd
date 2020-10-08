@@ -35,7 +35,6 @@ df <- read.csv(here("Simulations", "Data", "Sizes.csv")) %>%
 ggplot(df, aes(y = Value, x = level, col = nCells)) +
     geom_line() +
   facet_wrap(~clustering) +
-  # scale_x_log10() +
   theme_bw() +
   labs(col = "Number of cells", y ="ARI with ground truth", x = "Level of merging")
 ```
@@ -45,11 +44,10 @@ ggplot(df, aes(y = Value, x = level, col = nCells)) +
 ```{r}
 df <- read.csv(here("Simulations", "Data", "Param.csv")) %>%
   select(-X, -Name) %>% 
-  mutate(Param = factor(Param, levels = as.character(seq(30, 50, 5))))
-ggplot(df, aes(y = Value, x = level, col = Param)) +
+  mutate(param = factor(param, levels = as.character(seq(30, 50, 5))))
+ggplot(df, aes(y = Value, x = level, col = param)) +
     geom_line() +
   facet_wrap(~clustering) +
-  # scale_x_log10() +
   theme_bw() +
   labs(col = "Parameter value", y ="ARI with ground truth", x = "Level of merging")
 ```
@@ -57,8 +55,9 @@ ggplot(df, aes(y = Value, x = level, col = Param)) +
 # Number of methods Analysis
 
 ```{r}
-df <- read.csv(here("Simulations", "Data", "Param.csv")) %>%
+df <- read.csv(here("Simulations", "Data", "Ns.csv")) %>%
   select(-X, -Name) %>% 
+  filter(clustering %in% c("sc3_40", "tSNE_KMEANS_40", "UMAP_KMEANS_40"))
   mutate(ns = factor(ns))
 ggplot(df, aes(y = Value, x = level, col = ns)) +
     geom_line() +
