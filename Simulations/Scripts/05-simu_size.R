@@ -21,7 +21,9 @@ sces <- lapply(nCells, function(nCell) {
 
 print("Running clustering methods")
 clusterings <- purrr::map(sces, run_clusterings)
-saveRDS(clusterings, here("Simulations", "Data", "clusterings.rds"))
+# saveRDS(clusterings, here("Simulations", "Data", "clusterings.rds"))
+# clusterings  <- readRDS(here("Simulations", "Data", "clusterings.rds"))
+
 # 3 methods, different sizes ----
 # Do the consensus
 print("Running Dune")
@@ -47,31 +49,10 @@ print("Running Dune")
 ks <- as.character(seq(30, 50, 5))
 names(ks) <- ks
 Dunes <- purrr::map(ks, function(k) {
-  df <- data.frame(cells = clustering$sc3$cells,
+  df <- data.frame(cells = clusterings[[6]]$sc3$cells,
                    "sc3" = clusterings[[6]]$sc3[, k],
                    "UMAP_KMEANS" = clusterings[[6]]$UMAP_KMEANS[, k],
                    "TSNE_KMEANS" = clusterings[[6]]$tSNE_KMEANS[, k]
-  )
-  return(run_Dune(df))
-})
-
-# Do the measures
-print("Evaluating Dune")
-ARIs <- purrr::map(Dunes, evaluate_clustering_methods, sce = sces[[6]])
-names(ARIs) <- ks
-ARIs <- bind_rows(ARIs, .id = "param")
-write.csv(x = ARIs, file = here("Simulations", "Data", "Param.csv"))
-
-# 3 methods, changing the parameters ----
-# Do the consensus
-print("Running Dune")
-ks <- as.character(seq(30, 50, 5))
-names(ks) <- ks
-Dunes <- purrr::map(ks, function(k) {
-  df <- data.frame(cells = clustering$sc3$cells,
-                   "sc3" = clusterings[[6]]$sc3[, k],
-                   "UMAP_KMEANS" = clusterings[[6]]$UMAP_KMEANS[, k],
-                   "tSNE_KMEANS" = clusterings[[6]]$tSNE_KMEANS[, k]
   )
   return(run_Dune(df))
 })
