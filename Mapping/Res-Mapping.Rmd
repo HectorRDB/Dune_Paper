@@ -31,19 +31,21 @@ rm(libs)
 ```{r}
 df <- bind_rows("Pancreas" = read.csv(here("Mapping", "Data", "Pancreas.csv")),
                 "Brain" = read.csv(here("Mapping", "Data", "Brain.csv")),
-                .id = "pair")
+                .id = "pair") %>%
+  pivot_longer(c("imp", "imp_prop"), names_to = "Type", values_to = "proba")
 ```
 
 ```{r}
 ggplot(df, aes(x = proba, fill = pair)) +
   geom_histogram(position = "dodge", bins = 50) +
   my_theme() +
+  facet_wrap(~Type) +
   scale_fill_brewer(type = "qual")
 ```
 
 ```{r}
 df %>%
-  group_by(pair) %>%
+  group_by(pair, Type) %>%
   summarise(imp = mean(proba > 0),
             mean_imp = mean(proba))
 ```
