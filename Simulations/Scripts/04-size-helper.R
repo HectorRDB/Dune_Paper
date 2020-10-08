@@ -28,8 +28,8 @@ run_clusterings <- function(sce) {
   df <- as.data.frame(df)
   sce <- sce[, !(df$libsize.drop | df$feature.drop)]
   clusters <- clusters[!(df$libsize.drop | df$feature.drop)]
-  sce <- computeSumFactors(sce, sizes = pmin(ncol(sce), seq(20, 120, 20)),
-                           min.mean = 0.1)
+  sce <- computeSumFactors(sce, min.mean = 0.1,
+                           sizes = pmin(ncol(sce), seq(20, 120, 20) )%>% unique())
   logcounts(sce) <- scater::normalizeCounts(sce)
   df <- colData(sce) %>% as.data.frame()
   rownames(df) <- df$Cell
@@ -42,8 +42,8 @@ run_clusterings <- function(sce) {
                                   verbose = FALSE)
   sSeurat <- ScaleData(object = sSeurat, vars.to.regress = "nCount_RNA",
                        verbose = FALSE)
-  sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 100, verbose = FALSE)
-  sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:100, verbose = FALSE)
+  sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 98, verbose = FALSE)
+  sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:98)
   sce <- as.SingleCellExperiment(sSeurat)
 
   # TSNE K-Means ----
