@@ -8,15 +8,11 @@ suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
 rm(libs)
-
-run_clusterings <- function(sce) {
-  print(paste0(".. ", ncol(sce)))
-  NCORES <- 32
-  # Create data ----
-  # We follow the workflow from Duo et al 2018
-  # https://github.com/markrobinsonuzh/scRNAseq_clustering_comparison
-
-  ## Pre-processing ----
+source(here("Simulations", "Scripts", "01-create_data.R"))
+create_and_clean <- function(nCells) {
+  sce <- create_simple_balanced_data(nCells = nCells, nClus = 30, 
+                                     DE =.1, seed = runif(1, 0, 100))
+   ## Pre-processing ----
   clusters <- sce$Group
   keep_features <- rowSums(counts(sce) > 0) > 0
   sce <- sce[keep_features, ]
@@ -38,14 +34,21 @@ run_clusterings <- function(sce) {
   sSeurat <- NormalizeData(object = sSeurat, normalization.method = "LogNormalize",
                            verbose = FALSE)
   sSeurat <- FindVariableFeatures(object = sSeurat, mean.function = ExpMean,
-                                  dispersion.function = LogVMR, do.plot = F,
-                                  verbose = FALSE)
+                                  dispersion.function = LogVMR, verbose = FALSE)
   sSeurat <- ScaleData(object = sSeurat, vars.to.regress = "nCount_RNA",
                        verbose = FALSE)
   sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 98, verbose = FALSE)
   sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:98)
   sce <- as.SingleCellExperiment(sSeurat)
 
+}
+
+run_clusterings <- function(sce) {
+  print(paste0(".. ", ncol(sce)))
+  NCORES <- 32
+  # Create data ----
+  # We follow the workflow from Duo et al 2018
+  # https://github.com/markrobinsonuzh/scRNAseq_clustering_comparison
   # TSNE K-Means ----
   print("... Running RtsneKmeans")
   sce <- scater::runPCA(sce, ntop = 2000)
@@ -77,11 +80,10 @@ run_clusterings <- function(sce) {
   ks <- seq(from = 30, to = 50, by = 5)
   names(ks) <- ks
   
-  SC3 <- suppressMessages(suppressPackageStartupMessages(suppressWarnings(
-    sc3(sce, ks = ks, svm_max = ncol(sce) + 1, biology = FALSE,
+  SC3 <- sc3(sce, ks = ks, svm_max = ncol(sce) + 1, biology = FALSE,
         gene_filter = F, n_cores = NCORES, rand_seed = 786907)
-  )))
   sc3 <- colData(SC3)[, paste0("sc3_", ks, "_clusters")]
+  colnames(sc3) <- names(ks)
   sc3$cells <- colnames(sce)
   return(list("sc3" = sc3, "UMAP_KMEANS" = UMAP_KMEANS, "tSNE_KMEANS" = tSNE_KMEANS))
   
@@ -92,10 +94,14 @@ run_Dune <- function(clusMat) {
   Names <- clusMat$cells
   # Running Dune NMI ----
   BPPARAM <- BiocParallel::MulticoreParam(32)
-  merger <- Dune(clusMat = clusMat %>% select(-cells), BPPARAM = BPPARAM,
-                 parallel = TRUE, metric = "NMI")
+  clusMat <- clusMat %>% select(-cells) %>% map_dfc(as.numeric) %>%
+    as.matrix()
+  rownames(clusMat) <- Names
+  colnames(clusMat) <- c("sc3", "UMAP_KMEANS", "tSNE_KMEANS")
+  merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE,
+                  metric = "NMI")
   Names <- as.character(Names)
-  chars <- c("SC3", "UMAP_KMEANS", "TSNE_KMEANS")
+  chars <- c("sc3", "UMAP_KMEANS", "tSNE_KMEANS")
   levels <- seq(from = 0, to = 1, by = .05)
   stopMatrix <- lapply(levels, function(p){
     print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
@@ -125,18 +131,17 @@ evaluate_clustering_methods <- function(sce, merger) {
   ref <- data.frame(groups = sce$Group,
                     cells = colnames(sce)) %>%
     arrange(cells) %>%
-    filter(cells %in% SC3$cells)
+    filter(cells %in% merger$cells)
   merger <- merger %>% arrange(cells)
   ARI <- data.frame(
     "Value" = lapply(merger %>% dplyr::select(-cells),
                      adjustedRandIndex, y = ref$groups) %>% unlist(),
     "Name" = colnames(merger %>% dplyr::select(-cells)),
     "n_clus" = lapply(merger %>% dplyr::select(-cells), n_distinct) %>% unlist(),
-    "clustering" = word(colnames(merger %>% dplyr::select(-cells)), 1, sep = "\\."),
+    "clustering" = word(colnames(merger %>% dplyr::select(-cells)), 1, sep = "-"),
     stringsAsFactors = FALSE
     ) %>%
     mutate(level = str_remove_all(Name, clustering),
-           level = str_remove(level, "^\\."),
-           level = str_remove(level, "^\\_") %>% as.numeric())
+           level = str_remove(level, "-") %>% as.numeric())
   return(ARI)
 }
