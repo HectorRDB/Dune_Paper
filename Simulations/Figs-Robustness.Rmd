@@ -36,7 +36,17 @@ ggplot(df, aes(y = Value, x = level, col = nCells)) +
     geom_line() +
   facet_wrap(~clustering) +
   theme_bw() +
+  scale_y_continuous(limits = c(0, 1)) +
   labs(col = "Number of cells", y ="ARI with ground truth", x = "Level of merging")
+df %>%
+  filter(level == 100) %>%
+  group_by(clustering) %>%
+  arrange(nCells) %>%
+  mutate(ratio = Value / dplyr::last(Value, order_by = nCells)) %>%
+  select(nCells, ratio) %>%
+  group_by(nCells) %>%
+  summarise(mean_ratio = mean(ratio),
+            min_ratio = min(ratio))
 ```
 
 # Parameter Change Analysis
@@ -49,20 +59,25 @@ ggplot(df, aes(y = Value, x = level, col = param)) +
     geom_line() +
   facet_wrap(~clustering) +
   theme_bw() +
+  scale_y_continuous(limits = c(0, 1)) +
   labs(col = "Parameter value", y ="ARI with ground truth", x = "Level of merging")
 ```
 
-# Number of methods Analysis
+# Number of Methods Analysis
 
 ```{r}
 df <- read.csv(here("Simulations", "Data", "Ns.csv")) %>%
   select(-X, -Name) %>% 
-  filter(clustering %in% c("sc3_40", "tSNE_KMEANS_40", "UMAP_KMEANS_40"))
+  filter(clustering %in% c("sc3_40", "X40", "X40.1")) %>%
+  mutate(clustering = case_when(clustering == "X40" ~ "UMAP_KMEANS_40",
+                                clustering == "X40.1" ~ "tSNE_KMEANS_40",
+                                TRUE ~ clustering)) %>%
   mutate(ns = factor(ns))
 ggplot(df, aes(y = Value, x = level, col = ns)) +
     geom_line() +
   facet_wrap(~clustering) +
-  # scale_x_log10() +
   theme_bw() +
-  labs(col = "Number of methods used as input", y ="ARI with ground truth", x = "Level of merging")
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(col = "Number of methods\nused as input", y ="ARI with ground truth",
+       x = "Level of merging") 
 ```
