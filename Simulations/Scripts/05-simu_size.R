@@ -88,6 +88,6 @@ for (i in 1:6) {
 # Do the measures
 print("Evaluating Dune")
 ARIs <- purrr::map(Dunes, evaluate_clustering_methods, sce = sces[[6]])
-names(ARIs) <- 3:9
+names(ARIs) <- 3:8
 ARIs <- bind_rows(ARIs, .id = "ns")
 write.csv(x = ARIs, file = here("Simulations", "Data", "Ns.csv"))
