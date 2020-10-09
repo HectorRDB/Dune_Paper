@@ -53,6 +53,7 @@ res <- lapply(1:5, function(id){
 }) %>%
   bind_rows(.id = "Dataset")
 res <- bind_rows(mean_method, res)
+rm(mean_method)
 ```
 
 ```{r}
@@ -75,40 +76,92 @@ for (Eval in c("ARI", "NMI")) {
   }
 }
 plot_grid(plotlist = plots, nrow = 2)
+rm(Crit, Eval, i, plots, df, p)
 ```
+```{r}
+g1 <- df <- res %>% pivot_wider(names_from = Metric, values_from = Value) %>%
+  pivot_longer(c(NMI, ARI), names_to = "EvalMetric", values_to = "Evaluation") %>%
+  pivot_longer(c(SL, MeanNMI), names_to = "SelectMetric", values_to = "Selection") %>%
+  group_by(Dataset, EvalMetric, SelectMetric) %>%
+  mutate(Evaluation = rank(Evaluation) %>% as.integer(),
+         Selection = rank(Selection) %>% as.integer()) %>%
+  ungroup() %>%
+  filter(Selection == 1) %>%
+  group_by(EvalMetric, SelectMetric) %>%
+  summarise(best = 100 * mean(Evaluation == 1),
+            second = 100 * mean(Evaluation == 2),
+            third = 100 * mean(Evaluation == 3))
+```
+
 ## Brain
 
 ```{r}
 df <- read.table(here("BestMethod", "Data", "Brain.txt"), header = TRUE) %>%
   pivot_wider(names_from = "Metric", values_from = "Value") %>%
-  pivot_longer(c("MeanNMI", "SL"), values_to = "Crit", names_to = "Crit_Type") %>%
-  pivot_longer(c("ARI", "Rep"), values_to = "Eval", names_to = "Eval_Type") 
-  
+  pivot_longer(c("MeanNMI", "SL"), values_to = "Selection", names_to = "SelectMetric") %>%
+  pivot_longer(c("ARI", "Rep"), values_to = "Evaluation", names_to = "EvalMetric")
 ```
 
 
 ```{r}
-ggplot(df, aes(x = Eval, y = Crit, col = comp)) +
+ggplot(df, aes(x = Evaluation, y = Selection, col = comp)) +
   geom_point() +
-  labs(x = "Eval", y = "Crit") +
-  facet_grid(Crit_Type + Eval_Type ~dataset, scales = "free") +
+  labs(x = "Evaluation", y = "Selection") +
+  facet_grid(EvalMetric + SelectMetric ~ dataset, scales = "free") +
   theme_bw()
 ```
+```{r}
+g2 <- df %>%
+  group_by(dataset, EvalMetric, SelectMetric, comp) %>%
+  mutate(Evaluation = rank(Evaluation) %>% as.integer(),
+         Selection = rank(Selection) %>% as.integer()) %>%
+  ungroup() %>%
+  filter(Selection == 1) %>%
+  group_by(EvalMetric, SelectMetric) %>%
+  summarise(best = 100 * mean(Evaluation == 1),
+            second = 100 * mean(Evaluation == 2),
+            third = 100 * mean(Evaluation == 3))
+```
+
 
 ## Pancreas
 
 ```{r}
-df <- read.table(here("BestMethod", "Data", "Pancreas.txt"), header = TRUE) %>%
-  pivot_wider(names_from = "Metric", values_from = "Value") %>%  
-  pivot_longer(c("MeanNMI", "SL"), values_to = "Crit", names_to = "Crit_Type") %>%
-  pivot_longer(c("ARI", "Rep"), values_to = "Eval", names_to = "Eval_Type") 
+df <- read.table(here("BestMethod", "Data", "Pancreas.txt"), header = TRUE)  %>%
+  pivot_wider(names_from = "Metric", values_from = "Value") %>%
+  pivot_longer(c("MeanNMI", "SL"), values_to = "Selection", names_to = "SelectMetric") %>%
+  pivot_longer(c("ARI", "Rep"), values_to = "Evaluation", names_to = "EvalMetric")
 ```
 
 
 ```{r}
-ggplot(df, aes(x = Eval, y = Crit, col = comp)) +
+ggplot(df, aes(x = Evaluation, y = Selection, col = comp)) +
   geom_point() +
-  labs(x = "Eval", y = "Crit") +
-  facet_grid(Crit_Type + Eval_Type ~dataset, scales = "free") +
+  labs(x = "Evaluation", y = "Selection") +
+  facet_grid(EvalMetric + SelectMetric ~ dataset, scales = "free") +
   theme_bw()
+```
+
+```{r}
+g3 <-df %>%
+  group_by(dataset, EvalMetric, SelectMetric, comp) %>%
+  mutate(Evaluation = rank(Evaluation) %>% as.integer(),
+         Selection = rank(Selection) %>% as.integer()) %>%
+  ungroup() %>%
+  filter(Selection == 1) %>%
+  group_by(EvalMetric, SelectMetric) %>%
+  summarise(best = 100 * mean(Evaluation == 1),
+            second = 100 * mean(Evaluation == 2),
+            third = 100 * mean(Evaluation == 3))
+```
+
+# Results
+
+```{r}
+df <- bind_rows("Simulations" = g1,
+                "Brain" = g2, 
+                "Pancreas" = g3,
+                .id = "Dataset") %>%
+  arrange(SelectMetric, EvalMetric)
+knitr::kable(df)
 ```

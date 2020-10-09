@@ -31,13 +31,15 @@ rm(libs)
 ```{r}
 df <- read.csv(here("Simulations", "Data", "Sizes.csv")) %>%
   select(-X, -Name) %>% 
-  mutate(nCells = factor(nCells, levels = c(100, 200, 500, 1000, 2000, 5000)))
-ggplot(df, aes(y = Value, x = level, col = nCells)) +
+  mutate(nCells = factor(nCells, levels = c(100, 200, 500, 1000, 2000, 5000))) %>%
+  mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
+                                clustering == "tSNE_KMEANS" ~ "tSNE\nkmeans",
+                                clustering == "UMAP_KMEANS" ~ "UMAP\nkmeans"))
+p1 <- ggplot(df, aes(y = Value, x = level, col = nCells)) +
     geom_line() +
   facet_wrap(~clustering) +
-  theme_bw() +
-  scale_y_continuous(limits = c(0, 1)) +
   labs(col = "Number of cells", y ="ARI with ground truth", x = "Level of merging")
+p1
 df %>%
   filter(level == 100) %>%
   group_by(clustering) %>%
@@ -54,13 +56,15 @@ df %>%
 ```{r}
 df <- read.csv(here("Simulations", "Data", "Param.csv")) %>%
   select(-X, -Name) %>% 
-  mutate(param = factor(param, levels = as.character(seq(30, 50, 5))))
-ggplot(df, aes(y = Value, x = level, col = param)) +
+  mutate(param = factor(param, levels = as.character(seq(30, 50, 5)))) %>%
+  mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
+                                clustering == "tSNE_KMEANS" ~ "tSNE\nkmeans",
+                                clustering == "UMAP_KMEANS" ~ "UMAP\nkmeans"))
+p2 <- ggplot(df, aes(y = Value, x = level, col = param)) +
     geom_line() +
   facet_wrap(~clustering) +
-  theme_bw() +
-  scale_y_continuous(limits = c(0, 1)) +
   labs(col = "Parameter value", y ="ARI with ground truth", x = "Level of merging")
+p2
 ```
 
 # Number of Methods Analysis
@@ -71,13 +75,62 @@ df <- read.csv(here("Simulations", "Data", "Ns.csv")) %>%
   filter(clustering %in% c("sc3_40", "X40", "X40.1")) %>%
   mutate(clustering = case_when(clustering == "X40" ~ "UMAP_KMEANS_40",
                                 clustering == "X40.1" ~ "tSNE_KMEANS_40",
-                                TRUE ~ clustering)) %>%
-  mutate(ns = factor(ns))
-ggplot(df, aes(y = Value, x = level, col = ns)) +
+                                TRUE ~ clustering),
+         clustering = str_remove(clustering, "_40")) %>%
+  mutate(ns = factor(ns)) %>%
+  mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
+                                clustering == "tSNE_KMEANS" ~ "tSNE\nkmeans",
+                                clustering == "UMAP_KMEANS" ~ "UMAP\nkmeans"))
+p3 <- ggplot(df, aes(y = Value, x = level, col = ns)) +
     geom_line() +
   facet_wrap(~clustering) +
-  theme_bw() +
-  scale_y_continuous(limits = c(0, 1)) +
-  labs(col = "Number of methods\nused as input", y ="ARI with ground truth",
-       x = "Level of merging") 
+  labs(col = "Number of methods used as input", y ="ARI with ground truth",
+       x = "Level of merging")
+```
+
+# Garbage 
+
+```{r}
+df <- read.table(here("Figure-Stability", "data", "garbage.txt")) %>%
+  arrange(level) %>%
+  mutate(nb_garb = factor(nb_garb)) %>%
+  group_by(nb_garb, level, Comp) %>%
+  summarise(fraction_replicable_cells = mean(fraction_replicable_cells)) %>%
+  mutate(Comp = paste0("Comp ", Comp))
+p4 <- ggplot(df, aes(x = level, y = fraction_replicable_cells, col = nb_garb)) +
+  facet_wrap( ~ Comp) +
+  geom_path() +
+  labs(col = "Number of random methods used as input",
+       y = "Replicability",
+       x = "Level of merging")
+```
+
+# All together
+
+```{r}
+plots <- list(p1, p2, p3, p4)
+plots <- lapply(plots, function(p) {
+  p <- p + 
+      theme_classic() +
+  theme(plot.background = element_rect(fill = "transparent",
+                                       colour = "transparent"),
+        legend.background = element_rect(fill = "transparent"),
+        strip.background = element_rect(fill = "transparent"),
+        panel.background = element_rect(fill = "transparent"),
+        legend.position = "bottom",
+        strip.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 12)) +
+  scale_y_continuous(limits = c(0, 1), breaks = c(0, .5, 1)) +
+  scale_x_continuous(breaks = c(0, 50, 100), labels = c("0%", "50%", "100%")) +
+  guides(col = guide_legend(nrow = 1))
+  return(p)
+})
+p <- plot_grid(plotlist = plots, nrow = 2, scale = .9,
+               labels = c("a)", "b)", "c)", "d)"), label_size = 16)
+p
+ggsave(filename = here("Simulations", "Figures", "Robustness.png"),
+       bg = "transparent", plot = p, width = 11, height = 8)
 ```

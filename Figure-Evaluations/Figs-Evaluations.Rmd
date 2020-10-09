@@ -186,18 +186,19 @@ p4 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
   NULL
 p4
 ```
+
 # All
 
 ```{r}
 first_row <- plot_grid(p1, p2, nrow = 1, labels = c("a)", "b)"))
 second_row <- plot_grid(p4, plot_grid(p3, NULL, nrow = 2, 
-                                      rel_heights = c(1.5, .05)),
+                                      rel_heights = c(1.5, .1)),
                         nrow = 1, labels = c("c)", "d)"),
                         rel_widths = c(1, .8))
-p <- plot_grid(first_row, second_row, nrow = 2)
+p <- plot_grid(first_row, second_row, nrow = 2, rel_heights = c(1.5, 1))
 p
 save_plot(plot = p,  filename = here("Figure-Evaluations", "panel.png"),
-          base_width = 12, base_height = 9,
+          base_width = 12, base_height = 7,
           bg = "transparent")
 
 ```
