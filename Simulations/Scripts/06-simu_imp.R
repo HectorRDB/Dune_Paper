@@ -28,7 +28,8 @@ clusterings <- purrr::map(sces, run_clusterings)
 print("Running and evaluating Dunes")
 ks <- as.character(seq(30, 50, 5))
 names(ks) <- ks
-ARIs <- purrr::map(clusterings, function(clustering) {
+ARIs <- purrr::map(seq_along(nCells), function(i) {
+  clustering <- clusterings[[i]]
   Dunes <- purrr::map(ks, function(k) {
     df <- data.frame(cells = clustering$sc3$cells,
                      "sc3" = clustering$sc3[, k],
@@ -37,7 +38,7 @@ ARIs <- purrr::map(clusterings, function(clustering) {
     )
     return(run_Dune(df))
   })
-  ARIs <- purrr::map2(sces, Dunes, evaluate_clustering_methods)
+  ARIs <- purrr::map(Dunes, evaluate_clustering_methods, sce = sces[[i]])
   names(ARIs) <- ks
   ARIs <- bind_rows(ARIs, .id = "param")
   return(ARIs)

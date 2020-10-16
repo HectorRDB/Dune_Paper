@@ -5,4 +5,4 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
 
-R CMD BATCH 05-simu_size.R 05-simu_size.out
+R CMD BATCH 06-simu_imp.R 06-simu_imp.out
