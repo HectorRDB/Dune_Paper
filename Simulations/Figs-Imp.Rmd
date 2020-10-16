@@ -29,27 +29,37 @@ rm(libs)
 # Input vs Output 
 
 ```{r}
-dfs <- list(
-  read.csv(here("Simulations", "Data", "Sizes.csv")) %>%
-    select(-X, -Name),
-  read.csv(here("Simulations", "Data", "Param.csv")) %>%
-  select(-X, -Name),
-  read.csv(here("Simulations", "Data", "Ns.csv")) %>%
-  select(-X, -Name)
-)
-dfs <- lapply(dfs, function(df) {
-  df <- df %>%
-    select(-n_clus) %>%
-    filter(level %in% c(0, 100)) %>%
-    mutate(level = if_else(level == 0, "Init", "Final")) %>%
-    pivot_wider(names_from = "level", values_from  = "Value") %>%
-    select(Init, Final)
-}) %>%
-  bind_rows()
+df <- read.csv(here("Simulations", "Data", "Imp.csv")) %>%
+  select(-X, -Name, -n_clus) %>%
+  filter(level %in% c(0, 100)) %>%
+  mutate(level = if_else(level == 0, "Initial","Final")) %>%
+  pivot_wider(names_from = "level", values_from = "Value") %>%
+  mutate(
+    clustering = case_when(
+      str_detect(clustering, ".1") ~ "tSNE",
+      str_detect(clustering, "X") ~ "UMAP",
+      TRUE~ "sc3"),
+    Improvement = Final - Initial
+  ) %>%
+  filter(nCells > 200) %>%
+  pivot_longer(c("Initial", "Final", "Improvement"), names_to = "Type",
+               values_to = "ARI") %>%
+  mutate(param = as.factor(param),
+         Type = factor(Type, levels = c("Initial", "Final", "Improvement")))
 
-ggplot(dfs, aes(x = Init, y = Final - Init)) +
+ggplot(df, aes(x = param, y = ARI, col = clustering)) +
+  geom_boxplot() +
+  labs(y = "ARI with ground truth", x = "Number of Initial clusters") +
+  facet_wrap(~Type, ncol = 2, scales = "free") +
+  theme_bw()+
+  theme(legend.position = c(.75, .25),
+        legend.direction = "horizontal")
+```
+
+```{r}
+ggplot(df, aes(x = nCells, y = Final - Init, col = clustering)) +
   geom_point() +
-  labs(x = "Improvement") +
-  scale_x_continuous(limits = c(0, 1)) +
-  theme_bw()
+  facet_wrap(~as.factor(param)) +
+  labs(y = "Improvement") +
+  theme_bw() 
 ```
