@@ -19,9 +19,8 @@ Prep <- function(sce) {
 }
 
 de_label <- function(label, sce) {
-  colLabels(sce) <- label
   markers <- scran::findMarkers(
-    sce, pval.type = "any", direction = "up"
+    sce, groups = label, pval.type = "any", direction = "up"
   )
   markers <- lapply(markers, function(df){
      df %>% 
@@ -38,8 +37,9 @@ de_label <- function(label, sce) {
 
 # All together----
 compute_de_comp <- function(i, sce, comps, m_locs, f) {
-  df <- read.csv(file = paste0(m_locs[i], f, "_", comps[i]))
-  print(paste0("...", names(comps[i])))
+  df <- read.csv(file = paste0(m_locs[i], f, "_", comps[i]),
+                 stringsAsFactors = FALSE)
+  print(paste0("...", names(comps)[i]))
   df <- df %>% select("cells", paste0(c("Monocle", "sc3", "Seurat"), 
                                       rep(c(".00", ".100"), each = 3)))
   sce <- sce[, df$cells]
@@ -49,6 +49,7 @@ compute_de_comp <- function(i, sce, comps, m_locs, f) {
 }
 
 compute_de_sce <- function(i, sces, comps, m_locs) {
+  names(comps) <- word(comps, 1, sep = "_")
   f <- names(sces)[i]
   print(f)
   sce <- Prep(sces[[i]])

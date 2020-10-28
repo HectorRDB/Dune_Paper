@@ -47,23 +47,23 @@ sce2 <- readRDS(file = paste0(opt$l, opt$s, "_filt.rds"))
 
 if (is.na(opt$n)) {
   comps <- list.files(opt$m) %>%
-  str_subset("Dune_NMI.csv")  %>%
-  str_remove("_Dune_NMI.csv") %>%
-  unlist() %>%
-  word(-1, sep = "_") %>%
-  unlist() %>%
-  unique() %>%
-  paste0("_Dune_NMI.csv")
+    str_subset("Dune_NMI.csv")  %>%
+    str_remove("_Dune_NMI.csv") %>%
+    unlist() %>%
+    word(-1, sep = "_") %>%
+    unlist() %>%
+    unique() %>%
+    paste0("_Dune_NMI.csv")
   m_locs <- rep(opt$m, length(comps))
 } else {
   comps <- list.files(opt$m) %>%
-  str_subset("NMI_Dune.csv")  %>%
-  str_remove("_NMI_Dune.csv") %>%
-  unlist() %>%
-  word(-1, sep = "_") %>%
-  unlist() %>%
-  unique() %>%
-  paste0("_NMI_Dune.csv")
+    str_subset("NMI_Dune.csv")  %>%
+    str_remove("_NMI_Dune.csv") %>%
+    unlist() %>%
+    word(-1, sep = "_") %>%
+    unlist() %>%
+    unique() %>%
+    paste0("_NMI_Dune.csv")
   comps <- c(comps, "NMI.csv")
   m_locs <- c(rep(opt$m, length(comps) -1 ), opt$n)
 }
