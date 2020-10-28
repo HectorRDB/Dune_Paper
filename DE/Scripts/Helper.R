@@ -57,7 +57,7 @@ compute_de_sce <- function(i, sces, comps, m_locs) {
                      comps = comps, m_locs = m_locs, f = f)
   names(de_genes) <- names(comps)
   de_genes <- bind_rows(de_genes, .id = "comp")
-  return(df)
+  return(de_genes)
 }
 
 all_de <- function(sce1, sce2, f, s, m_locs, comps) {
