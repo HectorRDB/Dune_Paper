@@ -60,6 +60,8 @@ ggplot(Pancreas, aes(x = Initial, y = Final, color = same_method)) +
 Brain <- read.csv(here("DE", "Data", "Brain.csv")) %>%
   rename("method_1" = "X") %>%
   pivot_longer(-method_1, values_to = "Dist", names_to = "method_2") %>%
+  mutate(method_1 = str_replace(method_1, "NMI\\.csv", "large1"),
+         method_2 = str_replace(method_2, "NMI\\.csv", "large1")) %>%
   group_by(method_1, method_2) %>%
   mutate(first = min(method_1, method_2),
          second = max(method_1, method_2)) %>%
@@ -71,13 +73,14 @@ Brain <- read.csv(here("DE", "Data", "Brain.csv")) %>%
   mutate(level = word(first, 2, sep = "\\."),
          first = word(first, 1, sep = "\\."),
          second = word(second, 1, sep = "\\."),
-         same_dataset = word(first, 1, sep = "_") == word(second, 1, sep = "_"),
-         same_comp = word(first, 2, sep = "_") == word(second, 2, sep = "_"),
-         same_method = word(first, 3, sep = "_") == word(second, 3, sep = "_"),
+         same_dataset = word(first, 2, sep = "_") == word(second, 2, sep = "_"),
+         same_comp = word(first, 3, sep = "_") == word(second, 3, sep = "_"),
+         same_method = word(first, 4, sep = "_") == word(second, 4, sep = "_"),
          level = if_else(level == "00", "Initial", "Final")) %>%
   # filter(same_dataset == TRUE) %>%
   pivot_wider(names_from = "level", values_from = "Dist")
-ggplot(Pancreas, aes(x = Initial, y = Final, color = same_method)) +
+ggplot(Brain, aes(x = Initial, y = Final, color = same_method)) +
+  geom_abline(slope = 1, intercept = 0) +
   geom_jitter() +
   facet_wrap(~same_dataset, scales = "free")
 ```
