@@ -15,7 +15,7 @@ output:
 library(knitr)
 opts_chunk$set(
   fig.pos = "!h", out.extra = "", warning = F, message = F,
-  fig.align = "center", echo = F
+  fig.align = "center"
 )
 NCORES <- 2
 ```
@@ -25,25 +25,28 @@ NCORES <- 2
 We download the data from segerstolpe et al, hosted [here]
 
 ```{r}
-library(SingleCellExperiment)
-library(stringr)
-sce <- readRDS(url("https://scrnaseq-public-datasets.s3.amazonaws.com/scater-objects/segerstolpe.rds"))
-sce <- sce[, sce$cell_quality == "OK"]
-filt <- rowSums(counts(sce) >= 5) >= 20
+suppressPackageStartupMessages({
+  library(SingleCellExperiment)
+  library(stringr)
+  library(scRNAseq)
+})
+sce <- BaronPancreasData()
+# We select the largest batch to avoid pre-processing issues
+# sce <- sce[, sce$donor == "GSM2230759"]
+filt <- rowSums(counts(sce) >= 2) >= 10
 sce <- sce[filt, ]
-sce$batch <- word(colnames(sce), 1, sep = "_") %>% unlist()
 sce
 rm(filt)
 ```
 
 # Pre-processing
 
-The dataset can be normalized using ZinbWave 
+The dataset can be normalized using SCVI 
 
 ```{r}
-library(zinbwave)
-library(Seurat)
-library(BiocParallel)
+suppressPackageStartupMessages({
+  library(Seurat)
+})
 pre_process_time <- system.time({
   se <- CreateSeuratObject(counts = counts(sce),
                            min.cells = 0,
@@ -51,35 +54,54 @@ pre_process_time <- system.time({
                            project = "de")
   se <- AddMetaData(se, as.data.frame(colData(sce)))
   se <- NormalizeData(se, verbose = FALSE)
-  se <- FindVariableFeatures(se, selection.method = 'vst', nfeatures = 2000,
+  se <- FindVariableFeatures(se, selection.method = 'vst', nfeatures = 4000,
                              verbose = FALSE)
   se <- se[VariableFeatures(se), ]
+  se <- ScaleData(object = se, vars.to.regress = c("nCount_RNA", "donor"))
   sce <- as.SingleCellExperiment(se)
 })
-BPPARAM <- bpparam()
-BPPARAM$workers <- NCORES
-zinb_time <- system.time({
-  var_genes <- rownames(sce)[rowData(sce)$vst.variable]
-  sce <- zinbwave(sce, K = 10, X = "~batch", BPPARAM = BPPARAM,
-                  normalizedValues = TRUE, which_genes = var_genes)
+```
+
+```{r, warning=FALSE}
+suppressPackageStartupMessages({
+  library(reticulate)
+})
+use_python("/usr/local/bin/python3")
+scvi <- import("scvi")
+anndata <- import("anndata")
+np <- import("numpy")
+sc <- import("scanpy")
+scvi_time <- system.time({
+  adata <- anndata$AnnData(X = as.sparse(t(counts(sce))),
+                           obs = data.frame(cells = colnames(sce),
+                                            batch = sce$donor))
+  scvi$data$setup_anndata(adata, batch_key = "batch")
+  model <- scvi$model$SCVI(adata)
+  model$train(n_epochs = as.integer(50), n_epochs_kl_warmup = as.integer(20))
 })
 ```
+
 We can visualize the data using the labels from the original publication
 
 ```{r}
 library(scater)
-sce <- runTSNE(sce, dimred = "zinbwave")
-plotTSNE(sce, colour_by = "cell_type1")
-plotTSNE(sce, colour_by = "batch")
+reducedDim(sce, "scvi") <- model$get_latent_representation()
+denoised <- t(model$get_normalized_expression(adata, library_size = 10e4))
+dimnames(denoised) <- dimnames(counts(sce))
+assay(sce, "denoised") <- log1p(denoised)
+sce <- runTSNE(sce, dimred = "scvi")
+plotTSNE(sce, colour_by = "label")
+plotTSNE(sce, colour_by = "donor")
 ```
 
 # Creating inputs to Dune
 ## sc3
 
-```{r}
-library(SC3)
+```{r, message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(SC3))
 sc3_time <- system.time({
   sce_sc3 <- sce
+  logcounts(sce_sc3) <- assay(sce, "denoised")
   rowData(sce_sc3)$feature_symbol <- rownames(sce_sc3)
   counts(sce_sc3) <- as.matrix(counts(sce_sc3))
   logcounts(sce_sc3) <- as.matrix(logcounts(sce_sc3))
@@ -88,7 +110,9 @@ sc3_time <- system.time({
   # Note: with R >= 4.0, RStudio and Mac OS, this can fails. 
   # A workaround is running 
   # parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
-  sce_sc3 <- sc3(sce_sc3, ks = K, n_cores = 2, rand_seed = 786907)
+  sce_sc3 <- sc3(sce_sc3, ks = K, n_cores = NCORES, rand_seed = 786907,
+                 svm_num_cells = round(.1 * ncol(sce)))
+  sce_sc3 <- sc3_run_svm(sce_sc3, ks = K)    
   sce$SC3 <- colData(sce_sc3)[, paste0("sc3_", K, "_clusters")] %>% as.factor()
 })
 plotTSNE(sce, colour_by = "SC3")
@@ -106,23 +130,23 @@ seurat_time <- system.time({
 plotTSNE(sce, colour_by = "seurat")
 ```
 
-## Seurat with Zinbwave
+## Seurat with SCVI
 
 ```{r}
-seurat_zinb_time <- system.time({
+seurat_scvi_time <- system.time({
   seu <- as.Seurat(x = sce, counts = "counts", data = "counts")
-  seu <- FindNeighbors(seu, reduction = "zinbwave", verbose = FALSE)
+  seu <- FindNeighbors(seu, reduction = "scvi", verbose = FALSE)
   seu <- FindClusters(object = seu, verbose = FALSE)
-  sce$seurat_zinb <- Idents(seu)
+  sce$seurat_scvi <- Idents(seu)
 })
-plotTSNE(sce, colour_by = "seurat_zinb")
+plotTSNE(sce, colour_by = "seurat_scvi")
 ```
 
 # Running Dune
 
 ```{r}
 library(Dune)
-df <- colData(sce)[, c("SC3", "seurat", "seurat_zinb")] %>%
+df <- colData(sce)[, c("SC3", "seurat", "seurat_scvi")] %>%
   as.matrix()
 dune_time <- system.time(
   merger <- Dune(clusMat = df, BPPARAM = BPPARAM, metric = "NMI")
@@ -148,8 +172,8 @@ plotTSNE(sce, colour_by = "seurat_Final")
 ```
 
 ```{r}
-sce$seurat_zinb_Final <- as.factor(merger$currentMat$seurat_zinb)
-plotTSNE(sce, colour_by = "seurat_zinb_Final")
+sce$seurat_scvi_Final <- as.factor(merger$currentMat$seurat_scvi)
+plotTSNE(sce, colour_by = "seurat_scvi_Final")
 ```
 
 ```{r}
@@ -161,7 +185,7 @@ plotTSNE(sce, colour_by = "SC3_Final")
 
 ```{r}
 library(cluster)
-dist_mat <- dist(as.matrix(reducedDim(sce, "zinbwave")))
+dist_mat <- dist(as.matrix(reducedDim(sce, "scvi")))
 sils <- lapply(merger$currentMat %>% as.data.frame, function(label){
   silhouette(label, dist = dist_mat)[,3] %>%  mean()
 }) %>% unlist()
@@ -172,16 +196,16 @@ sils
 
 ```{r}
 times <- c(pre_process_time[1],
-           zinb_time[1],
+           scvi_time[1],
            sc3_time[1],
            seurat_time[1],
-           seurat_zinb_time[1],
+           seurat_scvi_time[1],
            dune_time[1])
 names(times) <- c("Pre-Process",
-                  "Zinbwave",
+                  "SCVI",
                   "Sc3",
                   "Seurat",
-                  "Seurat after Zinbwave",
+                  "Seurat after SCVI",
                   "Dune")
 df <- data.frame(times = times,
                  Name = factor(names(times), levels = names(times)))
@@ -189,5 +213,6 @@ ggplot(df, aes(x = Name, y = times, fill = Name)) +
   geom_col() +
   theme_classic() +
   labs(x = "Step", y = "Time (second)") +
-  scale_color_brewer(palette = "Dark2")
+  scale_color_brewer(palette = "Dark2") +
+  scale_y_log10()
 ```
