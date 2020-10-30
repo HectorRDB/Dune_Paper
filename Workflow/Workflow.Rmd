@@ -77,7 +77,7 @@ scvi_time <- system.time({
                                             batch = sce$donor))
   scvi$data$setup_anndata(adata, batch_key = "batch")
   model <- scvi$model$SCVI(adata)
-  model$train(n_epochs = as.integer(100), n_epochs_kl_warmup = as.integer(30))
+  model$train(n_epochs = as.integer(100), n_epochs_kl_warmup = as.integer(25))
 })
 ```
 
