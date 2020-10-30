@@ -23,6 +23,7 @@ We use the data from [@Baron2016], which is a human pancreas dataset, to display
 We rely on a pre-processed dataset where the count matrix has already been computed. We also have information on the batches, i.e the ids of the donors, as well as the cell labels assigned in the original publication. Note that, in that publication, cells were clustered using hierarchical clustering with a final manual merging step. We will show how, running each algorithm with its default, we can polish the results with Dune.
 
 ```{r}
+set.seed(19)
 suppressPackageStartupMessages({
   library(SingleCellExperiment)
   library(stringr)
@@ -66,18 +67,19 @@ pre_process_time <- system.time({
 suppressPackageStartupMessages({
   library(reticulate)
 })
-use_python("/usr/local/bin/python3")
+use_python("/usr/local/linux/anaconda3.7/bin/python3")
 scvi <- import("scvi")
 anndata <- import("anndata")
 np <- import("numpy")
 sc <- import("scanpy")
 scvi_time <- system.time({
+  scvi$settings$seed = 0L
   adata <- anndata$AnnData(X = as.sparse(t(counts(sce))),
                            obs = data.frame(cells = colnames(sce),
                                             batch = sce$donor))
   scvi$data$setup_anndata(adata, batch_key = "batch")
   model <- scvi$model$SCVI(adata)
-  model$train(n_epochs = as.integer(100), n_epochs_kl_warmup = as.integer(25))
+  model$train(n_epochs = 100L, n_epochs_kl_warmup = 25L)
 })
 ```
 
@@ -123,8 +125,8 @@ sc3_time <- system.time({
   } else {
     sce_sc3 <- sc3(sce_sc3, ks = K, n_cores = NCORES, rand_seed = 786907,
                    svm_num_cells = round(.1 * ncol(sce)))
-    sce_sc3 <- sc3_run_svm(sce_sc3, ks = K)
   }
+  sce_sc3 <- sc3_run_svm(sce_sc3, ks = K)
   sce$SC3 <- colData(sce_sc3)[, paste0("sc3_", K, "_clusters")] %>% as.factor()
 })
 plotTSNE(sce, colour_by = "SC3")
@@ -245,7 +247,7 @@ ggplot(df, aes(x = Name, y = times, fill = Name)) +
   geom_col() +
   theme_classic() +
   labs(x = "Step", y = "Time (second)") +
-  scale_color_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2") +
   scale_y_log10()
 ```
 
