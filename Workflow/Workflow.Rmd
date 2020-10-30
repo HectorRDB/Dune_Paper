@@ -4,20 +4,15 @@ date: '`r format(Sys.time(), "%d %B , %Y")`'
 title: 'Dune workflow on the baron dataset'
 bibliography: workflow.bib
 output:
-  html_document:
+  pdf_document:
     toc: true
-    toc_float: TRUE
     toc_depth: 2
     number_sections: true
-    code_download: TRUE
 ---
 
 ```{r load packages, include=F}
 library(knitr)
-opts_chunk$set(
-  fig.pos = "!h", out.extra = "", warning = F, message = F,
-  fig.align = "center"
-)
+opts_chunk$set(fig.pos = "!h", out.extra = "",fig.align = "center")
 NCORES <- 2
 ```
 
