@@ -98,15 +98,15 @@ As we can see, the __scvi__ method clearly clusters correctly the original label
 
 __Dune__ takes as input a set of clustering results. We therefore need to produce such a set. Here, we will demonstrate by producing three clustering results. 
 
-## sc3
+## __SC3__
 
-We first use __sc3__ [@Kiselev2017]. We use as input the denoised count matrix from __scvi__. __sc3__ has a function to estimate the value of $K$, the exact number of clusters. 
+We first use __SC3__ [@Kiselev2017]. We use as input the denoised count matrix from __scvi__. __SC3__ has a function to estimate the value of $K$, the exact number of clusters. 
 
-Since the dataset has more than $5000$ cells, __sc3__ is automatically run in hybrid mode to lower runtime. However, the process is still quite slow. The code below is run in the default mode. If you want to run it faster, set `default=TRUE`
+Since the dataset has more than $5000$ cells, __SC3__ is automatically run in hybrid mode to lower runtime. However, the process is still quite slow. The code below is run in the default mode. If you want to run it faster, set `default=FALSE`
 
 ```{r, message=FALSE, warning=FALSE}
 suppressPackageStartupMessages(library(SC3))
-default <- FALSE
+default <- TRUE
 sc3_time <- system.time({
   sce_sc3 <- sce
   logcounts(sce_sc3) <- assay(sce, "denoised")
@@ -130,7 +130,7 @@ sc3_time <- system.time({
 plotTSNE(sce, colour_by = "SC3")
 ```
 
-As we can see, __sc3__ estimates too many clusters and, as a result, fails to properly cluster the data (according to the original clusters).
+As we can see, __SC3__ estimates too many clusters and, as a result, fails to properly cluster the data (according to the original clusters).
 
 ## Seurat 
 
@@ -146,7 +146,7 @@ seurat_time <- system.time({
 plotTSNE(sce, colour_by = "seurat")
 ```
 
-__Seurat__ seems to perfom better than __sc3__ here but still seems to overpartition the data (with the default parameters). 
+__Seurat__ seems to perform better than __SC3__ here but still seems to overpartition the data (with the default parameters). 
 
 
 ## Seurat with SCVI
@@ -176,9 +176,9 @@ df <- colData(sce)[, c("SC3", "seurat", "seurat_scvi")] %>%
 dune_time <- system.time(
   merger <- Dune(clusMat = df, metric = "NMI")
 )
-merger$currentMat <- lapply(merger$currentMat, as.factor) %>%
-  as.data.frame()
-colData(sce)[, c("SC3", "seurat", "seurat_scvi")] <- merger$currentMat
+colData(sce)[, c("SC3_final", "seurat_final", "seurat_scvi_final")] <-
+  lapply(merger$currentMat, as.factor) %>%
+    as.data.frame()
 ```
 
 ## Vizualing the merging
@@ -198,9 +198,9 @@ While __Dune__ increases the concordance between the three sets of clusters, it 
 One common way to pick clustering results is still manual, using visualization. 
 
 ```{r}
-plotTSNE(sce, colour_by = "seurat_Final")
-plotTSNE(sce, colour_by = "seurat_scvi_Final")
-plotTSNE(sce, colour_by = "SC3_Final")
+plotTSNE(sce, colour_by = "seurat_final")
+plotTSNE(sce, colour_by = "seurat_scvi_final")
+plotTSNE(sce, colour_by = "SC3_final")
 ```
 
 Here, we can see that all clustering results look more consistent with the low dimensionality representation. Moreover, it clearly looks like __Seurat__ using the latent space from __scvi__ produces better results. 
@@ -224,7 +224,7 @@ For all methods, the average silhouette information increased after merging with
 
 # Runtimes
 
-We can also compare the runtimes of all parts of the workflow. Running __sc3__ in default mode is quite slow, followed by __scvi__. Running __Dune__ itself is quite quick compared to other steps. 
+We can also compare the runtimes of all parts of the workflow. Running __SC3__ in default mode is quite slow, followed by __scvi__. Running __Dune__ itself is quite quick compared to other steps. 
 
 ```{r}
 times <- c(pre_process_time[1],
@@ -235,7 +235,7 @@ times <- c(pre_process_time[1],
            dune_time[1])
 names(times) <- c("Pre-Process",
                   "SCVI",
-                  "Sc3",
+                  "SC3",
                   "Seurat",
                   "Seurat after SCVI",
                   "Dune")
