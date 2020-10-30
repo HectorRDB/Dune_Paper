@@ -77,7 +77,7 @@ scvi_time <- system.time({
                                             batch = sce$donor))
   scvi$data$setup_anndata(adata, batch_key = "batch")
   model <- scvi$model$SCVI(adata)
-  model$train(n_epochs = as.integer(50), n_epochs_kl_warmup = as.integer(20))
+  model$train(n_epochs = as.integer(60), n_epochs_kl_warmup = as.integer(30))
 })
 ```
 
@@ -111,7 +111,7 @@ sc3_time <- system.time({
   # A workaround is running 
   # parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
   sce_sc3 <- sc3(sce_sc3, ks = K, n_cores = NCORES, rand_seed = 786907,
-                 svm_num_cells = round(.1 * ncol(sce)))
+                 svm_num_cells = round(.5 * ncol(sce)))
   sce_sc3 <- sc3_run_svm(sce_sc3, ks = K)    
   sce$SC3 <- colData(sce_sc3)[, paste0("sc3_", K, "_clusters")] %>% as.factor()
 })
