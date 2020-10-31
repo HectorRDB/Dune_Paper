@@ -40,7 +40,7 @@ rm(filt)
 
 # Pre-processing
 
-To normalize the dataset, we can rely on two methods. We first use the default pipeline from __Seurat__ [@Cao2019]. Then, we use the __scvi__ method from [@lopez2018].
+To normalize the dataset, we can rely on two methods. We first use the default pipeline from __Seurat__ [@Cao2019]. Then, we use the __scvi__ method from [@Lopez2018].
 
 ```{r}
 suppressPackageStartupMessages({
@@ -83,7 +83,7 @@ scvi_time <- system.time({
 })
 ```
 
-We can visualize the data using the labels from the original publication, and reducing the 10 dimensions of the latent space from __scvi__ to 2 using t-SNE [@tsne1, @tnse2, @tnse3].
+We can visualize the data using the labels from the original publication, and reducing the 10 dimensions of the latent space from __scvi__ to 2 using t-SNE [@tsne1, @tsne2, @tsne3].
 
 ```{r}
 library(scater)
