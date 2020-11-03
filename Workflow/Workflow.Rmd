@@ -18,7 +18,7 @@ output:
 
 ```{r load packages, include=F}
 library(knitr)
-opts_chunk$set(fig.pos = "!h", out.extra = "",fig.align = "center", eval = F,
+opts_chunk$set(fig.pos = "!h", out.extra = "",fig.align = "center",
                fig.height = 6, fig.width = 6)
 NCORES <- 2
 ```
