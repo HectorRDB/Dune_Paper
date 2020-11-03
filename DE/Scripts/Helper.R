@@ -78,9 +78,9 @@ all_de <- function(sce1, sce2, f, s, m_locs, comps) {
     dist_mat <- matrix(0, nrow = 3, ncol = 3)
     for (i in 1:2) {
       for (j in i:3) {
-        genes_i <- de_genes_group %>% filter(method == clusterings[i]) 
+        genes_i <- de_genes_group %>% filter(Clustering == clusterings[i]) 
         genes_i <- genes_i$markers 
-        genes_j <- de_genes_group %>% filter(method == clusterings[j]) 
+        genes_j <- de_genes_group %>% filter(Clustering == clusterings[j]) 
         genes_j <- genes_j$markers
         dist_mat[i, j] <- sum(genes_i %in% genes_j) / 
           (length(genes_i) + sum(!genes_j %in% genes_i))
