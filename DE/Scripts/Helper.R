@@ -74,9 +74,9 @@ all_de <- function(sce1, sce2, f, s, m_locs, comps) {
            Group = paste0(dataset, "_", comp, "_", Level))
   clusterings <- unique(de_genes$Clustering)
   res <- lapply(unique(de_genes$Group), function(group){
-    de_genes_group <- de_genes %>% filter(Group == group)
-      select(Clustering, markers) %>%
-        distinct()
+    de_genes_group <- de_genes %>% filter(Group == group) %>%
+      dplyr::select(Clustering, markers) %>%
+      dplyr::distinct()
     common <- de_genes_group %>%
       group_by(markers) %>%
       filter(n() == 3) %>%
