@@ -68,22 +68,27 @@ all_de <- function(sce1, sce2, f, s, m_locs, comps) {
   names(de_genes) <- names(sces)
   de_genes <- bind_rows(de_genes, .id = "dataset")
   de_genes <- de_genes %>%
-    mutate(method = paste0(dataset, "_", comp, "_", label))
-  dist_mat <- matrix(0, nrow = n_distinct(de_genes$method),
-                     ncol = n_distinct(de_genes$method))
-  for (i in 1:n_distinct(de_genes$method)) {
-    for (j in 1:n_distinct(de_genes$method)) {
-      genes_i <- de_genes %>% filter(
-        method == unique(de_genes$method)[i]) 
-      genes_i <- genes_i$markers 
-      genes_j <- de_genes %>% filter(
-        method == unique(de_genes$method)[j])
-      genes_j <- genes_j$markers
-      dist_mat[i, j] <- sum(genes_i %in% genes_j) / 
-        (length(genes_i) + sum(!genes_j %in% genes_i))
+    mutate(method = paste0(dataset, "_", comp, "_", label),
+           Clustering = word(label, 1, sep = "\."),
+           Level = if_else(str_detect(label, "100", "Final", "Initial")),
+           Group = paste0(dataset, "_", comp, "_", Level))
+  clusterings <- unique(de_genes$Clustering)
+  res <- lapply(unique(de_genes$Group), function(group){
+    de_genes_group <- de_genes %>% filter(Group == group)
+    dist_mat <- matrix(0, nrow = 3, ncol = 3)
+    for (i in 1:2) {
+      for (j in i:3) {
+        genes_i <- de_genes_group %>% filter(method == clusterings[i]) 
+        genes_i <- genes_i$markers 
+        genes_j <- de_genes_group %>% filter(method == clusterings[j]) 
+        genes_j <- genes_j$markers
+        dist_mat[i, j] <- sum(genes_i %in% genes_j) / 
+          (length(genes_i) + sum(!genes_j %in% genes_i))
+      }
     }
-  }
-  colnames(dist_mat) <- unique(de_genes$method)
-  rownames(dist_mat) <- unique(de_genes$method)
-  return(dist_mat)
+    return(sum(dist_mat[upper.tri(dist_mat)]))
+  })
+  res <- data.frame(unique(de_genes$Group),
+                    Concordance = unlist(res))
+  return(res)
 }
