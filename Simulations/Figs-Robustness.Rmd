@@ -132,5 +132,5 @@ p <- plot_grid(plotlist = plots, nrow = 2, scale = .9,
                labels = c("a)", "b)", "c)", "d)"), label_size = 16)
 p
 ggsave(filename = here("Simulations", "Figures", "Robustness.png"),
-       bg = "transparent", plot = p, width = 11, height = 8)
+       bg = "transparent", plot = p, width = 11, height = 10)
 ```
