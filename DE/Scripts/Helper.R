@@ -69,7 +69,7 @@ all_de <- function(sce1, sce2, f, s, m_locs, comps) {
   de_genes <- bind_rows(de_genes, .id = "dataset")
   de_genes <- de_genes %>%
     mutate(method = paste0(dataset, "_", comp, "_", label),
-           Clustering = word(label, 1, sep = "\."),
+           Clustering = word(label, 1, sep = "\\."),
            Level = if_else(str_detect(label, "100", "Final", "Initial")),
            Group = paste0(dataset, "_", comp, "_", Level))
   clusterings <- unique(de_genes$Clustering)
