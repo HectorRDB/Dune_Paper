@@ -304,6 +304,6 @@ p <- plot_grid(plot_grid(p1, NULL, nrow = 2, rel_heights = c(1.2, .1)),
                rel_widths = c(.8, 1))
 p
 save_plot(plot = p,  filename = here("Figure-Evaluations", "Supp.png"),
-          base_width = 12, base_height = 6,
+          base_width = 12, base_height = 3,
           bg = "transparent")
 ```
