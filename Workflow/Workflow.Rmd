@@ -8,21 +8,29 @@ output:
     toc: true
     toc_depth: 2
     number_sections: true
+  html_document:
+    toc: true
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: true
+    code_download: TRUE
 ---
 
 ```{r load packages, include=F}
 library(knitr)
-opts_chunk$set(fig.pos = "!h", out.extra = "",fig.align = "center")
+opts_chunk$set(fig.pos = "!h", out.extra = "",fig.align = "center", eval = F,
+               fig.height = 6, fig.width = 6)
 NCORES <- 2
 ```
 
-We use the data from [@Baron2016], which is a human pancreas dataset, to display a full scRNA-Seq workflow where __Dune__ is run to improve the quality of the clustering. We will see how __Dune__ improves the quality of each of the clustering methods used as input.
+In this workflow, we will demonstrate a full full scRNA-Seq workflow using __Dune__ on an example dataset. We rely on the the data from [@Baron2016], a human pancreas dataset of $8569$ samples. We will demonstrate how to generate various input clustering results, how to merge clusters using __Dune__ and how to select the best output for use in downstream analysis. We will also monitor run times to show the impact of  running __Dune__ versus a workflow without it.
+
 
 # Load data
 
-We rely on a pre-processed dataset where the count matrix has already been computed. We also have information on the batches, i.e the ids of the donors, as well as the cell labels assigned in the original publication. Note that, in that publication, cells were clustered using hierarchical clustering with a final manual merging step. We will show how, running each algorithm with its default, we can polish the results with Dune.
+We rely on a pre-processed dataset where the count matrix has already been computed, using the __scRNAseq__ R package. The dataset also contains the id of the human donor for each cell, which are used as batch labels. It also contains the cell labels assignements from the original publication. Note that, in that publication, cells were clustered using hierarchical clustering with a final manual merging step. 
 
-```{r}
+```{r, message=F, warning=F}
 set.seed(19)
 suppressPackageStartupMessages({
   library(SingleCellExperiment)
@@ -34,13 +42,14 @@ sce <- BaronPancreasData()
 # Filter very lowly expressed genes for computational practices.
 filt <- rowSums(counts(sce) >= 2) >= 10
 sce <- sce[filt, ]
-sce
-rm(filt)
+print(sce)
 ```
 
 # Pre-processing
 
-To normalize the dataset, we can rely on two methods. We first use the default pipeline from __Seurat__ [@Cao2019]. Then, we use the __scvi__ method from [@Lopez2018].
+Before running clustering algorithms, we will rely on two normalization pipelines. 
+
++ The default pipeline of __Seurat__ [@Cao2019].
 
 ```{r}
 suppressPackageStartupMessages({
@@ -61,9 +70,12 @@ pre_process_time <- system.time({
 })
 ```
 
++ The __scvi__ method [@Lopez2018].
+
 ```{r}
-# Note that this chunk of code is actually python code run from R. To use the 
-# reticulate package, please follow https://rstudio.github.io/reticulate/index.html
+# Note that this chunk of code is actually python code run from R. To learn how
+# to use the reticulate package, please follow 
+# https://rstudio.github.io/reticulate/index.html
 suppressPackageStartupMessages({
   library(reticulate)
 })
@@ -83,10 +95,10 @@ scvi_time <- system.time({
 })
 ```
 
-We can visualize the data using the labels from the original publication, and reducing the 10 dimensions of the latent space from __scvi__ to 2 using t-SNE [@tsne1, @tsne2, @tsne3].
+We can visualize the latent space produced by __scvi__ using the labels from the original publication, and reducing the 10 dimensions of the latent space to 2 using t-SNE [@tsne1, @tsne2, @tsne3].
 
 ```{r}
-library(scater)
+suppressPackageStartupMessages(library(scater))
 reducedDim(sce, "scvi") <- model$get_latent_representation()
 denoised <- t(model$get_normalized_expression(adata, library_size = 10e4))
 dimnames(denoised) <- dimnames(counts(sce))
@@ -94,17 +106,21 @@ assay(sce, "denoised") <- log1p(denoised)
 sce <- runTSNE(sce, dimred = "scvi")
 plotTSNE(sce, colour_by = "label")
 ```
-As we can see, the __scvi__ method clearly clusters correctly the original labels. Note however that this is information that would not available while analyzing a new dataset. One would instead need to rely on known-marker genes. 
+As we can see, __scvi__ mostly produces a latent space that is consistent with the original labels. Note however that this is information that would not available while analyzing a new dataset. One would instead need to rely on known-marker genes.
 
 # Creating inputs to __Dune__
 
-__Dune__ takes as input a set of clustering results. We therefore need to produce such a set. Here, we will demonstrate by producing three clustering results. 
+__Dune__ takes as input a set of clustering results. We will generate a set of such results using a combination of clustering methods and normalization techniques:
+
++ __SC3__ [@Kiselev2017] using as input the denoised count matrix from __scvi__.
++ __Seurat__ using as input the latent space from __scvi__.
++ __Seurat__ using as input the top pcs from the count matrix normalized using the __Seurat__ pre-processing pipeline.
 
 ## __SC3__
 
-We first use __SC3__ [@Kiselev2017]. We use as input the denoised count matrix from __scvi__. __SC3__ has a function to estimate the value of $K$, the exact number of clusters. 
+__SC3__ is a consensus method that takes as input a normalized count matrix and outputs a set of cluster labels. The __SC3__ package provides a function to estimate the value of $K$, the exact number of clusters, which we will use. 
 
-Since the dataset has more than $5000$ cells, __SC3__ is automatically run in hybrid mode to lower runtime. However, the process is still quite slow. The code below is run in the default mode. If you want to run it faster, set `default=FALSE`
+Since the dataset has more than $5000$ cells, __SC3__ is automatically run in hybrid mode to lower runtime. However, the process can still be quite slow. The code below is run in the default mode. If you want it to run, we recommand seting `default=FALSE`.
 
 ```{r, message=FALSE, warning=FALSE}
 suppressPackageStartupMessages(library(SC3))
@@ -132,11 +148,11 @@ sc3_time <- system.time({
 plotTSNE(sce, colour_by = "SC3")
 ```
 
-As we can see, __SC3__ estimates too many clusters and, as a result, fails to properly cluster the data (according to the original clusters).
+As we can see, __SC3__ seems to overcluster the data, when compared either to the labels from the original publication, or to the reduced dimension representation. However, this is not a problem since __Dune__ will work better on overclustered results. 
 
 ## Seurat 
 
-The second method we use is __Seurat__, which first construct a Shared Nearest Neighbor (SNN) Graph and then runs the Louvain algorithm on the graph to identify clusters. 
+The second method we use is the clustering algorithm from the __Seurat__ R package, which first construct a Shared Nearest Neighbor (SNN) Graph and then runs the Louvain algorithm on the graph to identify clusters. The SNN graph is build using a reduced dimension representation of the dataset. We first use the default, which is to use the top pcs from the normalized count matrix.
 
 ```{r}
 seurat_time <- system.time({
@@ -148,7 +164,7 @@ seurat_time <- system.time({
 plotTSNE(sce, colour_by = "seurat")
 ```
 
-__Seurat__ seems to perform better than __SC3__ here but still seems to overpartition the data (with the default parameters). 
+__Seurat__ seems to perform better than __SC3__ here but still seems to overpartition the data when run with the default parameters. Once again, it will not be a problem if used as input to __Dune__.
 
 
 ## Seurat with SCVI
@@ -165,11 +181,13 @@ seurat_scvi_time <- system.time({
 plotTSNE(sce, colour_by = "seurat_scvi")
 ```
 
-This seems to produce the best result, at least on the latent space of __scvi__, but still results in possible over-partition. 
+This seems to produce the best result, at least on the latent space of __scvi__, which is not suprising. It also better matches the labels from the original publication but still results in possible over-partition. 
 
 # __Dune__
+
 ## Running __Dune__
-We can now run __Dune__, using the three clustering results as input. Since all clusterings seem to reflect over-partitioning of the data, __Dune__ will aim to identify the common underlying structure and polish all inputs, using the Normalized Mutual Information (NMI) as a merging criterion.
+
+We can now run __Dune__, using the three clustering results as input. Since all clusterings seem to reflect over-partitioning of the data, __Dune__ will  identify the common underlying structure and polish all inputs, using the Normalized Mutual Information (NMI) as a merging criterion.
 
 ```{r}
 library(Dune)
@@ -193,7 +211,7 @@ NMItrend(merger)
 
 # Picking the final clustering result to use
 
-While __Dune__ increases the concordance between the three sets of clusters, it does not pick one at the end. That choice remains to the user. __Dune__ does not seek to replace biological knowledge or other metrics used to rank clustering methods. Instead, it aims to improve all its inputs, and to lessen the impact of the selection of one set of clusters. 
+While __Dune__ increases the concordance between the three sets of clusters, it does not pick one at the end. That choice remains up to the user. __Dune__ does not seek to replace biological knowledge or other metrics used to rank clustering methods. Instead, it aims to improve all its inputs, and to lessen the impact of the selection of one set of clusters. 
 
 ## Manual selection
 
@@ -209,6 +227,8 @@ Here, we can see that all clustering results look more consistent with the low d
 
 ## Selection based on sihouette
 
+To provide a more quantitative selection criterion, we can rely on the average silhouette width. This is a number between $-1$ and $1$ that quantify the quality of clustering using the distance matrix between all cells. We compute the distance on the __scvi__ latent space. 
+
 ```{r}
 library(cluster)
 dist_mat <- dist(as.matrix(reducedDim(sce, "scvi")))
@@ -216,17 +236,32 @@ sils_init <- lapply(merger$initialMat %>% as.data.frame, function(label){
   silhouette(label, dist = dist_mat)[,3] %>%  mean()
 }) %>% unlist()
 sils_init
+```
+
+This confirm the visual impression: the cluster labels from __Seurat_scvi__ are clearly better on this dataset than the others before merging with __Dune__.
+
+```{r}
 sils_final <- lapply(merger$currentMat %>% as.data.frame, function(label){
   silhouette(label, dist = dist_mat)[,3] %>%  mean()
 }) %>% unlist()
 sils_final
 ```
 
-For all methods, the average silhouette information increased after merging with __Dune__. On that metric, all methods are improved with the merging. Moreover, and consistent with the visual representation, __Seurat__ using the latent space from __scvi__ clearly outperforms the other two. That is the one that will be used.
+For all methods, the average silhouette information increased after merging with __Dune__. Even the best method, __Seurat_scvi__, is greatly improved by the merging. However, the ranking of methods is unchanged: consistent with the visual representation, __Seurat__ using the latent space from __scvi__ clearly outperforms the other two. That is the one that should be used for downstream analysis such as trajectory inference, differential expression or cell type annotation.
+
+## Comparing with the original labels
+
+This last step is not possible on a normal analysis of a new dataset. However, here, we can see how, running all methods using default, we recover cluster labels that match closely clusters from the original publication that had require manual merging using outside biological knowledge.
+
+```{r}
+ConfusionPlot(x = sce$label, y = sce$seurat_scvi_final) +
+  labs(x = "Original cluster labels from the publication",
+       y = "Clustering results obtained after running Dune")
+```
 
 # Runtimes
 
-We can also compare the runtimes of all parts of the workflow. Running __SC3__ in default mode is quite slow, followed by __scvi__. Running __Dune__ itself is quite quick compared to other steps. 
+We can also compare the runtimes of all parts of the workflow. Running __SC3__ in default mode is quite slow, followed by __scvi__. Running __Dune__ itself is quite quick compared to other steps. Using __Dune__ in a workflow increased total runtime but not by orders of magnitudes.
 
 ```{r}
 times <- c(pre_process_time[1],
@@ -235,7 +270,7 @@ times <- c(pre_process_time[1],
            seurat_time[1],
            seurat_scvi_time[1],
            dune_time[1])
-names(times) <- c("Pre-Process",
+names(times) <- c("Seurat pre-processing",
                   "SCVI",
                   "SC3",
                   "Seurat",
@@ -246,8 +281,9 @@ df <- data.frame(times = times,
 ggplot(df, aes(x = Name, y = times, fill = Name)) +
   geom_col() +
   theme_classic() +
-  labs(x = "Step", y = "Time (second)") +
+  labs(x = "Step", y = "Time (second)", fill = "Step") +
   scale_fill_brewer(palette = "Dark2") +
+  theme(axis.text.x = element_text(angle = 90))
   scale_y_log10()
 ```
 
