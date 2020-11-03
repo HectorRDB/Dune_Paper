@@ -253,10 +253,13 @@ For all methods, the average silhouette information increased after merging with
 
 This last step is not possible on a normal analysis of a new dataset. However, here, we can see how, running all methods using default, we recover cluster labels that match closely clusters from the original publication that had require manual merging using outside biological knowledge.
 
-```{r}
-ConfusionPlot(x = sce$label, y = sce$seurat_scvi_final) +
-  labs(x = "Original cluster labels from the publication",
-       y = "Clustering results obtained after running Dune")
+```{r, warning=FALSE}
+suppressPackageStartupMessages({
+  library(aricode)
+  library(mclust)
+})
+NMI(sce$label, sce$seurat_scvi_final) %>% round(2)
+adjustedRandIndex(sce$label, sce$seurat_scvi_final) %>% round(2)
 ```
 
 # Runtimes
