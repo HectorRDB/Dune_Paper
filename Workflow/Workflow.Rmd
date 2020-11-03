@@ -19,7 +19,7 @@ output:
 ```{r load packages, include=F}
 library(knitr)
 opts_chunk$set(fig.pos = "!h", out.extra = "",fig.align = "center",
-               fig.height = 6, fig.width = 6)
+               fig.height = 4, fig.width = 6)
 NCORES <- 2
 ```
 
@@ -273,11 +273,11 @@ times <- c(pre_process_time[1],
            seurat_time[1],
            seurat_scvi_time[1],
            dune_time[1])
-names(times) <- c("Seurat pre-processing",
+names(times) <- c("Seurat\npre-processing",
                   "SCVI",
                   "SC3",
                   "Seurat",
-                  "Seurat after SCVI",
+                  "Seurat\nafter SCVI",
                   "Dune")
 df <- data.frame(times = times,
                  Name = factor(names(times), levels = names(times)))
@@ -286,7 +286,7 @@ ggplot(df, aes(x = Name, y = times, fill = Name)) +
   theme_classic() +
   labs(x = "Step", y = "Time (second)", fill = "Step") +
   scale_fill_brewer(palette = "Dark2") +
-  theme(axis.text.x = element_text(angle = 90))
+  theme(axis.text.x = element_text(angle = 90)) +
   scale_y_log10()
 ```
 
