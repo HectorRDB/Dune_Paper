@@ -69,5 +69,5 @@ if (is.na(opt$n)) {
 }
 
 # Make predictions
-dist_mat <- all_de(sce1, sce2, opt$f, opt$s, m_locs, comps)
-write.csv(dist_mat, file = opt$o, col.names = TRUE, row.names = TRUE)
+res <- all_de(sce1, sce2, opt$f, opt$s, m_locs, comps)
+write.csv(res, file = opt$o, col.names = F, row.names = F)
