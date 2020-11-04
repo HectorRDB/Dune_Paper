@@ -20,7 +20,7 @@ Prep <- function(sce) {
 
 de_label <- function(label, sce) {
   markers <- scran::findMarkers(
-    sce, groups = label, pval.type = "any", direction = "up"
+    sce, groups = label, pval.type = "any", direction = "any"
   )
   markers <- lapply(markers, function(df){
      df %>% 
@@ -72,7 +72,6 @@ all_de <- function(sce1, sce2, f, s, m_locs, comps) {
            Clustering = word(label, 1, sep = "\\."),
            Level = if_else(str_detect(label, "100"), "Final", "Initial"),
            Group = paste0(dataset, "_", comp, "_", Level))
-  clusterings <- unique(de_genes$Clustering)
   res <- lapply(unique(de_genes$Group), function(group){
     de_genes_group <- de_genes %>% filter(Group == group) %>%
       dplyr::select(Clustering, markers) %>%
@@ -81,7 +80,7 @@ all_de <- function(sce1, sce2, f, s, m_locs, comps) {
       group_by(markers) %>%
       filter(n() == 3) %>%
       nrow()
-    total <- n_distinct(de_genes_group$markers)
+    total <- n_distinct(de_genes_group$markers) * 3
     return(common / total)
   })
   res <- data.frame(unique(de_genes$Group),
