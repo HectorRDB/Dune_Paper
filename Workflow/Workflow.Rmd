@@ -206,21 +206,15 @@ We can now run __Dune__, using the three clustering results as input. Since all 
 
 ```{r}
 library(Dune)
-df <- colData(sce)[, c("SC3", "seurat", "seurat_scvi")] %>%
-  as.matrix()
-dune_time <- system.time(
-  merger <- Dune(clusMat = df, metric = "NMI")
-)
+df <- colData(sce)[, c("SC3", "seurat", "seurat_scvi")] %>% as.matrix()
+dune_time <- system.time(merger <- Dune(clusMat = df, metric = "NMI"))
 colData(sce)[, c("SC3_final", "seurat_final", "seurat_scvi_final")] <-
-  lapply(merger$currentMat, as.factor) %>%
-    as.data.frame()
+  lapply(merger$currentMat, as.factor) %>% as.data.frame()
 ```
 
 ## Vizualing the merging
 
 We can first see how the number of clusters in each clustering set decreased as merging occurred, and how the mean NMI increased when merging.
-
-\newpage
 
 ```{r}
 NMItrend(merger) + theme(legend.position = "bottom")
