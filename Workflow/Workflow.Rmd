@@ -72,15 +72,12 @@ pre_process_time <- system.time({
 })
 ```
 
+\newpage
+
 + The __scvi__ method [@Lopez2018].
 
 ```{r}
-# Note that this chunk of code is actually python code run from R. To learn how
-# to use the reticulate package, please follow 
-# https://rstudio.github.io/reticulate/index.html
-suppressPackageStartupMessages({
-  library(reticulate)
-})
+suppressPackageStartupMessages(library(reticulate))
 use_python("/usr/local/linux/anaconda3.7/bin/python3")
 scvi <- import("scvi")
 anndata <- import("anndata")
@@ -157,7 +154,7 @@ plotTSNE(sce, colour_by = "SC3")
 
 As we can see, __SC3__ seems to overcluster the data, when compared either to the labels from the original publication, or to the reduced dimension representation. However, this is not a problem since __Dune__ will work better on overclustered results. 
 
-## Seurat 
+## __Seurat__ 
 
 The second method we use is the clustering algorithm from the __Seurat__ R package, which first construct a Shared Nearest Neighbor (SNN) Graph and then runs the Louvain algorithm on the graph to identify clusters. The SNN graph is build using a reduced dimension representation of the dataset. We first use the default, which is to use the top pcs from the normalized count matrix.
 
@@ -179,7 +176,7 @@ plotTSNE(sce, colour_by = "seurat")
 __Seurat__ seems to perform better than __SC3__ here but still seems to overpartition the data when run with the default parameters. Once again, it will not be a problem if used as input to __Dune__.
 
 
-## Seurat with SCVI
+## __Seurat__ with __scvi__
 
 Finally, we run the __Seurat__ clustering workflow, but instead of building the SNN using the top 10 pcs, we build it using the latent space from __scvi__. 
 
