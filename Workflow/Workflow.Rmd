@@ -228,8 +228,6 @@ While __Dune__ increases the concordance between the three sets of clusters, it 
 
 One common way to pick clustering results is still manual, using visualization. 
 
-\newpage
-
 ```{r}
 plotTSNE(sce, colour_by = "seurat_final")
 plotTSNE(sce, colour_by = "seurat_scvi_final")
