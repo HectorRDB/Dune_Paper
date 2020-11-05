@@ -19,7 +19,7 @@ output:
 ```{r load packages, include=F}
 library(knitr)
 opts_chunk$set(fig.pos = "!h", out.extra = "",fig.align = "center",
-               fig.height = 4, fig.width = 6, cache = TRUE)
+               fig.height = 3.5, fig.width = 6, cache = TRUE)
 NCORES <- 2
 ```
 
