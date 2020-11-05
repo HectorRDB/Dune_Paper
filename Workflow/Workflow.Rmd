@@ -30,6 +30,8 @@ In this workflow, we will demonstrate a full full scRNA-Seq workflow using __Dun
 
 We rely on a pre-processed dataset where the count matrix has already been computed, using the __scRNAseq__ R package. The dataset also contains the id of the human donor for each cell, which are used as batch labels. It also contains the cell labels assignements from the original publication. Note that, in that publication, cells were clustered using hierarchical clustering with a final manual merging step. 
 
+\newpage
+
 ```{r, message=F, warning=F}
 set.seed(19)
 suppressPackageStartupMessages({
@@ -145,6 +147,11 @@ sc3_time <- system.time({
   sce_sc3 <- sc3_run_svm(sce_sc3, ks = K)
   sce$SC3 <- colData(sce_sc3)[, paste0("sc3_", K, "_clusters")] %>% as.factor()
 })
+```
+
+\newpage
+
+```{r}
 plotTSNE(sce, colour_by = "SC3")
 ```
 
@@ -161,6 +168,11 @@ seurat_time <- system.time({
   se <- FindClusters(object = se, verbose = FALSE)
   sce$seurat <- Idents(se)
 })
+```
+
+\newpage
+
+```{r}
 plotTSNE(sce, colour_by = "seurat")
 ```
 
@@ -178,6 +190,11 @@ seurat_scvi_time <- system.time({
   seu <- FindClusters(object = seu, verbose = FALSE)
   sce$seurat_scvi <- Idents(seu)
 })
+```
+
+\newpage
+
+```{r}
 plotTSNE(sce, colour_by = "seurat_scvi")
 ```
 
@@ -205,6 +222,8 @@ colData(sce)[, c("SC3_final", "seurat_final", "seurat_scvi_final")] <-
 
 We can first see how the number of clusters in each clustering set decreased as merging occurred, and how the mean NMI increased when merging.
 
+\newpage
+
 ```{r}
 NMItrend(merger)
 ```
@@ -217,9 +236,16 @@ While __Dune__ increases the concordance between the three sets of clusters, it 
 
 One common way to pick clustering results is still manual, using visualization. 
 
+\newpage
+
 ```{r}
 plotTSNE(sce, colour_by = "seurat_final")
 plotTSNE(sce, colour_by = "seurat_scvi_final")
+```
+
+\newpage
+
+```{r}
 plotTSNE(sce, colour_by = "SC3_final")
 ```
 
@@ -286,7 +312,7 @@ ggplot(df, aes(x = Name, y = times, fill = Name)) +
   theme_classic() +
   labs(x = "Step", y = "Time (second)", fill = "Step") +
   scale_fill_brewer(palette = "Dark2") +
-  theme(axis.text.x = element_text(angle = 90)) +
+  theme(axis.text.x = element_blank()) +
   scale_y_log10()
 ```
 
