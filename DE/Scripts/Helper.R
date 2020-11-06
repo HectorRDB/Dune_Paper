@@ -71,7 +71,7 @@ all_de <- function(sce1, sce2, f, s, m_locs, comps) {
     mutate(method = paste0(dataset, "_", comp, "_", label),
            Clustering = word(label, 1, sep = "\\."),
            Level = if_else(str_detect(label, "100"), "Final", "Initial"),
-           Group = paste0(dataset, "_", comp, "_", Level))
+           Group = paste0(comp, "_", Level))
   res <- lapply(unique(de_genes$Group), function(group){
     de_genes_group <- de_genes %>% filter(Group == group) %>%
       dplyr::select(Clustering, markers) %>%
