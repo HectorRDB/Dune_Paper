@@ -26,60 +26,59 @@ clusterings  <- readRDS(here("Simulations", "Data", "clusterings.rds"))
 
 # 3 methods, different sizes ----
 # Do the consensus
-print("Running Dune")
-Dunes <- purrr::map(clusterings, function(clustering) {
-  df <- data.frame(cells = clustering$sc3$cells,
-                   "sc3" = clustering$sc3[, "40"],
-                   "UMAP_KMEANS" = clustering$UMAP_KMEANS[, "40"],
-                   "TSNE_KMEANS" = clustering$tSNE_KMEANS[, "40"]
-                  )
-  return(run_Dune(df))
-})
-
-# Do the measures
-print("Evaluating Dune")
-ARIs <- purrr::map2(sces, Dunes, evaluate_clustering_methods)
-names(ARIs) <- nCells
-ARIs <- bind_rows(ARIs, .id = "nCells")
-write.csv(x = ARIs, file = here("Simulations", "Data", "Sizes.csv"))
+# print("Running Dune")
+# Dunes <- purrr::map(clusterings, function(clustering) {
+#   df <- data.frame(cells = clustering$sc3$cells,
+#                    "sc3" = clustering$sc3[, "40"],
+#                    "UMAP_KMEANS" = clustering$UMAP_KMEANS[, "40"],
+#                    "TSNE_KMEANS" = clustering$tSNE_KMEANS[, "40"]
+#                   )
+#   return(run_Dune(df))
+# })
+# 
+# # Do the measures
+# print("Evaluating Dune")
+# ARIs <- purrr::map2(sces, Dunes, evaluate_clustering_methods)
+# names(ARIs) <- nCells
+# ARIs <- bind_rows(ARIs, .id = "nCells")
+# write.csv(x = ARIs, file = here("Simulations", "Data", "Sizes.csv"))
 
 # 3 methods, changing the parameters ----
 # Do the consensus
-print("Running Dune")
-ks <- as.character(seq(30, 50, 5))
-names(ks) <- ks
-Dunes <- purrr::map(ks, function(k) {
-  df <- data.frame(cells = clusterings[[6]]$sc3$cells,
-                   "sc3" = clusterings[[6]]$sc3[, k],
-                   "UMAP_KMEANS" = clusterings[[6]]$UMAP_KMEANS[, k],
-                   "TSNE_KMEANS" = clusterings[[6]]$tSNE_KMEANS[, k]
-  )
-  return(run_Dune(df))
-})
-
-# Do the measures
-print("Evaluating Dune")
-ARIs <- purrr::map(Dunes, evaluate_clustering_methods, sce = sces[[6]])
-names(ARIs) <- ks
-ARIs <- bind_rows(ARIs, .id = "param")
-write.csv(x = ARIs, file = here("Simulations", "Data", "Param.csv"))
+# print("Running Dune")
+# ks <- as.character(seq(30, 50, 5))
+# names(ks) <- ks
+# Dunes <- purrr::map(ks, function(k) {
+#   df <- data.frame(cells = clusterings[[6]]$sc3$cells,
+#                    "sc3" = clusterings[[6]]$sc3[, k],
+#                    "UMAP_KMEANS" = clusterings[[6]]$UMAP_KMEANS[, k],
+#                    "TSNE_KMEANS" = clusterings[[6]]$tSNE_KMEANS[, k]
+#   )
+#   return(run_Dune(df))
+# })
+# 
+# # Do the measures
+# print("Evaluating Dune")
+# ARIs <- purrr::map(Dunes, evaluate_clustering_methods, sce = sces[[6]])
+# names(ARIs) <- ks
+# ARIs <- bind_rows(ARIs, .id = "param")
+# write.csv(x = ARIs, file = here("Simulations", "Data", "Param.csv"))
 
 # Changing the number of methods ----
 # Do the consensus
 print("Running Dune")
 df <- cbind(clusterings[[6]]$sc3[, c("35", "45")],
             clusterings[[6]]$UMAP_KMEANS[, c("35", "45")],
-            clusterings[[6]]$tSNE_KMEANS[, c("35", "45")])
+            clusterings[[6]]$tSNE_KMEANS[, c("35", "40", "45")])
 colnames(df) <- paste0(rep(c("sc3_", "UMAP_KMEANS_", "tSNE_KMEANS_"), each = 2),
                        c("35", "45"))
 Dunes <- list()
 clusMat <- data.frame(cells = clusterings[[6]]$sc3$cells,
                       "sc3_40" = clusterings[[6]]$sc3[, "40"],
-                      "UMAP_KMEANS_40" = clusterings[[6]]$UMAP_KMEANS[, "40"],
-                      "tSNE_KMEANS_40" = clusterings[[6]]$tSNE_KMEANS[, "40"]
+                      "UMAP_KMEANS_40" = clusterings[[6]]$UMAP_KMEANS[, "40"]
                       )
-for (i in 1:6) {
-  Dunes[[as.character(i + 2)]] <- run_Dune(clusMat)
+for (i in 1:7) {
+  Dunes[[as.character(i + 1)]] <- run_Dune(clusMat)
   k <- sample(ncol(df), 1)
   clusMat[, colnames(df)[k]] <- df[, k]
   df <- df[, -k]

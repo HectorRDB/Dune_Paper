@@ -134,3 +134,71 @@ p
 ggsave(filename = here("Simulations", "Figures", "Robustness.png"),
        bg = "transparent", plot = p, width = 11, height = 10)
 ```
+
+
+# Variance
+
+```{r}
+df1 <- read.csv(here("Simulations", "Data", "Ns.csv")) %>%
+  select(-X, -Name) %>% 
+  filter(clustering %in% c("sc3_40", "X40", "X40.1")) %>%
+  mutate(clustering = case_when(clustering == "X40" ~ "UMAP_KMEANS_40",
+                                clustering == "X40.1" ~ "tSNE_KMEANS_40",
+                                TRUE ~ clustering),
+         clustering = str_remove(clustering, "_40")) %>%
+  mutate(ns = factor(ns)) %>%
+  mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
+                                clustering == "tSNE_KMEANS" ~ "tSNE\nkmeans",
+                                clustering == "UMAP_KMEANS" ~ "UMAP\nkmeans")) %>%
+  filter(level %in% c(0, 100)) %>%
+  group_by(ns, level) %>%
+  summarise(var = var(Value)) %>%
+  dplyr::rename("Param" = "ns")
+df2 <- read.csv(here("Simulations", "Data", "Param.csv")) %>%
+  select(-X, -Name) %>% 
+  mutate(param = factor(param, levels = as.character(seq(30, 50, 5)))) %>%
+  mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
+                                clustering == "tSNE_KMEANS" ~ "tSNE\nkmeans",
+                                clustering == "UMAP_KMEANS" ~ "UMAP\nkmeans")) %>%
+  ungroup() %>%
+  filter(level %in% c(0, 100)) %>%
+  group_by(param, level) %>%
+  summarise(var = var(Value)) %>%
+  dplyr::rename("Param" = "param")
+df3 <- read.csv(here("Simulations", "Data", "Sizes.csv")) %>%
+  select(-X, -Name) %>% 
+  mutate(nCells = factor(nCells, levels = c(100, 200, 500, 1000, 2000, 5000))) %>%
+  mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
+                                clustering == "tSNE_KMEANS" ~ "tSNE\nkmeans",
+                                clustering == "UMAP_KMEANS" ~ "UMAP\nkmeans")) %>%
+  filter(level %in% c(0, 100)) %>%
+  group_by(nCells, level) %>%
+  summarise(var = var(Value)) %>%
+  dplyr::rename("Param" = "nCells")
+df4 <- lapply(1:6, function(id){
+  df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
+  return(df)
+}) %>% 
+  bind_rows(., .id = "Dataset") %>%
+  filter(method != "param", as.numeric(level) %in% c(0, 100),
+         method == "Dune_NMI", Metric == "ARI") %>%
+  group_by(Dataset, level)  %>%
+  summarise(var = var(Value)) %>%
+  dplyr::rename("Param" = "Dataset")
+  
+
+df <- bind_rows(
+  "ns" = df1,
+  "param" = df2,
+  "nCells" = df3,
+  "stopping" = df4,
+  .id = "type"
+)
+df <- df %>% 
+  mutate(level = if_else(level == 0, "Initial", "Final")) %>%
+  pivot_wider(names_from = level, values_from = var) %>%
+  mutate(change = Final / Initial)
+mean(df$change)
+mean(df$change > 1)
+sum(df$change > 1)
+```
