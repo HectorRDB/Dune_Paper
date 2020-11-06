@@ -51,7 +51,7 @@ print(sce)
 
 Before running clustering algorithms, we will rely on two normalization pipelines. 
 
-+ The default pipeline of __Seurat__ [@Cao2019].
++ The default pipeline of __Seurat__ [@Stuart2019].
 
 ```{r}
 suppressPackageStartupMessages({
