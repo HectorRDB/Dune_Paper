@@ -69,16 +69,24 @@ clusterings  <- readRDS(here("Simulations", "Data", "clusterings.rds"))
 print("Running Dune")
 df <- cbind(clusterings[[6]]$sc3[, c("35", "45")],
             clusterings[[6]]$UMAP_KMEANS[, c("35", "45")],
-            clusterings[[6]]$tSNE_KMEANS[, c("35", "40", "45")])
+            clusterings[[6]]$tSNE_KMEANS[, c("35", "45")])
 colnames(df) <- paste0(rep(c("sc3_", "UMAP_KMEANS_", "tSNE_KMEANS_"), each = 2),
                        c("35", "45"))
 Dunes <- list()
 clusMat <- data.frame(cells = clusterings[[6]]$sc3$cells,
                       "sc3_40" = clusterings[[6]]$sc3[, "40"],
-                      "UMAP_KMEANS_40" = clusterings[[6]]$UMAP_KMEANS[, "40"]
+                      "UMAP_KMEANS_40" = clusterings[[6]]$UMAP_KMEANS[, "40"],
+                      "tSNE_KMEANS_40" = clusterings[[6]]$tSNE_KMEANS[, "40"]
                       )
-for (i in 1:7) {
-  Dunes[[as.character(i + 1)]] <- run_Dune(clusMat)
+for (i in 1:3) {
+  twos <- combn(3, 2)[,i]
+  clusMat_2 <- clusMat[, c(1, twos + 1)]
+  Dunes[[i]] <- run_Dune(clusMat_2)
+}
+
+for (i in 4:10) {
+  print(i)
+  Dunes[[as.character(i)]] <- run_Dune(clusMat)
   k <- sample(ncol(df), 1)
   clusMat[, colnames(df)[k]] <- df[, k]
   df <- df[, -k]
@@ -87,6 +95,6 @@ for (i in 1:7) {
 # Do the measures
 print("Evaluating Dune")
 ARIs <- purrr::map(Dunes, evaluate_clustering_methods, sce = sces[[6]])
-names(ARIs) <- 3:8
+names(ARIs) <- c(paste0(2, "_", 1:3), 3:9)
 ARIs <- bind_rows(ARIs, .id = "ns")
 write.csv(x = ARIs, file = here("Simulations", "Data", "Ns.csv"))
