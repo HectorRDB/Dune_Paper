@@ -72,6 +72,7 @@ df <- cbind(clusterings[[6]]$sc3[, c("35", "45")],
             clusterings[[6]]$tSNE_KMEANS[, c("35", "45")])
 colnames(df) <- paste0(rep(c("sc3_", "UMAP_KMEANS_", "tSNE_KMEANS_"), each = 2),
                        c("35", "45"))
+df <- as.data.frame(df)
 Dunes <- list()
 clusMat <- data.frame(cells = clusterings[[6]]$sc3$cells,
                       "sc3_40" = clusterings[[6]]$sc3[, "40"],
@@ -87,9 +88,16 @@ for (i in 1:3) {
 for (i in 4:10) {
   print(i)
   Dunes[[as.character(i)]] <- run_Dune(clusMat)
+  if (ncol(df) == 1) next
   k <- sample(ncol(df), 1)
   clusMat[, colnames(df)[k]] <- df[, k]
-  df <- df[, -k]
+  if (ncol(df) == 2) {
+    name <- colnames(df)[-k]
+    df <- data.frame(df[, -k])
+    colnames(df) <- name
+  } else {
+    df <- df[, -k]
+  }
 }
 
 # Do the measures
