@@ -72,20 +72,25 @@ p2
 ```{r}
 df <- read.csv(here("Simulations", "Data", "Ns.csv")) %>%
   select(-X, -Name) %>% 
-  filter(clustering %in% c("sc3_40", "X40", "X40.1")) %>%
+  # filter(clustering %in% c("sc3_40", "X40", "X40.1")) %>%
   mutate(clustering = case_when(clustering == "X40" ~ "UMAP_KMEANS_40",
                                 clustering == "X40.1" ~ "tSNE_KMEANS_40",
-                                TRUE ~ clustering),
-         clustering = str_remove(clustering, "_40")) %>%
-  mutate(ns = factor(ns)) %>%
+                                TRUE ~ clustering)) %>%
+  mutate(param = word(clustering, -1, sep = "_"),
+         clustering = word(clustering, 1, sep = "_")) %>%
+         # clustering = str_remove(clustering, "_40")) %>%
+  mutate(ns = word(ns, 1, sep = "_")) %>%
+  group_by(level, clustering, param, ns) %>%
+  summarise(Value = mean(Value)) %>%
   mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
-                                clustering == "tSNE_KMEANS" ~ "tSNE\nkmeans",
-                                clustering == "UMAP_KMEANS" ~ "UMAP\nkmeans"))
+                                clustering == "tSNE" ~ "tSNE\nkmeans",
+                                clustering == "UMAP" ~ "UMAP\nkmeans"))
 p3 <- ggplot(df, aes(y = Value, x = level, col = ns)) +
     geom_line() +
-  facet_wrap(~clustering) +
+  facet_wrap(~clustering + param) +
   labs(col = "Number of methods used as input", y ="ARI with ground truth",
        x = "Level of merging")
+p3
 ```
 
 # Garbage 

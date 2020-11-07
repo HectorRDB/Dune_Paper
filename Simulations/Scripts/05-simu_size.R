@@ -67,42 +67,27 @@ clusterings  <- readRDS(here("Simulations", "Data", "clusterings.rds"))
 # Changing the number of methods ----
 # Do the consensus
 print("Running Dune")
-df <- cbind(clusterings[[6]]$sc3[, c("35", "45")],
-            clusterings[[6]]$UMAP_KMEANS[, c("35", "45")],
-            clusterings[[6]]$tSNE_KMEANS[, c("35", "45")])
-colnames(df) <- paste0(rep(c("sc3_", "UMAP_KMEANS_", "tSNE_KMEANS_"), each = 2),
-                       c("35", "45"))
+df <- cbind(clusterings[[6]]$sc3$cells,
+            clusterings[[6]]$sc3[, c("35", "40", "45")],
+            clusterings[[6]]$UMAP_KMEANS[, c("35", "40", "45")],
+            clusterings[[6]]$tSNE_KMEANS[, c("35", "40", "45")])
+colnames(df) <- c("cells",
+                  paste0(rep(c("sc3_", "UMAP_KMEANS_", "tSNE_KMEANS_"), each = 3),
+                         c("35", "40", "45")))
 df <- as.data.frame(df)
 Dunes <- list()
-clusMat <- data.frame(cells = clusterings[[6]]$sc3$cells,
-                      "sc3_40" = clusterings[[6]]$sc3[, "40"],
-                      "UMAP_KMEANS_40" = clusterings[[6]]$UMAP_KMEANS[, "40"],
-                      "tSNE_KMEANS_40" = clusterings[[6]]$tSNE_KMEANS[, "40"]
-                      )
-for (i in 1:3) {
-  twos <- combn(3, 2)[,i]
-  clusMat_2 <- clusMat[, c(1, twos + 1)]
-  Dunes[[i]] <- run_Dune(clusMat_2)
-}
-
-for (i in 4:10) {
-  print(i)
-  Dunes[[as.character(i)]] <- run_Dune(clusMat)
-  if (ncol(df) == 1) next
-  k <- sample(ncol(df), 1)
-  clusMat[, colnames(df)[k]] <- df[, k]
-  if (ncol(df) == 2) {
-    name <- colnames(df)[-k]
-    df <- data.frame(df[, -k])
-    colnames(df) <- name
-  } else {
-    df <- df[, -k]
+for (i in 2:9) {
+  groups <- combn(9, i)
+  for (j in sample(seq_len(ncol(groups)), min(5, ncol(groups)))) {
+    clusMat <- df[, c(1, groups[, j] + 1)]
+    print(ncol(clusMat))
+    Dunes[[paste0(i, "_", j)]] <- run_Dune(clusMat)
   }
 }
 
 # Do the measures
 print("Evaluating Dune")
 ARIs <- purrr::map(Dunes, evaluate_clustering_methods, sce = sces[[6]])
-names(ARIs) <- c(paste0(2, "_", 1:3), 3:9)
+names(ARIs) <- names(Dunes)
 ARIs <- bind_rows(ARIs, .id = "ns")
 write.csv(x = ARIs, file = here("Simulations", "Data", "Ns.csv"))
