@@ -84,36 +84,35 @@ df <- read.csv(here("Simulations", "Data", "Ns.csv")) %>%
   summarise(Value = mean(Value)) %>%
   mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
                                 clustering == "tSNE" ~ "tSNE\nkmeans",
-                                clustering == "UMAP" ~ "UMAP\nkmeans"))
+                                clustering == "UMAP" ~ "UMAP\nkmeans"),
+         param  = paste0("K = ", param))
 p3 <- ggplot(df, aes(y = Value, x = level, col = ns)) +
     geom_line() +
-  facet_wrap(~clustering + param) +
-  labs(col = "Number of methods used as input", y ="ARI with ground truth",
-       x = "Level of merging")
+  facet_wrap(~clustering + param, ncol = 5) +
+  labs(col = "Number of\nmethods used\nas input", y ="ARI with ground truth",
+       x = "Level of merging") +
+  guides(col = guide_legend(ncol = 2)) +
+  theme_classic() +
+  theme(plot.background = element_rect(fill = "transparent",
+                                       colour = "transparent"),
+        legend.background = element_rect(fill = "transparent"),
+        strip.background = element_rect(fill = "transparent"),
+        panel.background = element_rect(fill = "transparent"),
+        legend.position = c(.92, .3),
+        strip.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 12)) +
+  scale_y_continuous(limits = c(.5, 1), breaks = c(0, .5, 1)) +
+  scale_x_continuous(breaks = c(0, 50, 100), labels = c("0%", "50%", "100%"))
 p3
-```
-
-# Garbage 
-
-```{r}
-df <- read.table(here("Figure-Stability", "data", "garbage.txt")) %>%
-  arrange(level) %>%
-  mutate(nb_garb = factor(nb_garb)) %>%
-  group_by(nb_garb, level, Comp) %>%
-  summarise(fraction_replicable_cells = mean(fraction_replicable_cells)) %>%
-  mutate(Comp = paste0("Comp ", Comp))
-p4 <- ggplot(df, aes(x = level, y = fraction_replicable_cells, col = nb_garb)) +
-  facet_wrap( ~ Comp) +
-  geom_path() +
-  labs(col = "Number of random methods used as input",
-       y = "Replicability",
-       x = "Level of merging")
 ```
 
 # All together
 
 ```{r}
-plots <- list(p1, p2, p3, p4)
+plots <- list(p1, p2)
 plots <- lapply(plots, function(p) {
   p <- p + 
       theme_classic() +
@@ -133,8 +132,11 @@ plots <- lapply(plots, function(p) {
   guides(col = guide_legend(nrow = 1))
   return(p)
 })
-p <- plot_grid(plotlist = plots, nrow = 2, scale = .9,
-               labels = c("a)", "b)", "c)", "d)"), label_size = 16)
+first_row <- plot_grid(plotlist = plots, nrow = 1, scale = .9,
+               labels = c("a)", "b)"), label_size = 16)
+second_row <- plot_grid(p3, nrow = 1, scale = .9,
+               labels = c("c)"), label_size = 16)
+p <- plot_grid(first_row, second_row, nrow = 2)
 p
 ggsave(filename = here("Simulations", "Figures", "Robustness.png"),
        bg = "transparent", plot = p, width = 11, height = 10)
