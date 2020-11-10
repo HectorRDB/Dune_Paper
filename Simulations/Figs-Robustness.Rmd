@@ -72,14 +72,12 @@ p2
 ```{r}
 df <- read.csv(here("Simulations", "Data", "Ns.csv")) %>%
   select(-X, -Name) %>% 
-  # filter(clustering %in% c("sc3_40", "X40", "X40.1")) %>%
   mutate(clustering = case_when(clustering == "X40" ~ "UMAP_KMEANS_40",
                                 clustering == "X40.1" ~ "tSNE_KMEANS_40",
                                 TRUE ~ clustering)) %>%
   mutate(param = word(clustering, -1, sep = "_"),
          clustering = word(clustering, 1, sep = "_")) %>%
-         # clustering = str_remove(clustering, "_40")) %>%
-  mutate(ns = word(ns, 1, sep = "_")) %>%
+         mutate(ns = word(ns, 1, sep = "_")) %>%
   group_by(level, clustering, param, ns) %>%
   summarise(Value = mean(Value)) %>%
   mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
@@ -108,6 +106,7 @@ p3 <- ggplot(df, aes(y = Value, x = level, col = ns)) +
   scale_x_continuous(breaks = c(0, 50, 100), labels = c("0%", "50%", "100%"))
 p3
 ```
+
 # All together
 
 ```{r}
@@ -147,15 +146,9 @@ ggsave(filename = here("Simulations", "Figures", "Robustness.png"),
 ```{r}
 df1 <- read.csv(here("Simulations", "Data", "Ns.csv")) %>%
   select(-X, -Name) %>% 
-  filter(clustering %in% c("sc3_40", "X40", "X40.1")) %>%
   mutate(clustering = case_when(clustering == "X40" ~ "UMAP_KMEANS_40",
                                 clustering == "X40.1" ~ "tSNE_KMEANS_40",
-                                TRUE ~ clustering),
-         clustering = str_remove(clustering, "_40")) %>%
-  mutate(ns = factor(ns)) %>%
-  mutate(clustering = case_when(clustering == "sc3" ~ "SC3",
-                                clustering == "tSNE_KMEANS" ~ "tSNE\nkmeans",
-                                clustering == "UMAP_KMEANS" ~ "UMAP\nkmeans")) %>%
+                                TRUE ~ clustering)) %>%
   filter(level %in% c(0, 100)) %>%
   group_by(ns, level) %>%
   summarise(var = var(Value)) %>%
