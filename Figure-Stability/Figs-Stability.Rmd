@@ -43,7 +43,8 @@ df <- read.table(here("Figure-Stability", "data", "garbage.txt")) %>%
   mutate(AURC = AURC / first(AURC)) %>%
   identity()
 p1 <- ggplot(df, aes(x = nb_garb, y = 100 * AURC, group = nb_garb)) +
-  geom_boxplot() +
+  geom_hline(yintercept = 100, color = "darkred", size = 1.5, alpha = .5) +
+  geom_boxplot(fill = "transparent") +
   my_theme() +
   scale_y_continuous(limits = c(80, 120), 
                      breaks = 8:12 * 10,
@@ -51,6 +52,7 @@ p1 <- ggplot(df, aes(x = nb_garb, y = 100 * AURC, group = nb_garb)) +
   labs(x = "Number of random inputs",
        y = "Ratio of AURC over\nAUC with no random inputs") +
   # theme() +
+  
   NULL
 p1
 ggsave(filename = here("Figure-Stability", "figures", "garbage.png"),
@@ -70,7 +72,9 @@ df <- read.table(here("Figure-Stability", "data", "downsampling.txt")) %>%
   arrange(desc(fraction)) %>%
   mutate(AURC = AURC / first(AURC))
 p3 <- ggplot(df, aes(x = fraction, y = 100 * AURC)) +
-  geom_boxplot(aes(group = fraction), outlier.shape = NA, width = 4) +
+  geom_hline(yintercept = 100, color = "darkred", size = 1.5, alpha = .5) +
+  geom_boxplot(aes(group = fraction), outlier.shape = NA, width = 4, 
+               fill = "transparent") +
   my_theme() +
   scale_y_continuous(limits = c(25, 170),
                      breaks = 1:4 * 40,
@@ -81,8 +85,8 @@ p3 <- ggplot(df, aes(x = fraction, y = 100 * AURC)) +
   # theme() +
   NULL
 p3
-# ggsave(filename = here("Figure-Stability", "figures", "down.png"),
-       # bg = "transparent", plot = p3)
+ggsave(filename = here("Figure-Stability", "figures", "down.png"),
+       bg = "transparent", plot = p3)
 ```
 
 # Dune's stoppping point is meaningfull
