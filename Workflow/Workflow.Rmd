@@ -16,6 +16,8 @@ output:
     code_download: TRUE
 ---
 
+\pagenumbering{gobble}
+
 ```{r load packages, include=F}
 library(knitr)
 opts_chunk$set(fig.pos = "!h", out.extra = "",fig.align = "center",
@@ -78,7 +80,7 @@ pre_process_time <- system.time({
 
 ```{r}
 suppressPackageStartupMessages(library(reticulate))
-use_python("/usr/local/linux/anaconda3.7/bin/python3")
+use_python("/usr/local/linux/anaconda3.8/bin/python3")
 scvi <- import("scvi")
 anndata <- import("anndata")
 np <- import("numpy")
