@@ -1,0 +1,90 @@
+---
+title: "Keeping smaller cell types"
+author: "Hector Roux de Bézieux"
+date: '`r format(Sys.time(), "%d %B , %Y")`'
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+---
+
+```{r packages, include=F}
+library(knitr)
+opts_chunk$set(
+  fig.pos = "!h", out.extra = "", warning = F, message = F,
+  fig.align = "center", echo = F
+)
+libs <- c("here", "tidyverse", "cluster", "Dune")
+suppressMessages(
+  suppressWarnings(sapply(libs, require, character.only = TRUE))
+)
+rm(libs)
+```
+
+```{r}
+source(here("SmallCellType", "Scripts", "load.R"))
+source(here("SmallCellType", "Scripts", "res.R"))
+```
+
+# Small distinct clusters
+
+```{r}
+df <- load_pancreas("Baron")
+small_distinct(df) %>%
+  arrange(sil)
+```
+
+
+```{r}
+df <- load_pancreas("Segerstolpe")
+small_distinct(df) %>%
+  arrange(sil)
+```
+
+```{r}
+df <- load_brain("SMARTer_nuclei")
+small_distinct(df) %>%
+  arrange(sil)
+```
+
+```{r}
+df <- load_brain("SMARTer_cells")
+small_distinct(df) %>%
+  arrange(sil)
+```
+
+
+
+
+# Are they merged ?
+
+```{r}
+df <- bind_rows("Baron" = load_res_pancreas("Baron"),
+                "Segerstolpe" = load_res_pancreas("Segerstolpe"),
+                "SMARTer_cells" = load_res_brain("SMARTer_cells"),
+                "SMARTer_nuclei" = load_res_brain("SMARTer_nuclei"),
+                .id = "dataset")
+ggplot(df, aes(x = Og_jaccard, y = New_jaccard, col = sil)) +
+  labs(x = "Cell type is detected at the beginning",
+       y = "Cell type is detected after merging",
+       col = "Cell Type is distinct") +
+  geom_point() +
+  facet_wrap(~dataset) +
+  theme_classic()
+sum(df$Delta >= 0)
+table(df$Delta >= 0, df$dataset)
+t.test(df$Og_jaccard[df$Delta >=0], df$Og_jaccard[df$Delta <0])
+```
+
+```{r}
+res <- df %>% group_by(dataset, comp, celltype) %>%
+  summarise(kept = sum(Delta >= 0),
+            found = median(Og_jaccard),
+            sil = mean(sil))
+ggplot(res, aes(x = kept, y = found)) +
+  geom_boxplot(aes(group = kept)) +
+  geom_jitter()
+library(ppcor)
+pcor.test(res$kept, res$found, res$sil)
+```
