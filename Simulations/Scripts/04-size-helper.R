@@ -65,6 +65,7 @@ run_clusterings <- function(sce) {
   tSNE_KMEANS$cells <- rownames(TSNE)
   
   # UMAP K-Means ----
+  print("... Running UmapKmeans")
   sce <- scater::runUMAP(sce, ntop = 2000, ncomponents = 3)
   UMAP <- reducedDim(sce, "UMAP")
   ks <- seq(30, 50, 5)
@@ -93,21 +94,18 @@ run_clusterings <- function(sce) {
 }
 
 run_Dune <- function(clusMat) {
-  print(paste0(".. ", nrow(clusMat)))
   Names <- clusMat$cells
   # Running Dune NMI ----
   BPPARAM <- BiocParallel::MulticoreParam(32)
   clusMat <- clusMat %>% select(-cells) %>% map_dfc(as.numeric) %>%
     as.matrix()
   rownames(clusMat) <- Names
-  # colnames(clusMat) <- c("sc3", "UMAP_KMEANS", "tSNE_KMEANS")
-  merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE,
-                  metric = "NMI")
+  merger <- Dune(clusMat = clusMat, BPPARAM = BPPARAM, parallel = TRUE)
   Names <- as.character(Names)
   chars <- colnames(clusMat)
   levels <- seq(from = 0, to = 1, by = .05)
   stopMatrix <- lapply(levels, function(p){
-    print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
+    # print(paste0("...Intermediary consensus at ", round(100 * p), "%"))
     mat <- intermediateMat(merger = merger, p = p)
     suppressWarnings(rownames(mat) <- mat$cells)
     mat <- mat[Names, ]

@@ -29,7 +29,7 @@ rm(libs)
 # Average silhouette width
 
 ```{r}
-res <- lapply(1:6, function(id){
+res <- lapply(1:5, function(id){
   df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
   return(df%>% filter(Metric == "SL"))
 })
@@ -44,7 +44,7 @@ ggplot(res, aes(x = n_clus, y = Value, col = clustering)) +
 ## Finding where Dune stops
 
 ```{r}
-res <- lapply(1:6, function(id){
+res <- lapply(1:5, function(id){
   df <- read.csv(here("Simulations", "Data", paste0("Metric_Ref_", id, ".csv")))
   return(df)
 })
@@ -66,10 +66,42 @@ p <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = clustering)) +
   scale_color_viridis_d() +
   labs(col = "Clustering", y = "Number of clusters") +
   geom_hline(yintercept = 30, col = "darkred") +
-  annotate("text", y = 33, x = 4, label = "True number\nof clusters",
-           col = "darkred")
+  annotate("text", y = 33, x = 3, label = "True number\nof clusters",
+           col = "darkred") +
+  expand_limits(y = 34)
 p
+min_ns %>% ungroup() %>%
+  summarise(mean = mean(n_clus - 30),
+            sd = sd(n_clus - 30))
 ```
+## Stopping based on SL
+
+```{r}
+min_ns <- lapply(res, function(df){
+  df %>% filter(Metric == "SL") %>%
+    group_by(clustering, method) %>%
+    filter(Value == max(Value)) %>%
+    select(n_clus) %>%
+    distinct()
+}) %>%
+  bind_rows(.id = "Dataset")
+p <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = clustering)) +
+  geom_jitter(width = .1, height = 0) +
+  theme_bw() +
+  facet_wrap( ~ method, ncol = 1) +
+  scale_color_viridis_d() +
+  labs(col = "Clustering", y = "Number of clusters") +
+  geom_hline(yintercept = 30, col = "darkred") +
+  annotate("text", y = 33, x = 3, label = "True number\nof clusters",
+           col = "darkred") +
+  expand_limits(y = 34)
+p
+min_ns %>% ungroup() %>%
+  group_by(method) %>%
+  summarise(mean = mean(n_clus - 30),
+            sd = sd(n_clus - 30))
+```
+
 # Figure with paper
 ## Panel a
 

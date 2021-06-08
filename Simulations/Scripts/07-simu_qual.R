@@ -1,7 +1,7 @@
 # Packages ----
 libs <- c("splatter", "here", "scater", "scran", "Seurat", "dplyr",
           "stringr", "SingleCellExperiment", "SC3", "Rtsne", "BiocParallel",
-          "ggplot2", "purrr", "mclust")
+          "ggplot2", "purrr", "mclust", "Dune")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -28,24 +28,24 @@ clusterings <- purrr::map(sces, run_clusterings)
 print("Running and evaluating Dunes")
 n_randoms <- 1:3
 size_random <- 1:5/5
+set.seed(2)
 params <- expand.grid(n_randoms, size_random)
 rownames(params) <- paste0(params[, 1], "_", params[,2])
-source <- cbind(clusterings[[6]]$sc3$cells,
-                clusterings[[6]]$sc3[, c("35", "45")],
-                clusterings[[6]]$UMAP_KMEANS[, c("35", "45")],
-                clusterings[[6]]$tSNE_KMEANS[, c("35", "45")])
-df <- data.frame(cells = clustering$sc3$cells,
-                 "sc3" = clustering$sc3[, "40"],
-                 "UMAP_KMEANS" = clustering$UMAP_KMEANS[, "40"],
-                 "TSNE_KMEANS" = clustering$tSNE_KMEANS[, "40"])
 ARIs <- purrr::map(1:2, function(i) {
   clustering <- clusterings[[i]]
-  Dunes <- purrr::map(seq_len(nrows(params)), function(k) {
+  source <- cbind(clustering$sc3[, c("35", "45")],
+                  clustering$UMAP_KMEANS[, c("35", "45")],
+                  clustering$tSNE_KMEANS[, c("35", "45")])
+  df <- data.frame(cells = clustering$sc3$cells,
+                   "sc3" = clustering$sc3[, "40"],
+                   "UMAP_KMEANS" = clustering$UMAP_KMEANS[, "40"],
+                   "TSNE_KMEANS" = clustering$tSNE_KMEANS[, "40"])
+  Dunes <- purrr::map(seq_len(nrow(params)), function(k) {
     n <- params[k, 1]
     r <- params[k, 2]
     random <- source[, sample(1:6, n, replace = F)] %>% as.matrix()
     colnames(random) <- paste0("random_", 1:n)
-    random_rows <- sample(nCells, nCells * r)
+    random_rows <- sample(nrow(random), nrow(random) * r)
     random[random_rows, ] <- random[sample(random_rows), ]
     df2 <- bind_cols(df, as.data.frame(random))
     return(run_Dune(df2))
