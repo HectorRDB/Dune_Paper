@@ -1,7 +1,7 @@
 # Packages ----
 libs <- c("splatter", "here", "scater", "scran", "Seurat", "dplyr",
           "stringr", "SingleCellExperiment", "SC3", "Rtsne", "BiocParallel",
-          "ggplot2", "purrr", "purrr", "mclust")
+          "ggplot2", "purrr", "mclust")
 suppressMessages(
   suppressWarnings(sapply(libs, require, character.only = TRUE))
 )
@@ -26,7 +26,7 @@ clusterings <- purrr::map(sces, run_clusterings)
 # 3 methods, different sizes and parameters ----
 # Do the consensus
 print("Running and evaluating Dunes")
-n_randoms <- 0:3
+n_randoms <- 1:3
 size_random <- 1:5/5
 params <- expand.grid(n_randoms, size_random)
 rownames(params) <- paste0(params[, 1], "_", params[,2])
@@ -52,11 +52,12 @@ ARIs <- purrr::map(1:2, function(i) {
   })
   ARIs <- purrr::map(Dunes, evaluate_clustering_methods, sce = sces[[i]])
   names(ARIs) <- rownames(params)
+  ARIs[["ref"]] <- evaluate_clustering_methods(sce = sces[[i]], merger = run_Dune(df))
   ARIs <- bind_rows(ARIs, .id = "param")
   return(ARIs)
 })
 
 # Do the measures
-names(ARIs) <- paste0("Dataset_", 1:3)
+names(ARIs) <- paste0("Dataset_", 1:2)
 ARIs <- bind_rows(ARIs, .id = "sim")
 write.csv(x = ARIs, file = here("Simulations", "Data", "Random.csv"))

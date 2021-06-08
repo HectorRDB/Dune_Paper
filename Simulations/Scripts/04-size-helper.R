@@ -10,9 +10,9 @@ suppressMessages(
 rm(libs)
 source(here("Simulations", "Scripts", "01-create_data.R"))
 create_and_clean <- function(nCells) {
-  sce <- create_simple_balanced_data(nCells = nCells, nClus = 30, 
+  sce <- create_simple_balanced_data(nCells = nCells, nClus = 20, 
                                      DE =.1, seed = runif(1, 0, 100))
-   ## Pre-processing ----
+  ## Pre-processing ----
   clusters <- sce$Group
   keep_features <- rowSums(counts(sce) > 0) > 0
   sce <- sce[keep_features, ]
@@ -39,8 +39,11 @@ create_and_clean <- function(nCells) {
                        verbose = FALSE)
   sSeurat <- RunPCA(object = sSeurat, ndims.print = 1, npcs = 98, verbose = FALSE)
   sSeurat <- RunUMAP(sSeurat, verbose = FALSE, dims = 1:98)
-  sce <- as.SingleCellExperiment(sSeurat)
-
+  sce <- SingleCellExperiment(assays = list(logcounts = sSeurat@assays$RNA[] %>% as.matrix(),
+                                            counts = counts(sce)),
+                              colData = sSeurat@meta.data %>% DataFrame)
+  reducedDims(sce) <- sSeurat@reductions
+  return(sce)
 }
 
 run_clusterings <- function(sce) {
