@@ -31,6 +31,7 @@ source(here("SmallCellType", "Scripts", "res.R"))
 
 ```{r}
 df <- load_pancreas("Baron")
+n_distinct(df$celltype)
 small_distinct(df) %>%
   arrange(sil)
 ```
@@ -38,18 +39,21 @@ small_distinct(df) %>%
 
 ```{r}
 df <- load_pancreas("Segerstolpe")
+n_distinct(df$celltype)
 small_distinct(df) %>%
   arrange(sil)
 ```
 
 ```{r}
 df <- load_brain("SMARTer_nuclei")
+n_distinct(df$celltype)
 small_distinct(df) %>%
   arrange(sil)
 ```
 
 ```{r}
 df <- load_brain("SMARTer_cells")
+n_distinct(df$celltype)
 small_distinct(df) %>%
   arrange(sil)
 ```

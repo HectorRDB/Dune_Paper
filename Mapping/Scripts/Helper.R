@@ -49,7 +49,8 @@ start_finish_clustering <- function(dtlist, merger, clustering) {
   proba_seurat <- map_dfc(labels, map_seurat_proba, dtlist = dtlist)
   imp <- mean(proba_seurat$final - proba_seurat$init)
   imp_prop <- mean((proba_seurat$final - proba_seurat$init) / proba_seurat$init)
-  return(data.frame('imp' = imp, "imp_prop" = imp_prop))
+  return(data.frame('improvement' = improvement,
+                    "relative_improvement" = relative_improvement))
 }
 
 start_finish <- function(ref, target, merger) {
