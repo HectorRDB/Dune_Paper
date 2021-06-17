@@ -32,7 +32,8 @@ rm(libs)
 df <- bind_rows("Pancreas" = read.csv(here("Mapping", "Data", "Pancreas.csv")),
                 "Brain" = read.csv(here("Mapping", "Data", "Brain.csv")),
                 .id = "pair") %>%
-  pivot_longer(c("imp", "imp_prop"), names_to = "Type", values_to = "proba")
+  pivot_longer(c("improvement", "relative_improvement"),
+               names_to = "Type", values_to = "proba")
 ```
 
 ```{r}
@@ -46,6 +47,6 @@ ggplot(df, aes(x = proba, fill = pair)) +
 ```{r}
 df %>%
   group_by(pair, Type) %>%
-  summarise(imp = mean(proba > 0),
-            mean_imp = mean(proba))
+  summarise(improvement = mean(proba > 0),
+            mean_improvement = mean(proba))
 ```

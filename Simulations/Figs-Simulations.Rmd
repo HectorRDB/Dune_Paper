@@ -71,7 +71,7 @@ p <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = clustering)) +
   expand_limits(y = 34)
 p
 min_ns %>% ungroup() %>%
-  summarise(mean = mean(n_clus - 30),
+  summarise(mean = mean((n_clus - 30)^2),
             sd = sd(n_clus - 30))
 ```
 ## Stopping based on SL
@@ -97,8 +97,8 @@ p <- ggplot(min_ns, aes(x = Dataset, y = n_clus, col = clustering)) +
   expand_limits(y = 34)
 p
 min_ns %>% ungroup() %>%
-  group_by(method) %>%
-  summarise(mean = mean(n_clus - 30),
+  filter(method == "param") %>%
+  summarise(mean = mean((n_clus - 30)^2),
             sd = sd(n_clus - 30))
 ```
 

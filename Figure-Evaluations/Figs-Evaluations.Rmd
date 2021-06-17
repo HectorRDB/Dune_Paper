@@ -128,9 +128,12 @@ top <- df %>% group_by(scenario) %>%
 labels <- paste0(df$Contrast, "\n", df$method,
                  "-$\\Theta_", 1:3, "$") %>%
   unique()
-p3 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
-              group_by(scenario) %>%
-              mutate(AUARIC = scale(AUARIC)) %>%
+p3 <- ggplot(df %>%
+               select(scenario, Merge_method, AUARIC) %>%
+               group_by(scenario) %>%
+               # mutate(AUARIC = base::scale(AUARIC)) %>%
+               mutate(AUARIC = AUARIC - min(AUARIC),
+                      AUARIC = AUARIC / max(AUARIC)) %>%
                ungroup() %>%
                arrange(scenario),
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
@@ -161,8 +164,8 @@ df <- bind_rows(
   filter(Merge_method != "Dune") %>%
   mutate(Merge_method = str_remove(Merge_method, "_NMI"),
          dataset = 
-           case_when(dataset == "SMARTer_cells_MOp" ~ "AIBS scRNA-Smart",
-                     dataset == "SMARTer_nuclei_MOp" ~ "AIBS snRNA-Smart",
+           case_when(dataset == "SMARTer_cells_MOp" ~ "AIBS scRNA",
+                     dataset == "SMARTer_nuclei_MOp" ~ "AIBS snRNA",
                      TRUE ~ dataset)) %>%
   mutate(scenario = paste0(dataset, "\n", method, "_", comp))
   
@@ -170,7 +173,9 @@ df <- df %>% arrange(scenario)
 p4 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
               group_by(scenario) %>%
               filter(Merge_method != "Param") %>%
-              mutate(AUARIC = scale(AUARIC)),
+              # mutate(AUARIC = scale(AUARIC))
+              mutate(AUARIC = AUARIC - min(AUARIC),
+                     AUARIC = AUARIC / max(AUARIC)),
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
   geom_tile() +
   scale_fill_viridis_c(begin = 1, end = 0) +
@@ -227,9 +232,12 @@ top <- df %>% group_by(scenario) %>%
   ungroup() %>%
   select(Merge_method) %>%
   table()
-p1 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
-              group_by(scenario) %>%
-              mutate(AUARIC = scale(AUARIC)) %>%
+p1 <- ggplot(df %>% 
+               select(scenario, Merge_method, AUARIC) %>%
+               group_by(scenario) %>%
+               # mutate(AUARIC = scale(AUARIC)) %>%
+               mutate(AUARIC = AUARIC - min(AUARIC),
+                      AUARIC = AUARIC / max(AUARIC)) %>%
                ungroup() %>%
                arrange(scenario),
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
@@ -262,8 +270,8 @@ df <- bind_rows(
          Merge_method = factor(Merge_method, levels = 
                                  c("Dist", "DE", "Dune_ARI", "Dune")),
          dataset = 
-           case_when(dataset == "SMARTer_cells_MOp" ~ "AIBS scRNA-Smart",
-                     dataset == "SMARTer_nuclei_MOp" ~ "AIBS snRNA-Smart",
+           case_when(dataset == "SMARTer_cells_MOp" ~ "AIBS scRNA",
+                     dataset == "SMARTer_nuclei_MOp" ~ "AIBS snRNA",
                      TRUE ~ dataset)) %>%
   mutate(scenario = paste0(dataset, "\n", method, "_", comp))
   
@@ -276,10 +284,13 @@ rank <- df %>%
   select(Merge_method, rk) %>%
   table
 
-p2 <- ggplot(df %>% select(scenario, Merge_method, AUARIC) %>%
-              group_by(scenario) %>%
-              filter(Merge_method != "Param") %>%
-              mutate(AUARIC = scale(AUARIC)),
+p2 <- ggplot(df %>% 
+               select(scenario, Merge_method, AUARIC) %>%
+               group_by(scenario) %>%
+               filter(Merge_method != "Param") %>%
+               # mutate(AUARIC = scale(AUARIC))
+               mutate(AUARIC = AUARIC - min(AUARIC),
+                      AUARIC = AUARIC / max(AUARIC)),
             aes(x = scenario, y = Merge_method, fill = AUARIC)) +
   geom_tile() +
   scale_fill_viridis_c(begin = 1, end = 0) +
